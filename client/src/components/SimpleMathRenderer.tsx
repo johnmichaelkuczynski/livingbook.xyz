@@ -19,30 +19,28 @@ export default function SimpleMathRenderer({ content, className = '' }: SimpleMa
 
     let processedContent = content;
 
-    // COMPLETELY REMOVE ALL MATH MARKUP AND SYMBOLS
+    // REMOVE ALL MATH MARKUP AND SYMBOLS COMPLETELY
     processedContent = processedContent.replace(/\$\$([^$]*?)\$\$/g, '$1');  // Remove $$...$$
     processedContent = processedContent.replace(/\$([^$]*?)\$/g, '$1');      // Remove $...$
+    processedContent = processedContent.replace(/\\\[([\s\S]*?)\\\]/g, '$1'); // Remove \[...\]
+    processedContent = processedContent.replace(/\\\(([\s\S]*?)\\\)/g, '$1'); // Remove \(...\)
     processedContent = processedContent.replace(/\\([a-zA-Z]+)/g, '$1');     // Remove \commands
-    processedContent = processedContent.replace(/\\\(/g, '(');               // Remove \(
-    processedContent = processedContent.replace(/\\\)/g, ')');               // Remove \)
-    processedContent = processedContent.replace(/\\\[/g, '[');               // Remove \[
-    processedContent = processedContent.replace(/\\\]/g, ']');               // Remove \]
-    processedContent = processedContent.replace(/\\{/g, '{');                // Remove \{
-    processedContent = processedContent.replace(/\\}/g, '}');                // Remove \}
     processedContent = processedContent.replace(/\*\*([^*]*?)\*\*/g, '$1');  // Remove **...**
     processedContent = processedContent.replace(/\*([^*]*?)\*/g, '$1');      // Remove *...*
     processedContent = processedContent.replace(/#{1,6}\s*/g, '');           // Remove ### headers
     processedContent = processedContent.replace(/`([^`]*?)`/g, '$1');        // Remove `...`
     processedContent = processedContent.replace(/_([^_]*?)_/g, '$1');        // Remove _..._
     
-    // Clean up remaining backslashes and symbols
+    // Clean up ALL remaining symbols and markup
     processedContent = processedContent.replace(/\\/g, '');                  // Remove all backslashes
-    processedContent = processedContent.replace(/[{}]/g, '');                // Remove curly braces
+    processedContent = processedContent.replace(/[{}[\]]/g, '');             // Remove brackets and braces
+    processedContent = processedContent.replace(/\^/g, '');                  // Remove carets
+    processedContent = processedContent.replace(/~/g, '');                   // Remove tildes
     
     // Handle line breaks
     processedContent = processedContent.replace(/\n/g, '<br>');
 
-    // Set the clean content
+    // Set the completely clean content
     containerRef.current.innerHTML = processedContent;
   }, [content]);
 
