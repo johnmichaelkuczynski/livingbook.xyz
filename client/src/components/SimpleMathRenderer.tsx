@@ -26,11 +26,18 @@ export default function SimpleMathRenderer({ content, className = '' }: SimpleMa
     containerRef.current.innerHTML = processedContent;
 
     // Trigger MathJax re-typesetting after content is set
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      window.MathJax.typesetPromise([containerRef.current]).catch((err: any) => 
-        console.warn('MathJax typeset failed:', err)
-      );
-    }
+    const typesetMath = async () => {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        try {
+          await window.MathJax.typesetPromise([containerRef.current]);
+        } catch (err) {
+          console.warn('MathJax typeset failed:', err);
+        }
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    setTimeout(typesetMath, 100);
   }, [content]);
 
   return (
