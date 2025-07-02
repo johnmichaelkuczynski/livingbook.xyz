@@ -16,11 +16,75 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleFileUploaded = (document: any) => {
     setCurrentDocument(document);
+  };
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = async (file: File) => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+    
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF, Word document, or text file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      handleFileUploaded(result);
+      
+      toast({
+        title: "Success",
+        description: "Document uploaded successfully!",
+      });
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Send message mutation
@@ -92,7 +156,7 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <Button 
                 variant="default" 
-                onClick={() => document.querySelector('input[type="file"]')?.click()}
+                onClick={() => fileInputRef.current?.click()}
                 className="bg-primary hover:bg-primary/90"
               >
                 <FileText className="w-4 h-4 mr-2" />
@@ -113,15 +177,20 @@ export default function Home() {
       <div className="flex h-[calc(100vh-200px)]">
         {/* Left Side: Document Area */}
         <div className="flex-1 flex flex-col p-8">
-          <FileUpload 
-            onFileUploaded={handleFileUploaded}
-            isUploading={isUploading}
-            setIsUploading={setIsUploading}
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInput}
+            accept=".pdf,.doc,.docx,.txt"
+            className="hidden"
           />
-          <div className="flex-1 mt-6">
+          
+          <div className="flex-1">
             <DocumentViewer 
               document={currentDocument}
               isLoading={isUploading}
+              onUploadClick={() => fileInputRef.current?.click()}
             />
           </div>
         </div>
