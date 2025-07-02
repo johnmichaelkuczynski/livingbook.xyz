@@ -116,79 +116,75 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Upload</h2>
-        
-        {!uploadedFile ? (
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              dragActive || isUploading
-                ? 'border-primary bg-primary/5'
-                : 'border-gray-300 hover:border-primary hover:bg-primary/5'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                ) : (
-                  <Upload className="w-6 h-6 text-gray-500" />
-                )}
+    <div className="mb-4">
+      {!uploadedFile ? (
+        <div
+          className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            dragActive || isUploading
+              ? 'border-primary bg-primary/5'
+              : 'border-gray-300 hover:border-primary hover:bg-primary/5'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="flex items-center justify-center space-x-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+              {isUploading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              ) : (
+                <Upload className="w-4 h-4 text-gray-500" />
+              )}
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium text-gray-900">
+                {isUploading ? 'Processing...' : 'Upload Document'}
+              </p>
+              <p className="text-xs text-gray-500">
+                PDF, DOCX, TXT (Max 10MB)
+              </p>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.docx,.txt"
+            onChange={handleFileInput}
+            disabled={isUploading}
+          />
+        </div>
+      ) : (
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                <File className="w-3 h-3 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {isUploading ? 'Processing document...' : 'Click to upload or drag and drop'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Supports: PDF, DOCX, TXT files (Max 10MB)
-                </p>
+                <p className="text-sm font-medium text-gray-900">{uploadedFile.originalName}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(uploadedFile.fileSize)}</p>
               </div>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.docx,.txt"
-              onChange={handleFileInput}
-              disabled={isUploading}
-            />
-          </div>
-        ) : (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <File className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{uploadedFile.originalName}</p>
-                  <p className="text-xs text-gray-500">{formatFileSize(uploadedFile.fileSize)}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Processed
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveFile}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Ready
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveFile}
+                className="text-gray-400 hover:text-gray-600 h-6 w-6 p-0"
+              >
+                <X className="w-3 h-3" />
+              </Button>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
