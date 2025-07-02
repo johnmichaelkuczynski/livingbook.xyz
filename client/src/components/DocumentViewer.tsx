@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MoreHorizontal, FileText } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
+import MathRenderer from './MathRenderer';
 
 interface DocumentViewerProps {
   document: any | null;
@@ -25,13 +26,67 @@ export default function DocumentViewer({ document, isLoading }: DocumentViewerPr
       
       return (
         <div key={index} className={`mb-4 ${hasMath ? 'math-content' : ''}`}>
-          <p 
-            className="text-gray-700 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: paragraph }}
-          />
+          {hasMath ? (
+            <MathAwareParagraph content={paragraph} />
+          ) : (
+            <p className="text-gray-700 leading-relaxed">
+              {paragraph}
+            </p>
+          )}
         </div>
       );
     }).filter(Boolean);
+  };
+
+  const MathAwareParagraph = ({ content }: { content: string }) => {
+    // Split content by math expressions and render each part appropriately
+    const parts = [];
+    let currentIndex = 0;
+    
+    // Find all math expressions (both inline and display)
+    const mathRegex = /<(span|div) class="math-(inline|display)" data-latex="([^"]+)"[^>]*>([^<]+)<\/(span|div)>/g;
+    let match;
+    
+    while ((match = mathRegex.exec(content)) !== null) {
+      // Add text before math expression
+      if (match.index > currentIndex) {
+        const textBefore = content.slice(currentIndex, match.index);
+        if (textBefore.trim()) {
+          parts.push(
+            <span key={`text-${parts.length}`} dangerouslySetInnerHTML={{ __html: textBefore }} />
+          );
+        }
+      }
+      
+      // Add math expression
+      const isDisplay = match[2] === 'display';
+      const latex = match[3];
+      parts.push(
+        <MathRenderer
+          key={`math-${parts.length}`}
+          expression={latex}
+          displayMode={isDisplay}
+        />
+      );
+      
+      currentIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (currentIndex < content.length) {
+      const remainingText = content.slice(currentIndex);
+      if (remainingText.trim()) {
+        parts.push(
+          <span key={`text-${parts.length}`} dangerouslySetInnerHTML={{ __html: remainingText }} />
+        );
+      }
+    }
+    
+    return (
+      <p className="text-gray-700 leading-relaxed">
+        {parts.length > 0 ? parts : content}
+      </p>
+    );
   };
 
   return (
