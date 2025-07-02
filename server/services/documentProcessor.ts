@@ -1,16 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 
-// For PDF processing, we'll use a simple text extraction
-// In production, you'd want to use pdf-parse or similar
+// For PDF processing
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
-    // This is a simplified implementation
-    // In production, use: const pdfParse = require('pdf-parse');
     const buffer = await fs.readFile(filePath);
-    
-    // For now, return a placeholder - in production you'd use pdf-parse
-    return "PDF text extraction requires pdf-parse library. Please install it for full functionality.";
+    const data = await pdfParse(buffer);
+    return data.text;
   } catch (error) {
     throw new Error(`Failed to extract text from PDF: ${error}`);
   }
@@ -19,12 +17,9 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
 // For DOCX processing
 async function extractTextFromDOCX(filePath: string): Promise<string> {
   try {
-    // This is a simplified implementation
-    // In production, use: const mammoth = require('mammoth');
     const buffer = await fs.readFile(filePath);
-    
-    // For now, return a placeholder - in production you'd use mammoth
-    return "DOCX text extraction requires mammoth library. Please install it for full functionality.";
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value;
   } catch (error) {
     throw new Error(`Failed to extract text from DOCX: ${error}`);
   }
