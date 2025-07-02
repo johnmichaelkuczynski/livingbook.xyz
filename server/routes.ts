@@ -124,7 +124,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Send chat message
+  // Send chat message without document
+  app.post("/api/chat/message", async (req, res) => {
+    try {
+      const { message, provider = 'deepseek' } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate AI response without document context
+      const aiResponse = await generateChatResponse(
+        message,
+        "", // No document content
+        [] // No conversation history
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+      
+      res.json({
+        message: aiResponse.message
+      });
+      
+    } catch (error) {
+      console.error("Chat error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process chat message" 
+      });
+    }
+  });
+
+  // Send chat message with document
   app.post("/api/chat/:documentId/message", async (req, res) => {
     try {
       const documentId = parseInt(req.params.documentId);
