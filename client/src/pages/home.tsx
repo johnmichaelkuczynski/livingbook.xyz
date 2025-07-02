@@ -44,10 +44,10 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+        <div className={`grid grid-cols-1 gap-8 h-full ${currentDocument ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
           
           {/* Left Column: File Upload & Document Viewer */}
-          <div className="flex flex-col space-y-6 h-full">
+          <div className={`flex flex-col space-y-6 h-full ${currentDocument ? 'lg:col-span-2' : ''}`}>
             <FileUpload 
               onFileUploaded={handleFileUploaded}
               isUploading={isUploading}
