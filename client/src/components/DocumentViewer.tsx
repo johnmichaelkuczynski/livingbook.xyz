@@ -1,16 +1,61 @@
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MoreHorizontal, FileText } from 'lucide-react';
+import { Search, MoreHorizontal, FileText, MessageCircle } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
 
 interface DocumentViewerProps {
   document: any | null;
   isLoading: boolean;
+  onAskAboutSelection?: (selectedText: string) => void;
 }
 
-export default function DocumentViewer({ document, isLoading }: DocumentViewerProps) {
+export default function DocumentViewer({ document, isLoading, onAskAboutSelection }: DocumentViewerProps) {
+  const [selectedText, setSelectedText] = useState('');
+  const [showAskButton, setShowAskButton] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      const text = selection.toString().trim();
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      setSelectedText(text);
+      setButtonPosition({
+        x: rect.right + 10,
+        y: rect.top + window.scrollY - 40
+      });
+      setShowAskButton(true);
+    } else {
+      setShowAskButton(false);
+      setSelectedText('');
+    }
+  };
+
+  const handleAskAboutSelection = () => {
+    if (selectedText && onAskAboutSelection) {
+      onAskAboutSelection(selectedText);
+      setShowAskButton(false);
+      
+      // Clear selection
+      window.getSelection()?.removeAllRanges();
+    }
+  };
+
+  // Hide button when clicking elsewhere
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowAskButton(false);
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
   const formatContent = (content: string) => {
     if (!content) return '';
     
