@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MoreHorizontal, FileText, MessageCircle } from 'lucide-react';
-import { processMathNotation, containsMath } from '@/lib/mathUtils';
-import MathRenderer from './MathRenderer';
+import SimpleMathRenderer from './SimpleMathRenderer';
 
 interface DocumentViewerProps {
   document: any | null;
@@ -17,80 +16,15 @@ export default function DocumentViewer({ document, isLoading, onUploadClick }: D
   const formatContent = (content: string) => {
     if (!content) return '';
     
-    // Process math notation
-    const processedContent = processMathNotation(content);
-    
-    // Split into paragraphs and format
-    return processedContent.split('\n').map((paragraph, index) => {
-      if (!paragraph.trim()) return null;
-      
-      // Check if this paragraph contains math
-      const hasMath = containsMath(paragraph);
-      
-      return (
-        <div key={index} className={`mb-4 ${hasMath ? 'math-content' : ''}`}>
-          {hasMath ? (
-            <MathAwareParagraph content={paragraph} />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {paragraph}
-            </p>
-          )}
-        </div>
-      );
-    }).filter(Boolean);
-  };
-
-  const MathAwareParagraph = ({ content }: { content: string }) => {
-    // Split content by math expressions and render each part appropriately
-    const parts = [];
-    let currentIndex = 0;
-    
-    // Find all math expressions (both inline and display)
-    const mathRegex = /<(span|div) class="math-(inline|display)" data-latex="([^"]+)"[^>]*>([^<]+)<\/(span|div)>/g;
-    let match;
-    
-    while ((match = mathRegex.exec(content)) !== null) {
-      // Add text before math expression
-      if (match.index > currentIndex) {
-        const textBefore = content.slice(currentIndex, match.index);
-        if (textBefore.trim()) {
-          parts.push(
-            <span key={`text-${parts.length}`} dangerouslySetInnerHTML={{ __html: textBefore }} />
-          );
-        }
-      }
-      
-      // Add math expression
-      const isDisplay = match[2] === 'display';
-      const latex = match[3];
-      parts.push(
-        <MathRenderer
-          key={`math-${parts.length}`}
-          expression={latex}
-          displayMode={isDisplay}
-        />
-      );
-      
-      currentIndex = match.index + match[0].length;
-    }
-    
-    // Add remaining text
-    if (currentIndex < content.length) {
-      const remainingText = content.slice(currentIndex);
-      if (remainingText.trim()) {
-        parts.push(
-          <span key={`text-${parts.length}`} dangerouslySetInnerHTML={{ __html: remainingText }} />
-        );
-      }
-    }
-    
     return (
-      <p className="text-gray-700 leading-relaxed">
-        {parts.length > 0 ? parts : content}
-      </p>
+      <SimpleMathRenderer 
+        content={content} 
+        className="text-gray-700 leading-relaxed text-lg"
+      />
     );
   };
+
+
 
   return (
     <Card className="flex-1 flex flex-col">
@@ -131,8 +65,8 @@ export default function DocumentViewer({ document, isLoading, onUploadClick }: D
                 </Button>
               </div>
             ) : (
-              <div className="prose prose-lg max-w-none">
-                <div className="space-y-4">
+              <div className="w-full">
+                <div className="space-y-4 text-lg leading-relaxed">
                   {formatContent(document.content)}
                 </div>
               </div>
