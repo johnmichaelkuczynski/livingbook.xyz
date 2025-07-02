@@ -384,8 +384,8 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
 
       {/* Chat Input - Fixed at bottom */}
       {showInputInline && (
-      <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
-        <div className="flex space-x-3">
+      <div className="border-t border-gray-200 px-3 py-4 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
+        <div className="flex space-x-2">
           <div className="flex-1">
             <div className="relative">
               <textarea
