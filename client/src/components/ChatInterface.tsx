@@ -37,16 +37,16 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch chat messages for the current document
+  // Fetch chat messages for the current document or global chat
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
-    queryKey: ['/api/chat/' + document?.id + '/messages'],
-    enabled: !!document,
+    queryKey: document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'],
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageContent: string) => {
-      const response = await apiRequest('POST', `/api/chat/${document.id}/message`, {
+      const endpoint = document ? `/api/chat/${document.id}/message` : '/api/chat/message';
+      const response = await apiRequest('POST', endpoint, {
         message: messageContent,
         provider: selectedProvider,
       });
@@ -57,7 +57,8 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     },
     onSuccess: () => {
       // Invalidate and refetch messages
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/' + document?.id + '/messages'] });
+      const queryKey = document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'];
+      queryClient.invalidateQueries({ queryKey });
       setMessage('');
       setIsTyping(false);
     },
@@ -73,7 +74,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
   });
 
   const handleSendMessage = () => {
-    if (!message.trim() || !document || sendMessageMutation.isPending) return;
+    if (!message.trim() || sendMessageMutation.isPending) return;
     
     sendMessageMutation.mutate(message.trim());
   };

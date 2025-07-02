@@ -194,6 +194,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
 
+      // Get or create a global chat session (ID 0 for no document)
+      let session = await storage.getChatSession(0);
+      if (!session) {
+        session = await storage.createChatSession({ documentId: 0 });
+      }
+
+      // Get conversation history
+      const messages = await storage.getChatMessages(session.id);
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Save user message
+      const userMessageData = {
+        sessionId: session.id,
+        role: "user",
+        content: message
+      };
+      const validatedUserMessage = insertChatMessageSchema.parse(userMessageData);
+      await storage.createChatMessage(validatedUserMessage);
+
       // Select AI service based on provider
       let generateChatResponse;
       switch (provider.toLowerCase()) {
@@ -216,15 +238,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiResponse = await generateChatResponse(
         message,
         "", // No document content
-        [] // No conversation history
+        conversationHistory
       );
       
       if (aiResponse.error) {
         return res.status(500).json({ error: aiResponse.error });
       }
+
+      // Save AI response
+      const aiMessageData = {
+        sessionId: session.id,
+        role: "assistant",
+        content: aiResponse.message
+      };
+      const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
+      const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
       
       res.json({
-        message: aiResponse.message
+        id: savedAiMessage.id,
+        role: savedAiMessage.role,
+        content: savedAiMessage.content,
+        timestamp: savedAiMessage.timestamp
       });
       
     } catch (error) {
@@ -332,6 +366,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const documentId = parseInt(req.params.documentId);
       
       const session = await storage.getChatSessionByDocumentId(documentId);
+      if (!session) {
+        return res.json([]);
+      }
+      
+      const messages = await storage.getChatMessages(session.id);
+      res.json(messages);
+      
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get chat messages" 
+      });
+    }
+  });
+
+  // Get global chat messages (no document)
+  app.get("/api/chat/messages", async (req, res) => {
+    try {
+      const session = await storage.getChatSession(0);
       if (!session) {
         return res.json([]);
       }
