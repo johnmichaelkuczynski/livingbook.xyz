@@ -137,6 +137,23 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     });
   };
 
+  // Function to clean markdown formatting
+  const cleanMarkdown = (text: string) => {
+    return text
+      .replace(/#{1,6}\s*/g, '') // Remove markdown headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
+      .replace(/__(.*?)__/g, '$1') // Remove bold __text__
+      .replace(/_(.*?)_/g, '$1') // Remove italic _text_
+      .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Remove code blocks
+      .replace(/^\s*[-*+]\s*/gm, '• ') // Convert list markers to bullets
+      .replace(/^\s*\d+\.\s*/gm, '') // Remove numbered list markers
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Remove links, keep text
+      .replace(/^\s*>\s*/gm, '') // Remove blockquotes
+      .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
+      .trim();
+  };
+
   return (
     <Card className="flex-1 flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -209,7 +226,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                       ? 'bg-primary text-white' 
                       : 'bg-gray-50 text-gray-700'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{cleanMarkdown(msg.content)}</p>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
