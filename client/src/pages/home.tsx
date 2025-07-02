@@ -197,44 +197,7 @@ export default function Home() {
       </div>
 
       {/* Fixed Chat Input at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg z-50">
-        <div className="p-6">
-          <div className="flex space-x-4 max-w-7xl mx-auto">
-            <div className="flex-1">
-              <Textarea
-                ref={textareaRef}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask me anything about your document..."
-                className="min-h-[100px] max-h-40 resize-none text-lg border-2 border-gray-300 focus:border-primary"
-                disabled={sendMessageMutation.isPending}
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deepseek">DeepSeek</SelectItem>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="anthropic">Anthropic</SelectItem>
-                  <SelectItem value="perplexity">Perplexity</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button 
-                onClick={handleSendMessage}
-                disabled={!message.trim() || sendMessageMutation.isPending}
-                className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg font-semibold"
-              >
-                <Send className="w-5 h-5 mr-2" />
-                {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
 
     </div>
