@@ -3,7 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lightbulb, Send, Paperclip } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Lightbulb, Send, Paperclip, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -21,6 +22,7 @@ interface ChatMessage {
 
 export default function ChatInterface({ document }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -38,6 +40,7 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
     mutationFn: async (messageContent: string) => {
       const response = await apiRequest('POST', `/api/chat/${document.id}/message`, {
         message: messageContent,
+        provider: selectedProvider,
       });
       return response.json();
     },

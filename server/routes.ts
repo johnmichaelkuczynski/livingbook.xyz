@@ -5,7 +5,10 @@ import path from "path";
 import fs from "fs/promises";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
-import { generateChatResponse } from "./services/openai";
+import * as openaiService from "./services/openai";
+import * as anthropicService from "./services/anthropic";
+import * as deepseekService from "./services/deepseek";
+import * as perplexityService from "./services/perplexity";
 import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
 
 // Configure multer for file uploads
@@ -125,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat/:documentId/message", async (req, res) => {
     try {
       const documentId = parseInt(req.params.documentId);
-      const { message } = req.body;
+      const { message, provider = 'deepseek' } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -158,6 +161,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const validatedUserMessage = insertChatMessageSchema.parse(userMessageData);
       await storage.createChatMessage(validatedUserMessage);
+      
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
       
       // Generate AI response
       const aiResponse = await generateChatResponse(
