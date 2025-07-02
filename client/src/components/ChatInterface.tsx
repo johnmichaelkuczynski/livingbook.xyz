@@ -248,9 +248,9 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={document ? "Ask me anything about your document..." : "Upload a document to start chatting..."}
+                placeholder={document ? "Ask me anything about your document..." : "Ask me any question..."}
                 className="min-h-[80px] max-h-40 resize-none pr-10 text-base"
-                disabled={!document || sendMessageMutation.isPending}
+                disabled={sendMessageMutation.isPending}
               />
               <Button
                 variant="ghost"
@@ -263,7 +263,7 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
           </div>
           <Button
             onClick={handleSendMessage}
-            disabled={!message.trim() || !document || sendMessageMutation.isPending}
+            disabled={!message.trim() || sendMessageMutation.isPending}
             className="px-6 py-6 bg-primary hover:bg-primary/90 text-base font-medium"
           >
             <Send className="w-5 h-5 mr-2" />
