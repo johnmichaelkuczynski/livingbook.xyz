@@ -70,11 +70,6 @@ export default function Home() {
       const result = await response.json();
       handleFileUploaded(result);
       
-      toast({
-        title: "Success",
-        description: "Document uploaded successfully!",
-      });
-      
     } catch (error) {
       console.error('Upload error:', error);
       toast({
