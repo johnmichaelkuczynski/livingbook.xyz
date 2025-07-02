@@ -82,6 +82,24 @@
   margin: 1rem 0;
 }
 
+/* KaTeX styling */
+.math-katex.display {
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: hsl(207, 90%, 96%);
+  border-radius: 0.5rem;
+}
+
+.math-katex.inline {
+  display: inline;
+  padding: 0.125rem 0.25rem;
+  background-color: hsl(207, 90%, 96%);
+  border-radius: 0.25rem;
+  margin: 0 0.125rem;
+}
+
 .math-content {
   line-height: 1.8;
 }
@@ -96,17 +114,29 @@
   line-height: 1.7;
 }
 
-.prose .math-inline {
+.prose .math-inline,
+.prose .math-katex.inline {
   display: inline;
 }
 
-.prose .math-display {
+.prose .math-display,
+.prose .math-katex.display {
   display: block;
 }
 
 /* Animation for math elements */
 .math-inline:hover,
-.math-display:hover {
+.math-display:hover,
+.math-katex:hover {
   background-color: hsl(207, 90%, 92%);
   transition: background-color 0.2s ease;
+}
+
+/* KaTeX font adjustments */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1rem 0;
 }

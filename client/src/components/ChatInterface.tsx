@@ -122,8 +122,8 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className="flex-1 flex flex-col">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <Card className="flex-1 flex flex-col h-full">
+      <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
@@ -141,10 +141,10 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
         </div>
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-hidden">
+      {/* Chat Messages - Takes up remaining space */}
+      <div className="flex-1 overflow-hidden min-h-0">
         <ScrollArea className="h-full">
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 pb-4">
             {/* Welcome Message */}
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -218,8 +218,8 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
         </ScrollArea>
       </div>
 
-      {/* Chat Input */}
-      <div className="border-t border-gray-200 p-4">
+      {/* Chat Input - Fixed at bottom */}
+      <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
         <div className="flex space-x-3">
           <div className="flex-1">
             <div className="relative">
