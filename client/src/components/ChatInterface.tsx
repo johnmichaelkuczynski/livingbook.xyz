@@ -137,9 +137,22 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
               <p className="text-xs text-gray-500">Ask questions about your document</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-xs text-gray-500">Online</span>
+          <div className="flex items-center space-x-3">
+            <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="deepseek">DeepSeek</SelectItem>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="anthropic">Anthropic</SelectItem>
+                <SelectItem value="perplexity">Perplexity</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="text-xs text-gray-500">Online</span>
+            </div>
           </div>
         </div>
       </div>
