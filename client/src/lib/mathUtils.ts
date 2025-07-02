@@ -1,4 +1,5 @@
 // Utility functions for math notation rendering
+import katex from 'katex';
 
 export function processMathNotation(text: string): string {
   let processedText = text;
@@ -50,29 +51,51 @@ export function processMathNotation(text: string): string {
   processedText = processedText.replace(/!=/g, '\\neq');
   processedText = processedText.replace(/~=/g, '\\approx');
   
-  // Mark inline math expressions (content between $ symbols)
-  processedText = processedText.replace(
-    /\$([^$]+)\$/g, 
-    '<span class="math-inline" data-latex="$1">$1</span>'
-  );
-  
-  // Mark display math expressions (content between $$ symbols)
+  // Render display math expressions (content between $$ symbols) using KaTeX
   processedText = processedText.replace(
     /\$\$([^$]+)\$\$/g, 
-    '<div class="math-display" data-latex="$1">$1</div>'
+    (match, latex) => {
+      try {
+        return `<div class="math-display">${katex.renderToString(latex, { displayMode: true, throwOnError: false })}</div>`;
+      } catch (e) {
+        return `<div class="math-display">${latex}</div>`;
+      }
+    }
+  );
+  
+  // Render inline math expressions (content between $ symbols) using KaTeX
+  processedText = processedText.replace(
+    /\$([^$]+)\$/g, 
+    (match, latex) => {
+      try {
+        return `<span class="math-inline">${katex.renderToString(latex, { displayMode: false, throwOnError: false })}</span>`;
+      } catch (e) {
+        return `<span class="math-inline">${latex}</span>`;
+      }
+    }
   );
   
   return processedText;
 }
 
 export function containsMath(text: string): boolean {
-  // Simple check for common math patterns
+  // Enhanced check for common math patterns
   const mathPatterns = [
-    /\$.*\$/,  // LaTeX-style math
+    /\$.*\$/,  // LaTeX-style math (single $)
+    /\$\$.*\$\$/,  // LaTeX-style display math (double $$)
+    /\\\w+\{.*\}/,  // LaTeX commands like \frac{}, \sqrt{}
     /\^[0-9]/,  // Superscripts
     /sqrt\(/,   // Square roots
     /[α-ω]/,    // Greek letters
-    /[±≤≥≠≈∞∑∫]/  // Math symbols
+    /[±≤≥≠≈∞∑∫]/,  // Math symbols
+    /\\frac/,   // Fractions
+    /\\sqrt/,   // Square roots
+    /\\sum/,    // Summation
+    /\\int/,    // Integration
+    /\\alpha|\\beta|\\gamma|\\delta/,  // Common Greek letters
+    /\\text\{.*\}/,  // Text inside math
+    /\\\(/,     // LaTeX inline math \( ... \)
+    /\\\[/      // LaTeX display math \[ ... \]
   ];
   
   return mathPatterns.some(pattern => pattern.test(text));

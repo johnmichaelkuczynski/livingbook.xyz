@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail } from 'lucide-react';
+import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isTyping, setIsTyping] = useState(false);
+  const [mathRenderingEnabled, setMathRenderingEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -144,11 +145,11 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     // First clean basic markdown but preserve math notation
     const cleanedContent = content
       .replace(/#{1,6}\s*/g, '') // Remove markdown headers
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
-      .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
-      .replace(/__(.*?)__/g, '$1') // Remove bold __text__
-      .replace(/_(.*?)_/g, '$1') // Remove italic _text_
-      .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Remove code blocks
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert bold **text**
+      .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert italic *text*
+      .replace(/__(.*?)__/g, '<strong>$1</strong>') // Convert bold __text__
+      .replace(/_(.*?)_/g, '<em>$1</em>') // Convert italic _text_
+      .replace(/`{1,3}(.*?)`{1,3}/g, '<code>$1</code>') // Convert code blocks
       .replace(/^\s*[-*+]\s*/gm, '• ') // Convert list markers to bullets
       .replace(/^\s*\d+\.\s*/gm, '') // Remove numbered list markers
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Remove links, keep text
@@ -156,19 +157,23 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
       .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
       .trim();
 
-    // Process and render math notation
-    if (containsMath(cleanedContent)) {
+    // Process content based on math rendering toggle
+    if (mathRenderingEnabled) {
       const processedContent = processMathNotation(cleanedContent);
       return (
         <div 
-          className="text-sm whitespace-pre-wrap" 
+          className="text-sm whitespace-pre-wrap chat-message" 
           dangerouslySetInnerHTML={{ __html: processedContent }}
         />
       );
+    } else {
+      // Raw mode - show content without math processing
+      return (
+        <div className="text-sm whitespace-pre-wrap chat-message font-mono">
+          {cleanedContent}
+        </div>
+      );
     }
-
-    // For content without math, return plain text
-    return <p className="text-sm whitespace-pre-wrap">{cleanedContent}</p>;
   };
 
   // Function to download message as PDF
@@ -250,6 +255,15 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <Button
+              variant={mathRenderingEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMathRenderingEnabled(!mathRenderingEnabled)}
+              className="flex items-center space-x-1"
+            >
+              <Calculator className="w-4 h-4" />
+              <span className="text-xs">Math</span>
+            </Button>
             <Select value={selectedProvider} onValueChange={setSelectedProvider}>
               <SelectTrigger className="w-32">
                 <SelectValue />
