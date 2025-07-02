@@ -19,29 +19,44 @@ export default function SimpleMathRenderer({ content, className = '' }: SimpleMa
 
     let processedContent = content;
 
-    // REMOVE ALL MATH MARKUP AND SYMBOLS COMPLETELY
-    processedContent = processedContent.replace(/\$\$([^$]*?)\$\$/g, '$1');  // Remove $$...$$
-    processedContent = processedContent.replace(/\$([^$]*?)\$/g, '$1');      // Remove $...$
-    processedContent = processedContent.replace(/\\\[([\s\S]*?)\\\]/g, '$1'); // Remove \[...\]
-    processedContent = processedContent.replace(/\\\(([\s\S]*?)\\\)/g, '$1'); // Remove \(...\)
-    processedContent = processedContent.replace(/\\([a-zA-Z]+)/g, '$1');     // Remove \commands
-    processedContent = processedContent.replace(/\*\*([^*]*?)\*\*/g, '$1');  // Remove **...**
-    processedContent = processedContent.replace(/\*([^*]*?)\*/g, '$1');      // Remove *...*
-    processedContent = processedContent.replace(/#{1,6}\s*/g, '');           // Remove ### headers
-    processedContent = processedContent.replace(/`([^`]*?)`/g, '$1');        // Remove `...`
-    processedContent = processedContent.replace(/_([^_]*?)_/g, '$1');        // Remove _..._
-    
-    // Clean up ALL remaining symbols and markup
-    processedContent = processedContent.replace(/\\/g, '');                  // Remove all backslashes
-    processedContent = processedContent.replace(/[{}[\]]/g, '');             // Remove brackets and braces
-    processedContent = processedContent.replace(/\^/g, '');                  // Remove carets
-    processedContent = processedContent.replace(/~/g, '');                   // Remove tildes
-    
-    // Handle line breaks
+    // Preserve original math notation for MathJax processing
+    // Convert line breaks to HTML
     processedContent = processedContent.replace(/\n/g, '<br>');
-
-    // Set the completely clean content
+    
+    // Set the content with original math notation preserved
     containerRef.current.innerHTML = processedContent;
+
+    // Trigger MathJax re-typesetting after content is set
+    const typesetMath = () => {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([containerRef.current])
+          .then(() => {
+            console.log('MathJax typeset complete');
+          })
+          .catch((err: any) => {
+            console.warn('MathJax typeset failed:', err);
+          });
+      } else if (window.MathJax && window.MathJax.Hub) {
+        // Fallback for MathJax v2
+        window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub, containerRef.current]);
+      }
+    };
+
+    // Wait for MathJax to be ready, then typeset
+    if (window.MathJax) {
+      setTimeout(typesetMath, 100);
+    } else {
+      // If MathJax not loaded yet, wait and retry
+      const checkMathJax = setInterval(() => {
+        if (window.MathJax) {
+          clearInterval(checkMathJax);
+          typesetMath();
+        }
+      }, 100);
+      
+      // Clear interval after 10 seconds to prevent infinite loop
+      setTimeout(() => clearInterval(checkMathJax), 10000);
+    }
   }, [content]);
 
   return (
