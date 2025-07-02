@@ -1,5 +1,4 @@
 // Utility functions for math notation rendering
-import katex from 'katex';
 
 export function processMathNotation(text: string): string {
   let processedText = text;
@@ -51,28 +50,16 @@ export function processMathNotation(text: string): string {
   processedText = processedText.replace(/!=/g, '\\neq');
   processedText = processedText.replace(/~=/g, '\\approx');
   
-  // Render display math expressions (content between $$ symbols) using KaTeX
+  // Mark display math expressions (content between $$ symbols) for KaTeX rendering
   processedText = processedText.replace(
     /\$\$([^$]+)\$\$/g, 
-    (match, latex) => {
-      try {
-        return `<div class="math-display">${katex.renderToString(latex, { displayMode: true, throwOnError: false })}</div>`;
-      } catch (e) {
-        return `<div class="math-display">${latex}</div>`;
-      }
-    }
+    '<div class="katex-math-display" data-math="$1">$$1$$</div>'
   );
   
-  // Render inline math expressions (content between $ symbols) using KaTeX
+  // Mark inline math expressions (content between $ symbols) for KaTeX rendering
   processedText = processedText.replace(
     /\$([^$]+)\$/g, 
-    (match, latex) => {
-      try {
-        return `<span class="math-inline">${katex.renderToString(latex, { displayMode: false, throwOnError: false })}</span>`;
-      } catch (e) {
-        return `<span class="math-inline">${latex}</span>`;
-      }
-    }
+    '<span class="katex-math-inline" data-math="$1">$1</span>'
   );
   
   return processedText;
