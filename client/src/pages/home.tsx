@@ -169,7 +169,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-120px)]">
+      <div className="flex h-[calc(100vh-120px)] pb-32">
         {/* Left Side: Document Area */}
         <div className="flex-1 flex flex-col p-8">
           {/* Hidden file input */}
@@ -192,13 +192,71 @@ export default function Home() {
 
         {/* Right Side: AI Chat Messages */}
         <div className="w-96 border-l border-gray-200 flex flex-col">
-          <ChatInterface document={currentDocument} showInputInline={true} />
+          <ChatInterface document={currentDocument} showInputInline={false} />
         </div>
       </div>
 
-      {/* Fixed Chat Input at Bottom */}
-
-
+      {/* Fixed Chat Input at Bottom of Screen */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg z-50">
+        <div className="p-4">
+          <div className="flex space-x-3 max-w-7xl mx-auto">
+            <div className="flex-1">
+              <textarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={currentDocument ? "Ask me anything about your document..." : "Ask me any question..."}
+                className="w-full min-h-[80px] max-h-40 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                disabled={sendMessageMutation.isPending}
+                style={{ 
+                  pointerEvents: 'auto',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text',
+                  MozUserSelect: 'text',
+                  msUserSelect: 'text',
+                  position: 'relative',
+                  zIndex: 100,
+                  backgroundColor: 'white',
+                  touchAction: 'manipulation'
+                }}
+                autoComplete="off"
+                spellCheck="true"
+                tabIndex={0}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deepseek">DeepSeek</SelectItem>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="perplexity">Perplexity</SelectItem>
+                </SelectContent>
+              </Select>
+              <button 
+                onClick={handleSendMessage}
+                disabled={!message.trim() || sendMessageMutation.isPending}
+                className="px-4 py-3 bg-primary hover:bg-primary/90 text-base font-semibold text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 100,
+                  border: 'none',
+                  outline: 'none'
+                }}
+                type="button"
+              >
+                <Send className="w-5 h-5 mr-2" />
+                {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
