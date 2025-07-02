@@ -27,6 +27,25 @@ interface ChatMessage {
 
 
 
+// Function to remove markdown symbols from text
+function removeMarkupSymbols(text: string): string {
+  return text
+    .replace(/#{1,6}\s*/g, '') // Remove heading symbols ### ## #
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+    .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
+    .replace(/__(.*?)__/g, '$1') // Remove bold __text__
+    .replace(/_(.*?)_/g, '$1') // Remove italic _text_
+    .replace(/`(.*?)`/g, '$1') // Remove inline code `text`
+    .replace(/```[\s\S]*?```/g, (match) => { // Handle code blocks
+      return match.replace(/```[\w]*\n?/g, '').replace(/```/g, '');
+    })
+    .replace(/^\s*[\*\-\+]\s+/gm, '') // Remove bullet points
+    .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered lists
+    .replace(/^\s*>\s+/gm, '') // Remove blockquotes
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links [text](url) -> text
+    .trim();
+}
+
 export default function ChatInterface({ document, showInputInline = true }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
@@ -308,9 +327,9 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                       : 'bg-gray-50 text-gray-700'
                   }`}>
                     {mathRenderingEnabled ? (
-                      <SimpleMathRenderer content={msg.content} className="whitespace-pre-wrap text-lg" />
+                      <SimpleMathRenderer content={removeMarkupSymbols(msg.content)} className="whitespace-pre-wrap text-lg" />
                     ) : (
-                      <div className="text-lg whitespace-pre-wrap">{msg.content}</div>
+                      <div className="text-lg whitespace-pre-wrap">{removeMarkupSymbols(msg.content)}</div>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
