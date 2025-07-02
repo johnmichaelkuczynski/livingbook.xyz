@@ -1,0 +1,16 @@
+Gödel's Incompleteness Theorems
+
+The first incompleteness theorem states that in any consistent axiomatic system F that is capable of expressing basic arithmetic, there exists a statement φ such that neither φ nor ¬φ can be proven within F.
+
+Key mathematical insights:
+
+1. For any recursively enumerable set T of axioms, if T is consistent and can prove certain basic facts about arithmetic, then T cannot prove its own consistency.
+
+2. The diagonal lemma: For any formula P(x) with one free variable, there exists a sentence φ such that φ ↔ P(⌜φ⌝) is provable in the system.
+
+Mathematical notation examples:
+- Set theory: ∀x ∈ ℕ, ∃y ∈ ℕ such that y = x + 1
+- Logic: (∀x)(P(x) → Q(x)) ∧ P(a) ⊢ Q(a)
+- Arithmetic: ∑_{i=1}^{n} i = \frac{n(n+1)}{2}
+
+The proof technique involves constructing a Gödel sentence G that essentially says "G cannot be proven in this system."
