@@ -174,7 +174,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-200px)]">
+      <div className="flex h-[calc(100vh-120px)]">
         {/* Left Side: Document Area */}
         <div className="flex-1 flex flex-col p-8">
           {/* Hidden file input */}

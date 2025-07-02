@@ -285,15 +285,15 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                 )}
                 
                 <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`rounded-lg p-4 inline-block max-w-xs lg:max-w-sm xl:max-w-md ${
+                  <div className={`rounded-lg p-6 inline-block w-full max-w-none ${
                     msg.role === 'user' 
                       ? 'bg-primary text-white' 
                       : 'bg-gray-50 text-gray-700'
                   }`}>
                     {mathRenderingEnabled ? (
-                      <SimpleMathRenderer content={msg.content} className="whitespace-pre-wrap" />
+                      <SimpleMathRenderer content={msg.content} className="whitespace-pre-wrap text-lg" />
                     ) : (
-                      <div className="text-sm whitespace-pre-wrap font-mono">{msg.content}</div>
+                      <div className="text-lg whitespace-pre-wrap">{msg.content}</div>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
@@ -377,7 +377,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={document ? "Ask me anything about your document..." : "Ask me any question..."}
-                className="min-h-[80px] max-h-40 resize-none pr-10 text-base"
+                className="min-h-[120px] max-h-60 resize-none pr-10 text-lg"
                 disabled={sendMessageMutation.isPending}
               />
               <Button
