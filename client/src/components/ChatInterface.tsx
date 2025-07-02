@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lightbulb, Send, Paperclip, Bot } from 'lucide-react';
+import { Lightbulb, Send, Paperclip, Bot, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -92,6 +92,14 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
     }
     if (quickMessage) {
       setMessage(quickMessage);
+    }
+  };
+
+  const handleRewrite = (originalMessage: string) => {
+    const rewritePrompt = `Please rewrite and improve this response: "${originalMessage}"`;
+    setMessage(rewritePrompt);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   };
 
@@ -202,9 +210,22 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
                   }`}>
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatTimestamp(msg.timestamp)}
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      {formatTimestamp(msg.timestamp)}
+                    </p>
+                    {msg.role === 'assistant' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRewrite(msg.content)}
+                        className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Rewrite
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {msg.role === 'user' && (
