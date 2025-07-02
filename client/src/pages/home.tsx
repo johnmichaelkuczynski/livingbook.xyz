@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send } from 'lucide-react';
+import { Settings, Info, Send, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -90,6 +90,14 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button 
+                variant="default" 
+                onClick={() => document.querySelector('input[type="file"]')?.click()}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Upload Document
+              </Button>
               <Button variant="ghost" size="sm">
                 <Info className="w-5 h-5" />
               </Button>

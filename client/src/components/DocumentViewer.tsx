@@ -10,52 +10,10 @@ interface DocumentViewerProps {
   document: any | null;
   isLoading: boolean;
   onAskAboutSelection?: (selectedText: string) => void;
+  onUploadClick?: () => void;
 }
 
-export default function DocumentViewer({ document, isLoading, onAskAboutSelection }: DocumentViewerProps) {
-  const [selectedText, setSelectedText] = useState('');
-  const [showAskButton, setShowAskButton] = useState(false);
-  const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim()) {
-      const text = selection.toString().trim();
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      
-      setSelectedText(text);
-      setButtonPosition({
-        x: rect.right + 10,
-        y: rect.top + window.scrollY - 40
-      });
-      setShowAskButton(true);
-    } else {
-      setShowAskButton(false);
-      setSelectedText('');
-    }
-  };
-
-  const handleAskAboutSelection = () => {
-    if (selectedText && onAskAboutSelection) {
-      onAskAboutSelection(selectedText);
-      setShowAskButton(false);
-      
-      // Clear selection
-      window.getSelection()?.removeAllRanges();
-    }
-  };
-
-  // Hide button when clicking elsewhere
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowAskButton(false);
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+export default function DocumentViewer({ document, isLoading, onUploadClick }: DocumentViewerProps) {
   const formatContent = (content: string) => {
     if (!content) return '';
     
@@ -157,14 +115,20 @@ export default function DocumentViewer({ document, isLoading, onAskAboutSelectio
                 <span className="ml-3 text-sm text-gray-600">Processing document...</span>
               </div>
             ) : !document ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div 
+                className="flex flex-col items-center justify-center py-12 text-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors border-2 border-dashed border-gray-300 hover:border-primary"
+                onClick={onUploadClick}
+              >
                 <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                   <FileText className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No document uploaded</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Click here to upload a document</h3>
                 <p className="text-sm text-gray-500 max-w-sm">
-                  Upload a document to view its content with properly rendered mathematical notation.
+                  Upload a PDF, Word document, or text file to view its content with properly rendered mathematical notation.
                 </p>
+                <Button className="mt-4 bg-primary hover:bg-primary/90">
+                  Choose File
+                </Button>
               </div>
             ) : (
               <div className="prose prose-lg max-w-none">
