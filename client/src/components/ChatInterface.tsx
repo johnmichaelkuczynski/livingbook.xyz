@@ -11,6 +11,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 interface ChatInterfaceProps {
   document: any | null;
+  showInputInline?: boolean;
 }
 
 interface ChatMessage {
@@ -20,7 +21,7 @@ interface ChatMessage {
   timestamp: string;
 }
 
-export default function ChatInterface({ document }: ChatInterfaceProps) {
+export default function ChatInterface({ document, showInputInline = true }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isTyping, setIsTyping] = useState(false);
@@ -260,6 +261,7 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
       </div>
 
       {/* Chat Input - Fixed at bottom */}
+      {showInputInline && (
       <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
         <div className="flex space-x-3">
           <div className="flex-1">
@@ -322,6 +324,7 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
           </div>
         )}
       </div>
+      )}
     </Card>
   );
 }

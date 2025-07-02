@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Settings, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
@@ -43,27 +45,54 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-200px)]">
-        <div className={`grid grid-cols-1 gap-8 h-full ${currentDocument ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
-          
-          {/* Left Column: File Upload & Document Viewer */}
-          <div className={`flex flex-col space-y-6 h-full ${currentDocument ? 'lg:col-span-2' : ''}`}>
-            <FileUpload 
-              onFileUploaded={handleFileUploaded}
-              isUploading={isUploading}
-              setIsUploading={setIsUploading}
+      <div className="flex h-[calc(100vh-200px)]">
+        {/* Left Side: Document Area */}
+        <div className="flex-1 flex flex-col p-8">
+          <FileUpload 
+            onFileUploaded={handleFileUploaded}
+            isUploading={isUploading}
+            setIsUploading={setIsUploading}
+          />
+          <div className="flex-1 mt-6">
+            <DocumentViewer 
+              document={currentDocument}
+              isLoading={isUploading}
             />
-            <div className="flex-1 min-h-0">
-              <DocumentViewer 
-                document={currentDocument}
-                isLoading={isUploading}
+          </div>
+        </div>
+
+        {/* Right Side: AI Chat Messages */}
+        <div className="w-96 border-l border-gray-200 flex flex-col">
+          <ChatInterface document={currentDocument} showInputInline={false} />
+        </div>
+      </div>
+
+      {/* Fixed Chat Input at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg z-50">
+        <div className="p-6">
+          <div className="flex space-x-4 max-w-7xl mx-auto">
+            <div className="flex-1">
+              <Textarea
+                placeholder="Ask me anything about your document..."
+                className="min-h-[100px] max-h-40 resize-none text-lg border-2 border-gray-300 focus:border-primary"
               />
             </div>
-          </div>
-
-          {/* Right Column: AI Chat Interface */}
-          <div className="flex flex-col h-full">
-            <ChatInterface document={currentDocument} />
+            <div className="flex flex-col space-y-2">
+              <Select defaultValue="deepseek">
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deepseek">DeepSeek</SelectItem>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="perplexity">Perplexity</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg font-semibold">
+                Send
+              </Button>
+            </div>
           </div>
         </div>
       </div>
