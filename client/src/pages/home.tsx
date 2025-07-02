@@ -43,24 +43,26 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-120px)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
           
           {/* Left Column: File Upload & Document Viewer */}
-          <div className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6 h-full">
             <FileUpload 
               onFileUploaded={handleFileUploaded}
               isUploading={isUploading}
               setIsUploading={setIsUploading}
             />
-            <DocumentViewer 
-              document={currentDocument}
-              isLoading={isUploading}
-            />
+            <div className="flex-1 min-h-0">
+              <DocumentViewer 
+                document={currentDocument}
+                isLoading={isUploading}
+              />
+            </div>
           </div>
 
           {/* Right Column: AI Chat Interface */}
-          <div className="flex flex-col">
+          <div className="flex flex-col h-full">
             <ChatInterface document={currentDocument} />
           </div>
         </div>
