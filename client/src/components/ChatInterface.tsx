@@ -86,6 +86,22 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     }
   };
 
+  const handleTextareaClick = () => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handleTextareaFocus = () => {
+    // Ensure the textarea is properly focused for all browsers
+    if (textareaRef.current) {
+      textareaRef.current.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length
+      );
+    }
+  };
+
   const handleQuickAction = (action: string) => {
     let quickMessage = '';
     switch (action) {
@@ -368,36 +384,53 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
 
       {/* Chat Input - Fixed at bottom */}
       {showInputInline && (
-      <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
+      <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
         <div className="flex space-x-3">
           <div className="flex-1">
             <div className="relative">
-              <Textarea
+              <textarea
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onClick={handleTextareaClick}
+                onFocus={handleTextareaFocus}
                 placeholder={document ? "Ask me anything about your document..." : "Ask me any question..."}
-                className="min-h-[120px] max-h-60 resize-none pr-10 text-lg"
+                className="w-full min-h-[120px] max-h-60 resize-none pr-10 text-lg border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 disabled={sendMessageMutation.isPending}
+                style={{ 
+                  pointerEvents: 'auto',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text',
+                  MozUserSelect: 'text',
+                  msUserSelect: 'text',
+                  position: 'relative',
+                  zIndex: 100,
+                  backgroundColor: 'white',
+                  touchAction: 'manipulation'
+                }}
+                autoComplete="off"
+                spellCheck="true"
+                tabIndex={0}
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 bottom-2 p-1.5 h-auto text-gray-400 hover:text-primary"
-              >
-                <Paperclip className="w-4 h-4" />
-              </Button>
             </div>
           </div>
-          <Button
+          <button
             onClick={handleSendMessage}
             disabled={!message.trim() || sendMessageMutation.isPending}
-            className="px-6 py-6 bg-primary hover:bg-primary/90 text-base font-medium"
+            className="px-6 py-6 bg-primary hover:bg-primary/90 text-base font-medium text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              pointerEvents: 'auto',
+              position: 'relative',
+              zIndex: 100,
+              border: 'none',
+              outline: 'none'
+            }}
+            type="button"
           >
             <Send className="w-5 h-5 mr-2" />
-            Send
-          </Button>
+            {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
+          </button>
         </div>
         
         {/* Quick Actions */}
