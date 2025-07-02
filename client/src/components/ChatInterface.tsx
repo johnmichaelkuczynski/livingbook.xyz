@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import katex from 'katex';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,57 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+// Component to render content with proper KaTeX math rendering
+function MathContent({ content }: { content: string }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      // Render display math
+      contentRef.current.querySelectorAll('.katex-math-display').forEach((element) => {
+        const mathContent = element.getAttribute('data-math');
+        if (mathContent) {
+          try {
+            katex.render(mathContent, element as HTMLElement, {
+              displayMode: true,
+              throwOnError: false,
+              strict: false,
+            });
+          } catch (e) {
+            console.log('KaTeX display error:', e);
+            element.textContent = `$$${mathContent}$$`;
+          }
+        }
+      });
+
+      // Render inline math
+      contentRef.current.querySelectorAll('.katex-math-inline').forEach((element) => {
+        const mathContent = element.getAttribute('data-math');
+        if (mathContent) {
+          try {
+            katex.render(mathContent, element as HTMLElement, {
+              displayMode: false,
+              throwOnError: false,
+              strict: false,
+            });
+          } catch (e) {
+            console.log('KaTeX inline error:', e);
+            element.textContent = `$${mathContent}$`;
+          }
+        }
+      });
+    }
+  }, [content]);
+
+  return (
+    <div 
+      ref={contentRef}
+      className="text-sm whitespace-pre-wrap chat-message"
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
+  );
 }
 
 export default function ChatInterface({ document, showInputInline = true }: ChatInterfaceProps) {
@@ -161,10 +213,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     if (mathRenderingEnabled) {
       const processedContent = processMathNotation(cleanedContent);
       return (
-        <div 
-          className="text-sm whitespace-pre-wrap chat-message" 
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
+        <MathContent content={processedContent} />
       );
     } else {
       // Raw mode - show content without math processing
