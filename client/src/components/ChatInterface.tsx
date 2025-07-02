@@ -103,10 +103,14 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
     }
   }, [message]);
 
-  // Scroll to bottom when new messages arrive
+  // Only scroll to bottom when user sends a message (not on every change)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+    if (sendMessageMutation.isSuccess) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [sendMessageMutation.isSuccess]);
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -245,7 +249,7 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={document ? "Ask me anything about your document..." : "Upload a document to start chatting..."}
-                className="min-h-[44px] max-h-32 resize-none pr-10"
+                className="min-h-[80px] max-h-40 resize-none pr-10 text-base"
                 disabled={!document || sendMessageMutation.isPending}
               />
               <Button
@@ -260,10 +264,10 @@ export default function ChatInterface({ document }: ChatInterfaceProps) {
           <Button
             onClick={handleSendMessage}
             disabled={!message.trim() || !document || sendMessageMutation.isPending}
-            className="px-4 py-3 bg-primary hover:bg-primary/90"
+            className="px-6 py-6 bg-primary hover:bg-primary/90 text-base font-medium"
           >
-            <Send className="w-4 h-4 mr-2" />
-            <span className="text-sm font-medium">Send</span>
+            <Send className="w-5 h-5 mr-2" />
+            Send
           </Button>
         </div>
         
