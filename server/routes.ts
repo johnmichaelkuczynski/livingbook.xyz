@@ -9,6 +9,7 @@ import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
+import * as emailService from "./services/email";
 import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
 
 // Configure multer for file uploads
@@ -341,6 +342,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to get chat messages" 
+      });
+    }
+  });
+
+  // Email route using SendGrid
+  app.post("/api/email/send", async (req, res) => {
+    try {
+      const { subject, content, contentType = 'html' } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      await emailService.sendResponseEmail(content);
+      
+      res.json({ success: true, message: "Email sent successfully" });
+      
+    } catch (error) {
+      console.error("Email error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to send email" 
       });
     }
   });

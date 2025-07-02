@@ -1,3 +1,5 @@
+@import 'katex/dist/katex.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -82,7 +84,11 @@
   margin: 1rem 0;
 }
 
-/* KaTeX styling */
+/* Enhanced KaTeX styling */
+.math-katex {
+  font-size: 1.1em;
+}
+
 .math-katex.display {
   display: block;
   text-align: center;
