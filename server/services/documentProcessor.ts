@@ -1,15 +1,16 @@
 import fs from 'fs/promises';
 import path from 'path';
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
 
 // For PDF processing
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
+    // Dynamic import to avoid module loading issues
+    const pdfParse = await import('pdf-parse');
     const buffer = await fs.readFile(filePath);
-    const data = await pdfParse(buffer);
+    const data = await pdfParse.default(buffer);
     return data.text;
   } catch (error) {
+    console.error('PDF parsing error:', error);
     throw new Error(`Failed to extract text from PDF: ${error}`);
   }
 }
@@ -17,10 +18,13 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
 // For DOCX processing
 async function extractTextFromDOCX(filePath: string): Promise<string> {
   try {
+    // Dynamic import to avoid module loading issues
+    const mammoth = await import('mammoth');
     const buffer = await fs.readFile(filePath);
     const result = await mammoth.extractRawText({ buffer });
     return result.value;
   } catch (error) {
+    console.error('DOCX parsing error:', error);
     throw new Error(`Failed to extract text from DOCX: ${error}`);
   }
 }
