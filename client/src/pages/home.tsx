@@ -192,7 +192,7 @@ export default function Home() {
 
         {/* Right Side: AI Chat Messages */}
         <div className="w-96 border-l border-gray-200 flex flex-col">
-          <ChatInterface document={currentDocument} showInputInline={false} />
+          <ChatInterface document={currentDocument} showInputInline={true} />
         </div>
       </div>
 
