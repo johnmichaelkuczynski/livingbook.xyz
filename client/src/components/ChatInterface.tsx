@@ -384,8 +384,8 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
 
       {/* Chat Input - Fixed at bottom */}
       {showInputInline && (
-      <div className="border-t border-gray-200 px-3 py-4 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
-        <div className="flex space-x-2">
+      <div className="border-t border-gray-200 px-2 py-3 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
+        <div className="flex space-x-1">
           <div className="flex-1">
             <div className="relative">
               <textarea
@@ -418,7 +418,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
           <button
             onClick={handleSendMessage}
             disabled={!message.trim() || sendMessageMutation.isPending}
-            className="px-6 py-6 bg-primary hover:bg-primary/90 text-base font-medium text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-6 bg-primary hover:bg-primary/90 text-base font-medium text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ 
               pointerEvents: 'auto',
               position: 'relative',
