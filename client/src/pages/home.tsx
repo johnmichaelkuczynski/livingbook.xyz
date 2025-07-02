@@ -43,7 +43,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-200px)]">
         <div className={`grid grid-cols-1 gap-8 h-full ${currentDocument ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
           
           {/* Left Column: File Upload & Document Viewer */}
