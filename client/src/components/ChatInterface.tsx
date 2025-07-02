@@ -25,11 +25,30 @@ interface ChatMessage {
 }
 
 // Component to render content with proper KaTeX math rendering
-function MathContent({ content }: { content: string }) {
+function MathContent({ content, mathEnabled }: { content: string; mathEnabled: boolean }) {
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Clean and process content
+  const cleanedContent = content
+    .replace(/#{1,6}\s*/g, '') // Remove markdown headers
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert bold **text**
+    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert italic *text*
+    .replace(/__(.*?)__/g, '<strong>$1</strong>') // Convert bold __text__
+    .replace(/_(.*?)_/g, '<em>$1</em>') // Convert italic _text_
+    .replace(/`{1,3}(.*?)`{1,3}/g, '<code>$1</code>') // Convert code blocks
+    .replace(/^\s*[-*+]\s*/gm, '• ') // Convert list markers to bullets
+    .replace(/^\s*\d+\.\s*/gm, '') // Remove numbered list markers
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Remove links, keep text
+    .replace(/^\s*>\s*/gm, '') // Remove blockquotes
+    .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
+    .trim();
+
   useEffect(() => {
-    if (contentRef.current) {
+    if (contentRef.current && mathEnabled) {
+      // Process and render math notation
+      const processedContent = processMathNotation(cleanedContent);
+      contentRef.current.innerHTML = processedContent;
+
       // Render display math
       contentRef.current.querySelectorAll('.katex-math-display').forEach((element) => {
         const mathContent = element.getAttribute('data-math');
@@ -63,14 +82,16 @@ function MathContent({ content }: { content: string }) {
           }
         }
       });
+    } else if (contentRef.current) {
+      // Raw mode - just show cleaned content
+      contentRef.current.textContent = cleanedContent;
     }
-  }, [content]);
+  }, [content, mathEnabled, cleanedContent]);
 
   return (
     <div 
       ref={contentRef}
-      className="text-sm whitespace-pre-wrap chat-message"
-      dangerouslySetInnerHTML={{ __html: content }}
+      className={`text-sm whitespace-pre-wrap chat-message ${!mathEnabled ? 'font-mono' : ''}`}
     />
   );
 }
@@ -190,39 +211,6 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
       minute: '2-digit',
       hour12: true,
     });
-  };
-
-  // Function to render message content with proper math notation
-  const renderMessageContent = (content: string) => {
-    // First clean basic markdown but preserve math notation
-    const cleanedContent = content
-      .replace(/#{1,6}\s*/g, '') // Remove markdown headers
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert bold **text**
-      .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert italic *text*
-      .replace(/__(.*?)__/g, '<strong>$1</strong>') // Convert bold __text__
-      .replace(/_(.*?)_/g, '<em>$1</em>') // Convert italic _text_
-      .replace(/`{1,3}(.*?)`{1,3}/g, '<code>$1</code>') // Convert code blocks
-      .replace(/^\s*[-*+]\s*/gm, '• ') // Convert list markers to bullets
-      .replace(/^\s*\d+\.\s*/gm, '') // Remove numbered list markers
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Remove links, keep text
-      .replace(/^\s*>\s*/gm, '') // Remove blockquotes
-      .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
-      .trim();
-
-    // Process content based on math rendering toggle
-    if (mathRenderingEnabled) {
-      const processedContent = processMathNotation(cleanedContent);
-      return (
-        <MathContent content={processedContent} />
-      );
-    } else {
-      // Raw mode - show content without math processing
-      return (
-        <div className="text-sm whitespace-pre-wrap chat-message font-mono">
-          {cleanedContent}
-        </div>
-      );
-    }
   };
 
   // Function to download message as PDF
@@ -371,7 +359,7 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                       ? 'bg-primary text-white' 
                       : 'bg-gray-50 text-gray-700'
                   }`}>
-{renderMessageContent(msg.content)}
+                    <MathContent content={msg.content} mathEnabled={mathRenderingEnabled} />
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
