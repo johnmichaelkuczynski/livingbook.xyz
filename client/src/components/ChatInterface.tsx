@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
+import SimpleMathRenderer from './SimpleMathRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -24,77 +25,7 @@ interface ChatMessage {
   timestamp: string;
 }
 
-// Component to render content with proper KaTeX math rendering
-function MathContent({ content, mathEnabled }: { content: string; mathEnabled: boolean }) {
-  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Clean and process content
-  const cleanedContent = content
-    .replace(/#{1,6}\s*/g, '') // Remove markdown headers
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert bold **text**
-    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert italic *text*
-    .replace(/__(.*?)__/g, '<strong>$1</strong>') // Convert bold __text__
-    .replace(/_(.*?)_/g, '<em>$1</em>') // Convert italic _text_
-    .replace(/`{1,3}(.*?)`{1,3}/g, '<code>$1</code>') // Convert code blocks
-    .replace(/^\s*[-*+]\s*/gm, '• ') // Convert list markers to bullets
-    .replace(/^\s*\d+\.\s*/gm, '') // Remove numbered list markers
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Remove links, keep text
-    .replace(/^\s*>\s*/gm, '') // Remove blockquotes
-    .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
-    .trim();
-
-  useEffect(() => {
-    if (contentRef.current && mathEnabled) {
-      // Process and render math notation
-      const processedContent = processMathNotation(cleanedContent);
-      contentRef.current.innerHTML = processedContent;
-
-      // Render display math
-      contentRef.current.querySelectorAll('.katex-math-display').forEach((element) => {
-        const mathContent = element.getAttribute('data-math');
-        if (mathContent) {
-          try {
-            katex.render(mathContent, element as HTMLElement, {
-              displayMode: true,
-              throwOnError: false,
-              strict: false,
-            });
-          } catch (e) {
-            console.log('KaTeX display error:', e);
-            element.textContent = `$$${mathContent}$$`;
-          }
-        }
-      });
-
-      // Render inline math
-      contentRef.current.querySelectorAll('.katex-math-inline').forEach((element) => {
-        const mathContent = element.getAttribute('data-math');
-        if (mathContent) {
-          try {
-            katex.render(mathContent, element as HTMLElement, {
-              displayMode: false,
-              throwOnError: false,
-              strict: false,
-            });
-          } catch (e) {
-            console.log('KaTeX inline error:', e);
-            element.textContent = `$${mathContent}$`;
-          }
-        }
-      });
-    } else if (contentRef.current) {
-      // Raw mode - just show cleaned content
-      contentRef.current.textContent = cleanedContent;
-    }
-  }, [content, mathEnabled, cleanedContent]);
-
-  return (
-    <div 
-      ref={contentRef}
-      className={`text-sm whitespace-pre-wrap chat-message ${!mathEnabled ? 'font-mono' : ''}`}
-    />
-  );
-}
 
 export default function ChatInterface({ document, showInputInline = true }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
