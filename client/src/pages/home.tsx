@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { Settings, Info } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Settings, Info, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
@@ -10,9 +13,63 @@ import ChatInterface from '@/components/ChatInterface';
 export default function Home() {
   const [currentDocument, setCurrentDocument] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('deepseek');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleFileUploaded = (document: any) => {
     setCurrentDocument(document);
+  };
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageContent: string) => {
+      const endpoint = currentDocument 
+        ? `/api/chat/${currentDocument.id}/message`
+        : '/api/chat/message';
+        
+      const response = await apiRequest('POST', endpoint, {
+        message: messageContent,
+        provider: selectedProvider,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (currentDocument) {
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/' + currentDocument.id + '/messages'] });
+      } else {
+        // Handle response for non-document chats
+        toast({
+          title: "AI Response",
+          description: data.message,
+        });
+      }
+      setMessage('');
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error sending message",
+        description: error.message || "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    sendMessageMutation.mutate(message.trim());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   return (
@@ -73,12 +130,17 @@ export default function Home() {
           <div className="flex space-x-4 max-w-7xl mx-auto">
             <div className="flex-1">
               <Textarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Ask me anything about your document..."
                 className="min-h-[100px] max-h-40 resize-none text-lg border-2 border-gray-300 focus:border-primary"
+                disabled={sendMessageMutation.isPending}
               />
             </div>
             <div className="flex flex-col space-y-2">
-              <Select defaultValue="deepseek">
+              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
@@ -89,8 +151,13 @@ export default function Home() {
                   <SelectItem value="perplexity">Perplexity</SelectItem>
                 </SelectContent>
               </Select>
-              <Button className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg font-semibold">
-                Send
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!message.trim() || sendMessageMutation.isPending}
+                className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg font-semibold"
+              >
+                <Send className="w-5 h-5 mr-2" />
+                {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
               </Button>
             </div>
           </div>
