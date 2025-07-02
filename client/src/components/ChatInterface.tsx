@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lightbulb, Send, Paperclip, Bot, RotateCcw } from 'lucide-react';
+import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail } from 'lucide-react';
+import { processMathNotation, containsMath } from '@/lib/mathUtils';
+import MathRenderer from './MathRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -137,9 +139,10 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     });
   };
 
-  // Function to clean markdown formatting
-  const cleanMarkdown = (text: string) => {
-    return text
+  // Function to render message content with proper math notation
+  const renderMessageContent = (content: string) => {
+    // First clean basic markdown but preserve math notation
+    const cleanedContent = content
       .replace(/#{1,6}\s*/g, '') // Remove markdown headers
       .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
       .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
@@ -152,6 +155,85 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
       .replace(/^\s*>\s*/gm, '') // Remove blockquotes
       .replace(/\n{3,}/g, '\n\n') // Limit excessive line breaks
       .trim();
+
+    // Process and render math notation
+    if (containsMath(cleanedContent)) {
+      const processedContent = processMathNotation(cleanedContent);
+      return (
+        <div 
+          className="text-sm whitespace-pre-wrap" 
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
+      );
+    }
+
+    // For content without math, return plain text
+    return <p className="text-sm whitespace-pre-wrap">{cleanedContent}</p>;
+  };
+
+  // Function to download message as PDF
+  const downloadMessageAsPDF = (content: string) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      const processedContent = containsMath(content) ? processMathNotation(content) : content;
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>AI Response - DocMath AI</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+          <style>
+            body { font-family: Georgia, serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; }
+            .math-katex { font-size: 1.1em; }
+            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+          </style>
+        </head>
+        <body>
+          <h1>AI Response - DocMath AI</h1>
+          <div>${processedContent}</div>
+          <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+          <script>
+            // Render any remaining math elements
+            document.querySelectorAll('.math-katex').forEach(element => {
+              if (element.textContent) {
+                try {
+                  katex.render(element.textContent, element, { displayMode: element.classList.contains('display') });
+                } catch (e) {
+                  console.log('KaTeX render error:', e);
+                }
+              }
+            });
+            setTimeout(() => window.print(), 500);
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
+  // Function to email message via SendGrid
+  const emailMessage = async (content: string) => {
+    try {
+      const processedContent = containsMath(content) ? processMathNotation(content) : content;
+      
+      const response = await apiRequest('POST', '/api/email/send', {
+        subject: 'AI Response from DocMath AI',
+        content: processedContent,
+        contentType: 'html'
+      });
+
+      toast({
+        title: "Email sent successfully",
+        description: "The response has been sent to your email address.",
+      });
+    } catch (error) {
+      toast({
+        title: "Email failed",
+        description: "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -226,22 +308,42 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                       ? 'bg-primary text-white' 
                       : 'bg-gray-50 text-gray-700'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{cleanMarkdown(msg.content)}</p>
+{renderMessageContent(msg.content)}
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
                       {formatTimestamp(msg.timestamp)}
                     </p>
                     {msg.role === 'assistant' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRewrite(msg.content)}
-                        className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
-                      >
-                        <RotateCcw className="w-3 h-3 mr-1" />
-                        Rewrite
-                      </Button>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadMessageAsPDF(msg.content)}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          PDF
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => emailMessage(msg.content)}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        >
+                          <Mail className="w-3 h-3 mr-1" />
+                          Email
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRewrite(msg.content)}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1" />
+                          Rewrite
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
