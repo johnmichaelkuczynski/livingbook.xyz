@@ -359,7 +359,11 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                       ? 'bg-primary text-white' 
                       : 'bg-gray-50 text-gray-700'
                   }`}>
-                    <MathContent content={msg.content} mathEnabled={mathRenderingEnabled} />
+                    {mathRenderingEnabled ? (
+                      <SimpleMathRenderer content={msg.content} className="whitespace-pre-wrap" />
+                    ) : (
+                      <div className="text-sm whitespace-pre-wrap font-mono">{msg.content}</div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
