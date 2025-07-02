@@ -19,25 +19,31 @@ export default function SimpleMathRenderer({ content, className = '' }: SimpleMa
 
     let processedContent = content;
 
-    // Handle line breaks first
+    // COMPLETELY REMOVE ALL MATH MARKUP AND SYMBOLS
+    processedContent = processedContent.replace(/\$\$([^$]*?)\$\$/g, '$1');  // Remove $$...$$
+    processedContent = processedContent.replace(/\$([^$]*?)\$/g, '$1');      // Remove $...$
+    processedContent = processedContent.replace(/\\([a-zA-Z]+)/g, '$1');     // Remove \commands
+    processedContent = processedContent.replace(/\\\(/g, '(');               // Remove \(
+    processedContent = processedContent.replace(/\\\)/g, ')');               // Remove \)
+    processedContent = processedContent.replace(/\\\[/g, '[');               // Remove \[
+    processedContent = processedContent.replace(/\\\]/g, ']');               // Remove \]
+    processedContent = processedContent.replace(/\\{/g, '{');                // Remove \{
+    processedContent = processedContent.replace(/\\}/g, '}');                // Remove \}
+    processedContent = processedContent.replace(/\*\*([^*]*?)\*\*/g, '$1');  // Remove **...**
+    processedContent = processedContent.replace(/\*([^*]*?)\*/g, '$1');      // Remove *...*
+    processedContent = processedContent.replace(/#{1,6}\s*/g, '');           // Remove ### headers
+    processedContent = processedContent.replace(/`([^`]*?)`/g, '$1');        // Remove `...`
+    processedContent = processedContent.replace(/_([^_]*?)_/g, '$1');        // Remove _..._
+    
+    // Clean up remaining backslashes and symbols
+    processedContent = processedContent.replace(/\\/g, '');                  // Remove all backslashes
+    processedContent = processedContent.replace(/[{}]/g, '');                // Remove curly braces
+    
+    // Handle line breaks
     processedContent = processedContent.replace(/\n/g, '<br>');
 
-    // Set the content without modifying math notation
+    // Set the clean content
     containerRef.current.innerHTML = processedContent;
-
-    // Trigger MathJax re-typesetting after content is set
-    const typesetMath = async () => {
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        try {
-          await window.MathJax.typesetPromise([containerRef.current]);
-        } catch (err) {
-          console.warn('MathJax typeset failed:', err);
-        }
-      }
-    };
-
-    // Small delay to ensure DOM is ready
-    setTimeout(typesetMath, 100);
   }, [content]);
 
   return (
