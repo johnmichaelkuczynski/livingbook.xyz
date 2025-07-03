@@ -9,7 +9,15 @@ export const documents = pgTable("documents", {
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size").notNull(),
   content: text("content").notNull(),
+  formattedContent: text("formatted_content"),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const formatOperations = pgTable("format_operations", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").references(() => documents.id).notNull(),
+  instruction: text("instruction").notNull(),
+  appliedAt: timestamp("applied_at").defaultNow().notNull(),
 });
 
 export const chatSessions = pgTable("chat_sessions", {
@@ -31,6 +39,11 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
   uploadedAt: true,
 });
 
+export const insertFormatOperationSchema = createInsertSchema(formatOperations).omit({
+  id: true,
+  appliedAt: true,
+});
+
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
   id: true,
   createdAt: true,
@@ -47,6 +60,8 @@ export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
 export type ChatSession = typeof chatSessions.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertFormatOperation = z.infer<typeof insertFormatOperationSchema>;
+export type FormatOperation = typeof formatOperations.$inferSelect;
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
