@@ -261,8 +261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
 
-      // Get or create a global chat session (ID 0 for no document)
-      let session = await storage.getChatSession(0);
+      // Get or create a global chat session (documentId 0 for no document)
+      let session = await storage.getChatSessionByDocumentId(0);
       if (!session) {
         session = await storage.createChatSession({ documentId: 0 });
       }
@@ -450,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get global chat messages (no document)
   app.get("/api/chat/messages", async (req, res) => {
     try {
-      const session = await storage.getChatSession(0);
+      const session = await storage.getChatSessionByDocumentId(0);
       if (!session) {
         return res.json([]);
       }
