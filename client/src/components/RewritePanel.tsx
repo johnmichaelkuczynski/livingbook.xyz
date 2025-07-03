@@ -532,7 +532,7 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                       <div>
                         <p className="text-xs font-medium text-gray-500 mb-2">Original:</p>
                         <div className={`text-sm text-gray-700 bg-gray-50 p-3 rounded overflow-y-auto ${
-                          expandedChunks.has(chunk.id) ? 'max-h-96' : 'max-h-32'
+                          expandedChunks.has(chunk.id) ? 'max-h-none h-auto' : 'max-h-32'
                         }`}>
                           <SimpleMathRenderer content={
                             expandedChunks.has(chunk.id) 
@@ -546,7 +546,7 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                         <div>
                           <p className="text-xs font-medium text-green-600 mb-2">Rewritten:</p>
                           <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 ${
-                            expandedChunks.has(chunk.id) ? 'max-h-96' : 'max-h-32'
+                            expandedChunks.has(chunk.id) ? 'max-h-none h-auto' : 'max-h-32'
                           }`}>
                             <SimpleMathRenderer content={
                               expandedChunks.has(chunk.id) 
