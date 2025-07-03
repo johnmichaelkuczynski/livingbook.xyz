@@ -239,6 +239,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update document content
+  app.put("/api/documents/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { content } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      const existingDocument = await storage.getDocument(id);
+      if (!existingDocument) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      // Update the document with new content
+      const updatedDocument = await storage.updateDocument(id, { content });
+      
+      res.json(updatedDocument);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to update document" 
+      });
+    }
+  });
+
   // Get all documents
   app.get("/api/documents", async (req, res) => {
     try {
@@ -248,6 +274,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to get documents" 
       });
+    }
+  });
+
+  // Format text using AI
+  app.post("/api/format-text", async (req, res) => {
+    try {
+      const { content, instruction } = req.body;
+      
+      if (!content || !instruction) {
+        return res.status(400).json({ error: "Content and instruction are required" });
+      }
+
+      // Use OpenAI to format the text according to instructions
+      const { generateChatResponse } = await import('./services/openai');
+      
+      const formatPrompt = `You are a text formatting assistant. Apply the following formatting instruction to the provided text:
+
+Instruction: "${instruction}"
+
+Original text:
+"""
+${content}
+"""
+
+Return only the formatted text without any explanations or markdown formatting. Preserve the overall structure and meaning while applying the requested formatting changes.`;
+
+      const response = await generateChatResponse(formatPrompt, '', []);
+      
+      res.json({ formattedContent: response.message });
+    } catch (error) {
+      console.error("Format text error:", error);
+      res.status(500).json({ error: "Failed to format text" });
+    }
+  });
+
+  // Export document
+  app.post("/api/export-document", async (req, res) => {
+    try {
+      const { content, format, title } = req.body;
+      
+      if (!content || !format) {
+        return res.status(400).json({ error: "Content and format are required" });
+      }
+
+      if (format === 'pdf') {
+        // Simple PDF export using HTML to PDF conversion
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${title || 'Document'}</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+              .title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+              .content { white-space: pre-wrap; }
+            </style>
+          </head>
+          <body>
+            <div class="title">${title || 'Document'}</div>
+            <div class="content">${content}</div>
+          </body>
+          </html>
+        `;
+        
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Disposition', `attachment; filename="${title || 'document'}.html"`);
+        res.send(htmlContent);
+      } else if (format === 'word') {
+        // Simple Word document export
+        const wordContent = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                xmlns:w="urn:schemas-microsoft-com:office:word" 
+                xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8">
+            <title>${title || 'Document'}</title>
+            <!--[if gte mso 9]>
+            <xml>
+              <w:WordDocument>
+                <w:View>Print</w:View>
+                <w:WrapTrailSpaces/>
+                <w:ValidateAgainstSchemas/>
+                <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>
+                <w:IgnoreMixedContent>false</w:IgnoreMixedContent>
+                <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>
+                <w:DoNotPromoteQF/>
+                <w:LidThemeOther>EN-US</w:LidThemeOther>
+                <w:LidThemeAsian>X-NONE</w:LidThemeAsian>
+                <w:LidThemeComplexScript>X-NONE</w:LidThemeComplexScript>
+                <w:Compatibility>
+                  <w:BreakWrappedTables/>
+                  <w:SnapToGridInCell/>
+                  <w:WrapTextWithPunct/>
+                  <w:UseAsianBreakRules/>
+                  <w:DontGrowAutofit/>
+                </w:Compatibility>
+                <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+              </w:WordDocument>
+            </xml>
+            <![endif]-->
+            <style>
+              @page { margin: 1in; }
+              body { font-family: Arial, sans-serif; line-height: 1.6; }
+              .title { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 20pt; }
+              .content { white-space: pre-wrap; font-size: 12pt; }
+            </style>
+          </head>
+          <body>
+            <div class="title">${title || 'Document'}</div>
+            <div class="content">${content}</div>
+          </body>
+          </html>
+        `;
+        
+        res.setHeader('Content-Type', 'application/vnd.ms-word');
+        res.setHeader('Content-Disposition', `attachment; filename="${title || 'document'}.doc"`);
+        res.send(wordContent);
+      } else {
+        res.status(400).json({ error: "Unsupported format" });
+      }
+    } catch (error) {
+      console.error("Export document error:", error);
+      res.status(500).json({ error: "Failed to export document" });
     }
   });
 

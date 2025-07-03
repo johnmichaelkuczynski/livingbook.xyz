@@ -10,6 +10,7 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   getDocument(id: number): Promise<Document | undefined>;
   getAllDocuments(): Promise<Document[]>;
+  updateDocument(id: number, updates: Partial<Document>): Promise<Document>;
   
   // Chat session methods
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
@@ -76,6 +77,17 @@ export class MemStorage implements IStorage {
 
   async getAllDocuments(): Promise<Document[]> {
     return Array.from(this.documents.values());
+  }
+
+  async updateDocument(id: number, updates: Partial<Document>): Promise<Document> {
+    const existingDocument = this.documents.get(id);
+    if (!existingDocument) {
+      throw new Error(`Document with id ${id} not found`);
+    }
+
+    const updatedDocument = { ...existingDocument, ...updates };
+    this.documents.set(id, updatedDocument);
+    return updatedDocument;
   }
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
