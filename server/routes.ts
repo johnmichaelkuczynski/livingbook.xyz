@@ -67,6 +67,41 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Create document from text content (AI response conversion)
+  app.post("/api/documents/create-from-text", async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ error: "Title and content are required" });
+      }
+
+      // Process the text content like we do with uploaded documents
+      const processedContent = processMathNotation(content);
+      
+      // Create document entry
+      const documentData = {
+        originalName: title,
+        fileName: `ai_generated_${Date.now()}.txt`,
+        content: processedContent,
+        mimeType: 'text/plain',
+        fileSize: content.length,
+        uploadedAt: new Date()
+      };
+      
+      const validatedDocument = insertDocumentSchema.parse(documentData);
+      const document = await storage.createDocument(validatedDocument);
+      
+      res.json(document);
+      
+    } catch (error) {
+      console.error("Create document error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to create document" 
+      });
+    }
+  });
+
   // Upload document (main route)
   app.post("/api/documents/upload", upload.single('document'), async (req, res) => {
     try {

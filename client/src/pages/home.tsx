@@ -141,6 +141,34 @@ export default function Home() {
     setIsRewritePanelOpen(false);
   };
 
+  // Mutation to create document from AI message
+  const createDocumentMutation = useMutation({
+    mutationFn: async ({ title, content }: { title: string; content: string }) => {
+      return apiRequest('POST', '/api/documents/create-from-text', {
+        title,
+        content
+      });
+    },
+    onSuccess: (document: any) => {
+      setCurrentDocument(document);
+      toast({
+        title: "Document created",
+        description: `"${document.originalName}" is now available for analysis and rewriting.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create document",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleMessageToDocument = (content: string, title: string) => {
+    createDocumentMutation.mutate({ title, content });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -203,7 +231,11 @@ export default function Home() {
 
         {/* Right Side: AI Chat Messages */}
         <div className="w-[600px] border-l border-gray-200 flex flex-col">
-          <ChatInterface document={currentDocument} showInputInline={false} />
+          <ChatInterface 
+            document={currentDocument} 
+            showInputInline={false} 
+            onMessageToDocument={handleMessageToDocument}
+          />
         </div>
       </div>
 
