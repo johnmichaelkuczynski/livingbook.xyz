@@ -82,11 +82,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create document entry
       const documentData = {
         originalName: title,
-        fileName: `ai_generated_${Date.now()}.txt`,
+        filename: `ai_generated_${Date.now()}.txt`,
         content: processedContent,
-        mimeType: 'text/plain',
-        fileSize: content.length,
-        uploadedAt: new Date()
+        fileType: 'text/plain',
+        fileSize: content.length
       };
       
       const validatedDocument = insertDocumentSchema.parse(documentData);
