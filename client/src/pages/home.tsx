@@ -207,22 +207,10 @@ export default function Home() {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={currentDocument ? "Ask me anything about your document..." : "Ask me any question..."}
-                className="w-full min-h-[80px] max-h-40 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full h-20 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 disabled={sendMessageMutation.isPending}
-                style={{ 
-                  pointerEvents: 'auto',
-                  userSelect: 'text',
-                  WebkitUserSelect: 'text',
-                  MozUserSelect: 'text',
-                  msUserSelect: 'text',
-                  position: 'relative',
-                  zIndex: 100,
-                  backgroundColor: 'white',
-                  touchAction: 'manipulation'
-                }}
                 autoComplete="off"
                 spellCheck="true"
-                tabIndex={0}
               />
             </div>
             <div className="flex flex-col space-y-2">
@@ -240,14 +228,7 @@ export default function Home() {
               <button 
                 onClick={handleSendMessage}
                 disabled={!message.trim() || sendMessageMutation.isPending}
-                className="px-4 py-3 bg-primary hover:bg-primary/90 text-base font-semibold text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
-                  pointerEvents: 'auto',
-                  position: 'relative',
-                  zIndex: 100,
-                  border: 'none',
-                  outline: 'none'
-                }}
+                className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 <Send className="w-5 h-5 mr-2" />
