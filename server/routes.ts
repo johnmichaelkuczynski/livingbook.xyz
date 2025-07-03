@@ -10,7 +10,13 @@ import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
-import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
+import { 
+  applyMultipleFormatting, 
+  applyPresetOperation,
+  autoFormat,
+  PRESET_OPERATIONS 
+} from "./services/documentFormatter";
+import { insertDocumentSchema, insertChatMessageSchema, insertFormatOperationSchema } from "@shared/schema";
 
 // Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
@@ -518,6 +524,143 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         error: error instanceof Error ? error.message : "Failed to rewrite text" 
       });
     }
+  });
+
+  // Document formatting endpoint
+  app.post("/api/documents/format", async (req, res) => {
+    try {
+      const { documentId, operations, currentContent } = req.body;
+      
+      if (!documentId || !operations || !Array.isArray(operations)) {
+        return res.status(400).json({ error: "Document ID and operations array are required" });
+      }
+      
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      const contentToFormat = currentContent || document.formattedContent || document.content;
+      
+      // Apply formatting operations
+      const result = await applyMultipleFormatting(contentToFormat, operations);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      // Save format operations to database
+      for (const operation of operations) {
+        const formatOpData = {
+          documentId: documentId,
+          instruction: operation.instruction
+        };
+        const validatedOp = insertFormatOperationSchema.parse(formatOpData);
+        await storage.createFormatOperation(validatedOp);
+      }
+      
+      res.json({
+        formattedContent: result.formattedContent,
+        appliedOperations: result.appliedOperations
+      });
+      
+    } catch (error) {
+      console.error("Format error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to format document" 
+      });
+    }
+  });
+
+  // Update document with formatted content
+  app.put("/api/documents/:id", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.id);
+      const { formattedContent } = req.body;
+      
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      await storage.updateDocument(documentId, { formattedContent });
+      
+      res.json({ success: true, message: "Document updated successfully" });
+      
+    } catch (error) {
+      console.error("Update document error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to update document" 
+      });
+    }
+  });
+
+  // Export document in various formats
+  app.post("/api/documents/export", async (req, res) => {
+    try {
+      const { documentId, content, format } = req.body;
+      
+      if (!documentId || !content || !format) {
+        return res.status(400).json({ error: "Document ID, content, and format are required" });
+      }
+      
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      let mimeType: string;
+      let fileExtension: string;
+      
+      switch (format) {
+        case 'txt':
+          mimeType = 'text/plain';
+          fileExtension = 'txt';
+          res.setHeader('Content-Type', mimeType);
+          res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}.${fileExtension}"`);
+          res.send(content);
+          return;
+          
+        case 'pdf':
+          // For now, return as plain text with PDF mime type
+          // In production, you'd use a PDF generation library
+          mimeType = 'application/pdf';
+          fileExtension = 'pdf';
+          res.setHeader('Content-Type', 'text/plain');
+          res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}.txt"`);
+          res.send(`PDF export not yet implemented. Content:\n\n${content}`);
+          return;
+          
+        case 'docx':
+          // For now, return as plain text
+          // In production, you'd use a DOCX generation library
+          mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          fileExtension = 'docx';
+          res.setHeader('Content-Type', 'text/plain');
+          res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}.txt"`);
+          res.send(`DOCX export not yet implemented. Content:\n\n${content}`);
+          return;
+          
+        default:
+          return res.status(400).json({ error: "Unsupported format" });
+      }
+      
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to export document" 
+      });
+    }
+  });
+
+  // Get available preset formatting operations
+  app.get("/api/format-presets", (req, res) => {
+    const presets = Object.entries(PRESET_OPERATIONS).map(([key, operation]) => ({
+      key,
+      name: operation.name,
+      description: operation.description
+    }));
+    res.json(presets);
   });
 
   // Email route using SendGrid
