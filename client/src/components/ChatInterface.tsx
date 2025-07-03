@@ -58,15 +58,10 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   const queryClient = useQueryClient();
 
   // Fetch chat messages for the current document or global chat
-  const { data: messages = [], isLoading, error } = useQuery<ChatMessage[]>({
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'],
     refetchInterval: 2000, // Refetch every 2 seconds to see new messages
   });
-
-  // Debug logging
-  console.log('Chat messages:', messages);
-  console.log('Query error:', error);
-  console.log('Document:', document);
 
   // Send message mutation
   const sendMessageMutation = useMutation({
