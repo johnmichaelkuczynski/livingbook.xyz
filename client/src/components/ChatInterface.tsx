@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator } from 'lucide-react';
+import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator, Upload } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
 import SimpleMathRenderer from './SimpleMathRenderer';
@@ -16,6 +16,7 @@ import { apiRequest } from '@/lib/queryClient';
 interface ChatInterfaceProps {
   document: any | null;
   showInputInline?: boolean;
+  onMessageToDocument?: (content: string, title: string) => void;
 }
 
 interface ChatMessage {
@@ -46,7 +47,7 @@ function removeMarkupSymbols(text: string): string {
     .trim();
 }
 
-export default function ChatInterface({ document, showInputInline = true }: ChatInterfaceProps) {
+export default function ChatInterface({ document, showInputInline = true, onMessageToDocument }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isTyping, setIsTyping] = useState(false);
@@ -245,6 +246,31 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
     }
   };
 
+  // Function to convert AI message to document
+  const convertToDocument = (content: string) => {
+    // Extract first line or first 50 characters as title
+    const lines = content.split('\n').filter(line => line.trim());
+    let title = 'AI Generated Content';
+    
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      // Use first line if it's short enough, otherwise use first 50 chars
+      if (firstLine.length <= 60) {
+        title = firstLine.replace(/[^\w\s-]/g, '').trim();
+      } else {
+        title = content.substring(0, 50).replace(/[^\w\s-]/g, '').trim() + '...';
+      }
+    }
+
+    if (onMessageToDocument) {
+      onMessageToDocument(content, title);
+      toast({
+        title: "Converted to document",
+        description: "AI response has been converted to a document you can analyze and rewrite.",
+      });
+    }
+  };
+
   return (
     <Card className="flex-1 flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -338,6 +364,15 @@ export default function ChatInterface({ document, showInputInline = true }: Chat
                     </p>
                     {msg.role === 'assistant' && (
                       <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => convertToDocument(msg.content)}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        >
+                          <Upload className="w-3 h-3 mr-1" />
+                          Use as Doc
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
