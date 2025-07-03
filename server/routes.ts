@@ -398,6 +398,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rewrite text using AI
+  app.post("/api/rewrite", async (req, res) => {
+    try {
+      const { text, instructions, provider = 'deepseek' } = req.body;
+      
+      if (!text || !instructions) {
+        return res.status(400).json({ error: "Text and instructions are required" });
+      }
+      
+      // Create a prompt for rewriting
+      const rewritePrompt = `Please rewrite the following text according to these instructions: ${instructions}
+
+Original text:
+${text}
+
+Please provide only the rewritten text without any additional commentary or explanations.`;
+
+      let aiResponse;
+      switch (provider) {
+        case 'openai':
+          aiResponse = await openaiService.generateChatResponse(rewritePrompt, "", []);
+          break;
+        case 'anthropic':
+          aiResponse = await anthropicService.generateChatResponse(rewritePrompt, "", []);
+          break;
+        case 'perplexity':
+          aiResponse = await perplexityService.generateChatResponse(rewritePrompt, "", []);
+          break;
+        case 'deepseek':
+        default:
+          aiResponse = await deepseekService.generateChatResponse(rewritePrompt, "", []);
+          break;
+      }
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+      
+      res.json({ 
+        rewrittenText: aiResponse.message,
+        provider: provider,
+        originalLength: text.length,
+        rewrittenLength: aiResponse.message.length
+      });
+      
+    } catch (error) {
+      console.error("Rewrite error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to rewrite text" 
+      });
+    }
+  });
+
   // Email route using SendGrid
   app.post("/api/email/send", async (req, res) => {
     try {
