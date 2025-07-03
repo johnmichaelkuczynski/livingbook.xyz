@@ -248,8 +248,11 @@ export default function ChatInterface({ document, showInputInline = true, onMess
 
   // Function to convert AI message to document
   const convertToDocument = (content: string) => {
+    // Clean up markdown formatting from the content
+    const cleanedContent = removeMarkupSymbols(content);
+    
     // Extract first line or first 50 characters as title
-    const lines = content.split('\n').filter(line => line.trim());
+    const lines = cleanedContent.split('\n').filter(line => line.trim());
     let title = 'AI Generated Content';
     
     if (lines.length > 0) {
@@ -258,12 +261,12 @@ export default function ChatInterface({ document, showInputInline = true, onMess
       if (firstLine.length <= 60) {
         title = firstLine.replace(/[^\w\s-]/g, '').trim();
       } else {
-        title = content.substring(0, 50).replace(/[^\w\s-]/g, '').trim() + '...';
+        title = cleanedContent.substring(0, 50).replace(/[^\w\s-]/g, '').trim() + '...';
       }
     }
 
     if (onMessageToDocument) {
-      onMessageToDocument(content, title);
+      onMessageToDocument(cleanedContent, title);
       toast({
         title: "Converted to document",
         description: "AI response has been converted to a document you can analyze and rewrite.",
