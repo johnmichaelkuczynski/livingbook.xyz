@@ -12,6 +12,23 @@ import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
 import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
 
+// Helper function to clean markup symbols from AI responses
+function removeMarkupSymbols(text: string): string {
+  return text
+    .replace(/\*\*/g, '')     // Remove bold markdown
+    .replace(/\*/g, '')       // Remove italic markdown
+    .replace(/#{1,6}\s?/g, '') // Remove headers
+    .replace(/`{1,3}/g, '')   // Remove code blocks
+    .replace(/^\s*[-\*\+]\s+/gm, '') // Remove bullet points
+    .replace(/^\s*\d+\.\s+/gm, '')   // Remove numbered lists
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links
+    .replace(/^\s*>\s?/gm, '') // Remove blockquotes
+    .replace(/\|/g, ' ')      // Remove table separators
+    .replace(/---+/g, '')     // Remove horizontal rules
+    .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+    .trim();
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: "uploads/",
@@ -435,12 +452,15 @@ Please provide only the rewritten text without any additional commentary or expl
       if (aiResponse.error) {
         return res.status(500).json({ error: aiResponse.error });
       }
+
+      // Clean up markup symbols from the AI response
+      const cleanedText = removeMarkupSymbols(aiResponse.message);
       
       res.json({ 
-        rewrittenText: aiResponse.message,
+        rewrittenText: cleanedText,
         provider: provider,
         originalLength: text.length,
-        rewrittenLength: aiResponse.message.length
+        rewrittenLength: cleanedText.length
       });
       
     } catch (error) {
