@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Play, CheckSquare, Square } from 'lucide-react';
+import { X, Play, CheckSquare, Square, Download, Expand, Minimize } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -70,6 +70,7 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isRewriting, setIsRewriting] = useState(false);
+  const [expandedChunks, setExpandedChunks] = useState<Set<number>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -194,6 +195,146 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
   const selectedCount = chunks.filter(chunk => chunk.selected).length;
   const rewrittenCount = chunks.filter(chunk => chunk.rewritten).length;
 
+  // Download functionality
+  const downloadAsText = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsWord = (content: string, filename: string) => {
+    // Simple HTML format that Word can open
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${filename}</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 40px;">
+        ${content.replace(/\n/g, '<br>')}
+      </body>
+      </html>
+    `;
+    const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.doc';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadChunk = (chunk: TextChunk, format: 'txt' | 'word' | 'pdf') => {
+    const content = chunk.rewrittenText || chunk.text;
+    const filename = `chunk_${chunk.id}_rewritten`;
+    
+    if (format === 'txt') {
+      downloadAsText(content, filename + '.txt');
+    } else if (format === 'word') {
+      downloadAsWord(content, filename);
+    } else if (format === 'pdf') {
+      // For PDF, we'll use the browser's print functionality
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+          <head>
+            <title>Chunk ${chunk.id} - Rewritten</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+              h1 { color: #333; }
+            </style>
+          </head>
+          <body>
+            <h1>Chunk ${chunk.id} - Rewritten</h1>
+            <div>${content.replace(/\n/g, '<br>')}</div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+
+    toast({
+      title: "Download started",
+      description: `Chunk ${chunk.id} is being downloaded as ${format.toUpperCase()}.`,
+    });
+  };
+
+  const downloadAllRewritten = (format: 'txt' | 'word' | 'pdf') => {
+    const rewrittenChunks = chunks.filter(chunk => chunk.rewritten);
+    if (rewrittenChunks.length === 0) {
+      toast({
+        title: "No rewritten content",
+        description: "Please rewrite some chunks first before downloading.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const allContent = rewrittenChunks.map((chunk, index) => 
+      `--- Chunk ${chunk.id} ---\n\n${chunk.rewrittenText}\n\n`
+    ).join('');
+    
+    const filename = `all_rewritten_chunks`;
+    
+    if (format === 'txt') {
+      downloadAsText(allContent, filename + '.txt');
+    } else if (format === 'word') {
+      downloadAsWord(allContent, filename);
+    } else if (format === 'pdf') {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+          <head>
+            <title>All Rewritten Chunks</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+              h1 { color: #333; }
+              .chunk-separator { border-top: 2px solid #eee; margin: 30px 0; padding-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>All Rewritten Chunks</h1>
+            <div>${allContent.replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>').replace(/\n/g, '<br>')}</div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+
+    toast({
+      title: "Download started",
+      description: `All ${rewrittenChunks.length} rewritten chunks are being downloaded as ${format.toUpperCase()}.`,
+    });
+  };
+
+  // Toggle expanded state for chunks
+  const toggleExpanded = (chunkId: number) => {
+    setExpandedChunks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chunkId)) {
+        newSet.delete(chunkId);
+      } else {
+        newSet.add(chunkId);
+      }
+      return newSet;
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -267,6 +408,41 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                 {isRewriting ? 'Rewriting...' : `Rewrite ${selectedCount} Chunks`}
               </Button>
             </div>
+
+            {/* Download Section */}
+            {rewrittenCount > 0 && (
+              <div className="pt-4 border-t">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Download All Rewritten Content
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => downloadAllRewritten('txt')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    TXT
+                  </Button>
+                  <Button
+                    onClick={() => downloadAllRewritten('word')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Word
+                  </Button>
+                  <Button
+                    onClick={() => downloadAllRewritten('pdf')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -301,6 +477,53 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                         {chunk.rewritten && (
                           <div className="text-green-600 text-xs font-medium">✓ Rewritten</div>
                         )}
+                        
+                        {/* Individual chunk download buttons */}
+                        {chunk.rewritten && (
+                          <div className="flex items-center space-x-1 ml-2">
+                            <Button
+                              onClick={() => downloadChunk(chunk, 'txt')}
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              TXT
+                            </Button>
+                            <Button
+                              onClick={() => downloadChunk(chunk, 'word')}
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              DOC
+                            </Button>
+                            <Button
+                              onClick={() => downloadChunk(chunk, 'pdf')}
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              PDF
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {/* Expand/Collapse button */}
+                        <Button
+                          onClick={() => toggleExpanded(chunk.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                        >
+                          {expandedChunks.has(chunk.id) ? (
+                            <Minimize className="w-4 h-4" />
+                          ) : (
+                            <Expand className="w-4 h-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -308,16 +531,28 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                     <div className="space-y-3">
                       <div>
                         <p className="text-xs font-medium text-gray-500 mb-2">Original:</p>
-                        <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded max-h-32 overflow-y-auto">
-                          <SimpleMathRenderer content={chunk.text.substring(0, 300) + (chunk.text.length > 300 ? '...' : '')} />
+                        <div className={`text-sm text-gray-700 bg-gray-50 p-3 rounded overflow-y-auto ${
+                          expandedChunks.has(chunk.id) ? 'max-h-96' : 'max-h-32'
+                        }`}>
+                          <SimpleMathRenderer content={
+                            expandedChunks.has(chunk.id) 
+                              ? chunk.text 
+                              : chunk.text.substring(0, 300) + (chunk.text.length > 300 ? '...' : '')
+                          } />
                         </div>
                       </div>
                       
                       {chunk.rewrittenText && (
                         <div>
                           <p className="text-xs font-medium text-green-600 mb-2">Rewritten:</p>
-                          <div className="text-sm text-gray-700 bg-green-50 p-3 rounded max-h-32 overflow-y-auto border border-green-200">
-                            <SimpleMathRenderer content={chunk.rewrittenText.substring(0, 300) + (chunk.rewrittenText.length > 300 ? '...' : '')} />
+                          <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 ${
+                            expandedChunks.has(chunk.id) ? 'max-h-96' : 'max-h-32'
+                          }`}>
+                            <SimpleMathRenderer content={
+                              expandedChunks.has(chunk.id) 
+                                ? chunk.rewrittenText 
+                                : chunk.rewrittenText.substring(0, 300) + (chunk.rewrittenText.length > 300 ? '...' : '')
+                            } />
                           </div>
                         </div>
                       )}
