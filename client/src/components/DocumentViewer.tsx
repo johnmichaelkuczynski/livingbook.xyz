@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MoreHorizontal, FileText, MessageCircle } from 'lucide-react';
+import { Search, MoreHorizontal, FileText, MessageCircle, Edit3 } from 'lucide-react';
 import SimpleMathRenderer from './SimpleMathRenderer';
 
 interface DocumentViewerProps {
@@ -10,9 +10,10 @@ interface DocumentViewerProps {
   isLoading: boolean;
   onAskAboutSelection?: (selectedText: string) => void;
   onUploadClick?: () => void;
+  onRewriteClick?: () => void;
 }
 
-export default function DocumentViewer({ document, isLoading, onUploadClick }: DocumentViewerProps) {
+export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick }: DocumentViewerProps) {
   const formatContent = (content: string) => {
     if (!content) return '';
     
@@ -31,6 +32,17 @@ export default function DocumentViewer({ document, isLoading, onUploadClick }: D
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900">Document Content</h2>
         <div className="flex items-center space-x-2">
+          {document && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={onRewriteClick}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Edit3 className="w-4 h-4 mr-1" />
+              Rewrite
+            </Button>
+          )}
           <Button variant="ghost" size="sm">
             <Search className="w-4 h-4" />
           </Button>

@@ -9,12 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
+import RewritePanel from '@/components/RewritePanel';
 
 export default function Home() {
   const [currentDocument, setCurrentDocument] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
+  const [isRewritePanelOpen, setIsRewritePanelOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -131,6 +133,14 @@ export default function Home() {
     }
   };
 
+  const handleRewriteClick = () => {
+    setIsRewritePanelOpen(true);
+  };
+
+  const handleCloseRewritePanel = () => {
+    setIsRewritePanelOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -186,6 +196,7 @@ export default function Home() {
               document={currentDocument}
               isLoading={isUploading}
               onUploadClick={() => fileInputRef.current?.click()}
+              onRewriteClick={handleRewriteClick}
             />
           </div>
         </div>
@@ -238,6 +249,13 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Rewrite Panel */}
+      <RewritePanel
+        document={currentDocument}
+        isOpen={isRewritePanelOpen}
+        onClose={handleCloseRewritePanel}
+      />
 
     </div>
   );
