@@ -144,13 +144,15 @@ export default function Home() {
   // Mutation to create document from AI message
   const createDocumentMutation = useMutation({
     mutationFn: async ({ title, content }: { title: string; content: string }) => {
-      return apiRequest('POST', '/api/documents/create-from-text', {
+      const response = await apiRequest('POST', '/api/documents/create-from-text', {
         title,
         content
       });
+      return response.json();
     },
     onSuccess: (document: any) => {
       setCurrentDocument(document);
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       toast({
         title: "Document created",
         description: `"${document.originalName}" is now available for analysis and rewriting.`,
