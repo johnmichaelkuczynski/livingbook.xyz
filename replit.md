@@ -110,7 +110,13 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
-- July 02, 2025. Initial setup
+- July 03, 2025: MAJOR FIXES - Resolved AI chat functionality and "Convert to Document" feature
+  - Fixed broken AI chat session management and message retrieval
+  - Updated all AI providers to work without requiring document uploads
+  - Implemented complete document conversion from AI responses with clean formatting
+  - Fixed API response parsing and database schema validation issues
+  - AI now handles general requests (essays, creative writing, etc.) without restrictions
+- July 02, 2025: Initial setup
 
 ## User Preferences
 
