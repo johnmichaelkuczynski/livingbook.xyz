@@ -242,13 +242,31 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
     } else if (format === 'word') {
       downloadAsWord(content, filename);
     } else if (format === 'pdf') {
-      // For PDF, we'll use the browser's print functionality
+      // For PDF, we'll use the browser's print functionality with MathJax support
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
           <head>
             <title>Chunk ${chunk.id} - Rewritten</title>
+            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+            <script>
+              window.MathJax = {
+                tex: {
+                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+                },
+                startup: {
+                  ready: function () {
+                    MathJax.startup.defaultReady();
+                    MathJax.startup.promise.then(function () {
+                      setTimeout(() => window.print(), 1000);
+                    });
+                  }
+                }
+              };
+            </script>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; }
@@ -261,7 +279,6 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
           </html>
         `);
         printWindow.document.close();
-        printWindow.print();
       }
     }
 
@@ -299,6 +316,24 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
           <html>
           <head>
             <title>All Rewritten Chunks</title>
+            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+            <script>
+              window.MathJax = {
+                tex: {
+                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+                },
+                startup: {
+                  ready: function () {
+                    MathJax.startup.defaultReady();
+                    MathJax.startup.promise.then(function () {
+                      setTimeout(() => window.print(), 1000);
+                    });
+                  }
+                }
+              };
+            </script>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; }
@@ -312,7 +347,6 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
           </html>
         `);
         printWindow.document.close();
-        printWindow.print();
       }
     }
 
