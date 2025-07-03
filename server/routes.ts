@@ -12,9 +12,9 @@ import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
 import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
 
-// Helper function to clean markup symbols from AI responses
+// Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
-  return text
+  let cleaned = text
     .replace(/\*\*/g, '')     // Remove bold markdown
     .replace(/\*/g, '')       // Remove italic markdown
     .replace(/#{1,6}\s?/g, '') // Remove headers
@@ -27,6 +27,21 @@ function removeMarkupSymbols(text: string): string {
     .replace(/---+/g, '')     // Remove horizontal rules
     .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
     .trim();
+
+  // Remove common metadata patterns at the end of text
+  cleaned = cleaned
+    .replace(/\(.*continues.*\)$/gi, '') // Remove continuation notes
+    .replace(/\(.*debate.*continues.*\)$/gi, '') // Remove debate continuation notes
+    .replace(/\(.*reader.*to.*weigh.*\)$/gi, '') // Remove reader instruction notes
+    .replace(/\(.*leaving.*reader.*\)$/gi, '') // Remove reader leaving notes
+    .replace(/\(.*end.*of.*rewrite.*\)$/gi, '') // Remove rewrite end notes
+    .replace(/\(.*note:.*\)$/gi, '') // Remove general notes
+    .replace(/\(.*commentary.*\)$/gi, '') // Remove commentary notes
+    .replace(/\(.*analysis.*\)$/gi, '') // Remove analysis notes
+    .replace(/\s*\.\s*\)$/g, '.')  // Fix orphaned closing parentheses after periods
+    .trim();
+
+  return cleaned;
 }
 
 // Configure multer for file uploads
@@ -430,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 Original text:
 ${text}
 
-Please provide only the rewritten text without any additional commentary or explanations.`;
+IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, explanations, metadata, notes, or additional remarks. Do not add phrases like "Here is the rewritten text:" or any conclusion statements. Return only the pure rewritten content.`;
 
       let aiResponse;
       switch (provider) {
