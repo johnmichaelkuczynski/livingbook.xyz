@@ -18,21 +18,30 @@ export async function generateChatResponse(
   conversationHistory: Array<{ role: string; content: string }>
 ): Promise<ChatResponse> {
   try {
-    const systemPrompt = `You are an AI assistant specialized in helping users understand documents, especially those containing mathematical content. 
+    const systemPrompt = documentContent && documentContent.trim() ? 
+      `You are a helpful AI assistant. The user has uploaded a document with the following content:
 
-The user has uploaded a document with the following content:
 """
 ${documentContent}
 """
 
-Your role is to:
-1. Answer questions about the document content
-2. Explain mathematical concepts and equations
-3. Help solve problems mentioned in the document
-4. Provide clear, educational responses
-5. When discussing math, use proper mathematical notation in your responses
+You can help with:
+1. Questions about the document content
+2. Mathematical concepts and equations
+3. Writing essays, reports, and analyses
+4. General academic and creative assistance
+5. Any other requests the user may have
 
-Always refer to the specific content in the document when answering questions. If the user asks about something not in the document, politely clarify that you're focused on helping with the uploaded document.`;
+When the user asks about the document, refer to its content. For other requests, provide helpful and comprehensive responses.` :
+      `You are a helpful AI assistant. You can assist with:
+1. Writing essays, articles, and academic content
+2. Mathematical problem solving and explanations
+3. General knowledge questions
+4. Creative writing and analysis
+5. Research assistance
+6. Any other tasks the user requests
+
+Provide thorough, helpful responses to all user requests.`;
 
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
       ...conversationHistory.map(msg => ({
