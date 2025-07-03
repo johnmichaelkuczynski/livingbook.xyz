@@ -1,4 +1,4 @@
-import { documents, chatSessions, chatMessages, users, formatOperations, type Document, type ChatSession, type ChatMessage, type User, type FormatOperation, type InsertDocument, type InsertChatSession, type InsertChatMessage, type InsertUser, type InsertFormatOperation } from "@shared/schema";
+import { documents, chatSessions, chatMessages, users, type Document, type ChatSession, type ChatMessage, type User, type InsertDocument, type InsertChatSession, type InsertChatMessage, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   // User methods
@@ -10,7 +10,6 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   getDocument(id: number): Promise<Document | undefined>;
   getAllDocuments(): Promise<Document[]>;
-  updateDocument(id: number, data: Partial<Document>): Promise<Document>;
   
   // Chat session methods
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
@@ -20,10 +19,6 @@ export interface IStorage {
   // Chat message methods
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(sessionId: number): Promise<ChatMessage[]>;
-  
-  // Format operation methods
-  createFormatOperation(operation: InsertFormatOperation): Promise<FormatOperation>;
-  getFormatOperations(documentId: number): Promise<FormatOperation[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -31,22 +26,18 @@ export class MemStorage implements IStorage {
   private documents: Map<number, Document>;
   private chatSessions: Map<number, ChatSession>;
   private chatMessages: Map<number, ChatMessage>;
-  private formatOperations: Map<number, FormatOperation>;
   private currentUserId: number;
   private currentDocumentId: number;
   private currentSessionId: number;
   private currentMessageId: number;
-  private currentFormatOpId: number;
 
   constructor() {
     this.users = new Map();
     this.documents = new Map();
     this.chatSessions = new Map();
     this.chatMessages = new Map();
-    this.formatOperations = new Map();
     this.currentUserId = 1;
     this.currentDocumentId = 1;
-    this.currentFormatOpId = 1;
     this.currentSessionId = 1;
     this.currentMessageId = 1;
   }
@@ -73,7 +64,6 @@ export class MemStorage implements IStorage {
     const document: Document = { 
       ...insertDocument, 
       id,
-      formattedContent: null,
       uploadedAt: new Date()
     };
     this.documents.set(id, document);
@@ -124,34 +114,6 @@ export class MemStorage implements IStorage {
     return Array.from(this.chatMessages.values())
       .filter((message) => message.sessionId === sessionId)
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  }
-
-  async updateDocument(id: number, data: Partial<Document>): Promise<Document> {
-    const existing = this.documents.get(id);
-    if (!existing) {
-      throw new Error(`Document with id ${id} not found`);
-    }
-    
-    const updated: Document = { ...existing, ...data };
-    this.documents.set(id, updated);
-    return updated;
-  }
-
-  async createFormatOperation(insertOperation: InsertFormatOperation): Promise<FormatOperation> {
-    const id = this.currentFormatOpId++;
-    const operation: FormatOperation = {
-      ...insertOperation,
-      id,
-      appliedAt: new Date()
-    };
-    this.formatOperations.set(id, operation);
-    return operation;
-  }
-
-  async getFormatOperations(documentId: number): Promise<FormatOperation[]> {
-    return Array.from(this.formatOperations.values())
-      .filter((operation) => operation.documentId === documentId)
-      .sort((a, b) => a.appliedAt.getTime() - b.appliedAt.getTime());
   }
 }
 
