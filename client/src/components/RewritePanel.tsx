@@ -242,39 +242,44 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
     } else if (format === 'word') {
       downloadAsWord(content, filename);
     } else if (format === 'pdf') {
-      // For PDF, we'll use the browser's print functionality with MathJax support
+      // For PDF, create a clean version without complex math notation
+      // Replace LaTeX with simplified text equivalents
+      const cleanContent = content
+        .replace(/\\\(/g, '(')  // Remove LaTeX inline delimiters
+        .replace(/\\\)/g, ')')
+        .replace(/\\\[/g, '[')  // Remove LaTeX display delimiters  
+        .replace(/\\\]/g, ']')
+        .replace(/\${1,2}/g, '') // Remove dollar signs
+        .replace(/\\text\{([^}]+)\}/g, '$1') // Extract text from \text{}
+        .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1') // Remove LaTeX commands but keep content
+        .replace(/\\[a-zA-Z]+/g, '') // Remove remaining LaTeX commands
+        .replace(/\{([^}]*)\}/g, '$1') // Remove remaining braces
+        .replace(/\s+/g, ' ') // Clean up extra spaces
+        .trim();
+
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
           <head>
             <title>Chunk ${chunk.id} - Rewritten</title>
-            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-            <script>
-              window.MathJax = {
-                tex: {
-                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
-                },
-                startup: {
-                  ready: function () {
-                    MathJax.startup.defaultReady();
-                    MathJax.startup.promise.then(function () {
-                      setTimeout(() => window.print(), 1000);
-                    });
-                  }
-                }
-              };
-            </script>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; }
+              @media print { 
+                body { margin: 20px; } 
+                h1 { page-break-after: avoid; }
+              }
             </style>
           </head>
           <body>
             <h1>Chunk ${chunk.id} - Rewritten</h1>
-            <div>${content.replace(/\n/g, '<br>')}</div>
+            <div>${cleanContent.replace(/\n/g, '<br>')}</div>
+            <script>
+              window.onload = function() {
+                setTimeout(() => window.print(), 500);
+              };
+            </script>
           </body>
           </html>
         `);
@@ -310,39 +315,45 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
     } else if (format === 'word') {
       downloadAsWord(allContent, filename);
     } else if (format === 'pdf') {
+      // Clean math notation for PDF
+      const cleanAllContent = allContent
+        .replace(/\\\(/g, '(')  // Remove LaTeX inline delimiters
+        .replace(/\\\)/g, ')')
+        .replace(/\\\[/g, '[')  // Remove LaTeX display delimiters  
+        .replace(/\\\]/g, ']')
+        .replace(/\${1,2}/g, '') // Remove dollar signs
+        .replace(/\\text\{([^}]+)\}/g, '$1') // Extract text from \text{}
+        .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1') // Remove LaTeX commands but keep content
+        .replace(/\\[a-zA-Z]+/g, '') // Remove remaining LaTeX commands
+        .replace(/\{([^}]*)\}/g, '$1') // Remove remaining braces
+        .replace(/\s+/g, ' ') // Clean up extra spaces
+        .trim();
+
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
           <head>
             <title>All Rewritten Chunks</title>
-            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-            <script>
-              window.MathJax = {
-                tex: {
-                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
-                },
-                startup: {
-                  ready: function () {
-                    MathJax.startup.defaultReady();
-                    MathJax.startup.promise.then(function () {
-                      setTimeout(() => window.print(), 1000);
-                    });
-                  }
-                }
-              };
-            </script>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; }
               .chunk-separator { border-top: 2px solid #eee; margin: 30px 0; padding-top: 20px; }
+              @media print { 
+                body { margin: 20px; } 
+                h1 { page-break-after: avoid; }
+                .chunk-separator { page-break-inside: avoid; }
+              }
             </style>
           </head>
           <body>
             <h1>All Rewritten Chunks</h1>
-            <div>${allContent.replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>').replace(/\n/g, '<br>')}</div>
+            <div>${cleanAllContent.replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>').replace(/\n/g, '<br>')}</div>
+            <script>
+              window.onload = function() {
+                setTimeout(() => window.print(), 500);
+              };
+            </script>
           </body>
           </html>
         `);
