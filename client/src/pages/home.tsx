@@ -245,6 +245,7 @@ export default function Home() {
               isLoading={isUploading}
               onUploadClick={() => fileInputRef.current?.click()}
               onRewriteClick={handleRewriteClick}
+              onFileDrop={handleFile}
             />
           </div>
         </div>
