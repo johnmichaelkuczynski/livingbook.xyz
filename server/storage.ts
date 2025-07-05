@@ -16,6 +16,7 @@ export interface IStorage {
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
   getChatSession(id: number): Promise<ChatSession | undefined>;
   getChatSessionByDocumentId(documentId: number): Promise<ChatSession | undefined>;
+  getChatSessionByDocumentIds(documentId1: number, documentId2?: number): Promise<ChatSession | undefined>;
   
   // Chat message methods
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
@@ -93,8 +94,10 @@ export class MemStorage implements IStorage {
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
     const id = this.currentSessionId++;
     const session: ChatSession = {
-      ...insertSession,
       id,
+      documentId: insertSession.documentId || null,
+      documentId2: insertSession.documentId2 || null,
+      sessionType: insertSession.sessionType || "single",
       createdAt: new Date()
     };
     this.chatSessions.set(id, session);
@@ -108,6 +111,21 @@ export class MemStorage implements IStorage {
   async getChatSessionByDocumentId(documentId: number): Promise<ChatSession | undefined> {
     return Array.from(this.chatSessions.values()).find(
       (session) => session.documentId === documentId
+    );
+  }
+
+  async getChatSessionByDocumentIds(documentId1: number, documentId2?: number): Promise<ChatSession | undefined> {
+    return Array.from(this.chatSessions.values()).find(
+      (session) => {
+        if (documentId2) {
+          // For dual document sessions
+          return (session.documentId === documentId1 && session.documentId2 === documentId2) ||
+                 (session.documentId === documentId2 && session.documentId2 === documentId1);
+        } else {
+          // For single document sessions
+          return session.documentId === documentId1 && !session.documentId2;
+        }
+      }
     );
   }
 

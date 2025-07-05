@@ -161,6 +161,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload dual documents
+  app.post("/api/documents/upload-dual", upload.array('documents', 2), async (req, res) => {
+    try {
+      if (!req.files || req.files.length !== 2) {
+        return res.status(400).json({ error: "Exactly two documents are required" });
+      }
+
+      const files = req.files as Express.Multer.File[];
+      const processedDocuments = [];
+      
+      // Process both documents
+      for (const file of files) {
+        const { originalname, filename, mimetype, size, path: filePath } = file;
+        
+        // Extract text from the document
+        let extractedText = await extractTextFromDocument(filePath, mimetype);
+        
+        // Process math notation
+        extractedText = processMathNotation(extractedText);
+        
+        // Save document to storage
+        const documentData = {
+          filename,
+          originalName: originalname,
+          fileType: mimetype,
+          fileSize: size,
+          content: extractedText
+        };
+        
+        const validatedData = insertDocumentSchema.parse(documentData);
+        const document = await storage.createDocument(validatedData);
+        
+        processedDocuments.push(document);
+        
+        // Clean up uploaded file
+        await fs.unlink(filePath);
+      }
+      
+      // Create a dual document chat session
+      await storage.createChatSession({ 
+        documentId: processedDocuments[0].id,
+        documentId2: processedDocuments[1].id,
+        sessionType: "dual"
+      });
+      
+      res.json({
+        documents: processedDocuments.map(doc => ({
+          id: doc.id,
+          originalName: doc.originalName,
+          fileType: doc.fileType,
+          fileSize: doc.fileSize,
+          content: doc.content,
+          uploadedAt: doc.uploadedAt
+        }))
+      });
+      
+    } catch (error) {
+      console.error("Dual upload error:", error);
+      
+      // Clean up files if they exist
+      if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files) {
+          try {
+            await fs.unlink(file.path);
+          } catch (unlinkError) {
+            console.error("Error cleaning up file:", unlinkError);
+          }
+        }
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process documents" 
+      });
+    }
+  });
+
   // Upload document (alias route for convenience)  
   app.post("/api/upload", upload.single('document'), async (req, res) => {
     try {
@@ -575,12 +651,137 @@ Return only the formatted text without any explanations or markdown formatting. 
     }
   });
 
+  // Send chat message with dual documents
+  app.post("/api/chat/:documentId1/:documentId2/message", async (req, res) => {
+    try {
+      const documentId1 = parseInt(req.params.documentId1);
+      const documentId2 = parseInt(req.params.documentId2);
+      const { message, provider = 'deepseek' } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      
+      // Get both documents
+      const document1 = await storage.getDocument(documentId1);
+      const document2 = await storage.getDocument(documentId2);
+      
+      if (!document1 || !document2) {
+        return res.status(404).json({ error: "One or both documents not found" });
+      }
+      
+      // Get or create dual document chat session
+      let session = await storage.getChatSessionByDocumentIds(documentId1, documentId2);
+      if (!session) {
+        session = await storage.createChatSession({ 
+          documentId: documentId1, 
+          documentId2: documentId2,
+          sessionType: "dual" 
+        });
+      }
+      
+      // Get conversation history
+      const messages = await storage.getChatMessages(session.id);
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      // Save user message
+      const userMessageData = {
+        sessionId: session.id,
+        role: "user",
+        content: message
+      };
+      const validatedUserMessage = insertChatMessageSchema.parse(userMessageData);
+      await storage.createChatMessage(validatedUserMessage);
+      
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate AI response with both documents
+      const combinedContent = `DOCUMENT 1 (${document1.originalName}):
+${document1.content}
+
+DOCUMENT 2 (${document2.originalName}):
+${document2.content}`;
+      
+      const aiResponse = await generateChatResponse(
+        message,
+        combinedContent,
+        conversationHistory
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+      
+      // Save AI response
+      const aiMessageData = {
+        sessionId: session.id,
+        role: "assistant",
+        content: aiResponse.message
+      };
+      const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
+      const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
+      
+      res.json({
+        id: savedAiMessage.id,
+        role: savedAiMessage.role,
+        content: savedAiMessage.content,
+        timestamp: savedAiMessage.timestamp
+      });
+      
+    } catch (error) {
+      console.error("Dual chat error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process dual chat message" 
+      });
+    }
+  });
+
   // Get chat messages for a document
   app.get("/api/chat/:documentId/messages", async (req, res) => {
     try {
       const documentId = parseInt(req.params.documentId);
       
       const session = await storage.getChatSessionByDocumentId(documentId);
+      if (!session) {
+        return res.json([]);
+      }
+      
+      const messages = await storage.getChatMessages(session.id);
+      res.json(messages);
+      
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get chat messages" 
+      });
+    }
+  });
+
+  // Get chat messages for dual documents
+  app.get("/api/chat/:documentId1/:documentId2/messages", async (req, res) => {
+    try {
+      const documentId1 = parseInt(req.params.documentId1);
+      const documentId2 = parseInt(req.params.documentId2);
+      
+      const session = await storage.getChatSessionByDocumentIds(documentId1, documentId2);
       if (!session) {
         return res.json([]);
       }

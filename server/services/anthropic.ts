@@ -19,6 +19,21 @@ export async function generateChatResponse(
 ): Promise<ChatResponse> {
   try {
     const systemPrompt = documentContent && documentContent.trim() ? 
+      documentContent.includes('DOCUMENT 1 (') ? 
+      `You are a helpful AI assistant. The user has uploaded TWO documents for comparison and analysis:
+
+${documentContent}
+
+You can help with:
+1. Comparing and contrasting the two documents
+2. Analyzing differences and similarities
+3. Answering questions about either document
+4. Mathematical concepts and equations from both documents
+5. Writing essays, reports, and analyses
+6. General academic and creative assistance
+7. Any other requests the user may have
+
+When the user asks about the documents, you can refer to them as "Document 1" and "Document 2" or by their filenames. You can compare them, analyze their differences, find similarities, and provide comprehensive responses about both documents.` :
       `You are a helpful AI assistant. The user has uploaded a document with the following content:
 
 """
