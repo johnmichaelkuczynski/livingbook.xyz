@@ -1,4 +1,4 @@
-import { documents, chatSessions, chatMessages, users, type Document, type ChatSession, type ChatMessage, type User, type InsertDocument, type InsertChatSession, type InsertChatMessage, type InsertUser } from "@shared/schema";
+import { documents, chatSessions, chatMessages, comparisonSessions, comparisonMessages, users, type Document, type ChatSession, type ChatMessage, type ComparisonSession, type ComparisonMessage, type User, type InsertDocument, type InsertChatSession, type InsertChatMessage, type InsertComparisonSession, type InsertComparisonMessage, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   // User methods
@@ -20,6 +20,14 @@ export interface IStorage {
   // Chat message methods
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(sessionId: number): Promise<ChatMessage[]>;
+  
+  // Comparison session methods
+  createComparisonSession(session: InsertComparisonSession): Promise<ComparisonSession>;
+  getComparisonSession(id: number): Promise<ComparisonSession | undefined>;
+  
+  // Comparison message methods
+  createComparisonMessage(message: InsertComparisonMessage): Promise<ComparisonMessage>;
+  getComparisonMessages(sessionId: number): Promise<ComparisonMessage[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -27,20 +35,28 @@ export class MemStorage implements IStorage {
   private documents: Map<number, Document>;
   private chatSessions: Map<number, ChatSession>;
   private chatMessages: Map<number, ChatMessage>;
+  private comparisonSessions: Map<number, ComparisonSession>;
+  private comparisonMessages: Map<number, ComparisonMessage>;
   private currentUserId: number;
   private currentDocumentId: number;
   private currentSessionId: number;
   private currentMessageId: number;
+  private currentComparisonSessionId: number;
+  private currentComparisonMessageId: number;
 
   constructor() {
     this.users = new Map();
     this.documents = new Map();
     this.chatSessions = new Map();
     this.chatMessages = new Map();
+    this.comparisonSessions = new Map();
+    this.comparisonMessages = new Map();
     this.currentUserId = 1;
     this.currentDocumentId = 1;
     this.currentSessionId = 1;
     this.currentMessageId = 1;
+    this.currentComparisonSessionId = 1;
+    this.currentComparisonMessageId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -124,6 +140,39 @@ export class MemStorage implements IStorage {
 
   async getChatMessages(sessionId: number): Promise<ChatMessage[]> {
     return Array.from(this.chatMessages.values())
+      .filter((message) => message.sessionId === sessionId)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }
+
+  async createComparisonSession(insertSession: InsertComparisonSession): Promise<ComparisonSession> {
+    const id = this.currentComparisonSessionId++;
+    const session: ComparisonSession = {
+      id,
+      documentAId: insertSession.documentAId ?? null,
+      documentBId: insertSession.documentBId ?? null,
+      createdAt: new Date()
+    };
+    this.comparisonSessions.set(id, session);
+    return session;
+  }
+
+  async getComparisonSession(id: number): Promise<ComparisonSession | undefined> {
+    return this.comparisonSessions.get(id);
+  }
+
+  async createComparisonMessage(insertMessage: InsertComparisonMessage): Promise<ComparisonMessage> {
+    const id = this.currentComparisonMessageId++;
+    const message: ComparisonMessage = {
+      ...insertMessage,
+      id,
+      timestamp: new Date()
+    };
+    this.comparisonMessages.set(id, message);
+    return message;
+  }
+
+  async getComparisonMessages(sessionId: number): Promise<ComparisonMessage[]> {
+    return Array.from(this.comparisonMessages.values())
       .filter((message) => message.sessionId === sessionId)
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }

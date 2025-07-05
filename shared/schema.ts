@@ -18,6 +18,21 @@ export const chatSessions = pgTable("chat_sessions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const comparisonSessions = pgTable("comparison_sessions", {
+  id: serial("id").primaryKey(),
+  documentAId: integer("document_a_id").references(() => documents.id),
+  documentBId: integer("document_b_id").references(() => documents.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const comparisonMessages = pgTable("comparison_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id").references(() => comparisonSessions.id).notNull(),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
   sessionId: integer("session_id").references(() => chatSessions.id).notNull(),
@@ -41,12 +56,26 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   timestamp: true,
 });
 
+export const insertComparisonSessionSchema = createInsertSchema(comparisonSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertComparisonMessageSchema = createInsertSchema(comparisonMessages).omit({
+  id: true,
+  timestamp: true,
+});
+
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
 export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
 export type ChatSession = typeof chatSessions.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertComparisonSession = z.infer<typeof insertComparisonSessionSchema>;
+export type ComparisonSession = typeof comparisonSessions.$inferSelect;
+export type InsertComparisonMessage = z.infer<typeof insertComparisonMessageSchema>;
+export type ComparisonMessage = typeof comparisonMessages.$inferSelect;
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
