@@ -283,7 +283,7 @@ export default function ComparePage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px] pb-32">
           {/* Document A */}
           <DocumentColumn
             title="Document A"
@@ -323,73 +323,84 @@ export default function ComparePage() {
                 )}
                 
                 {(documentA || documentB) && (
-                  <>
-                    <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px]">
-                      {messages.length === 0 ? (
-                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
-                          Ask AI to compare your documents!
-                        </p>
-                      ) : (
-                        messages.map((msg) => (
-                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] p-2 rounded-lg text-sm ${
-                              msg.role === 'user' 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                            }`}>
-                              <SimpleMathRenderer content={msg.content} />
-                            </div>
+                  <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px] mb-4">
+                    {messages.length === 0 ? (
+                      <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                        Ask AI to compare your documents!
+                      </p>
+                    ) : (
+                      messages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] p-2 rounded-lg text-sm ${
+                            msg.role === 'user' 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                          }`}>
+                            <SimpleMathRenderer content={msg.content} />
                           </div>
-                        ))
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Select value={provider} onValueChange={setProvider}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="deepseek">DeepSeek</SelectItem>
-                          <SelectItem value="openai">OpenAI</SelectItem>
-                          <SelectItem value="anthropic">Anthropic</SelectItem>
-                          <SelectItem value="perplexity">Perplexity</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex gap-2">
-                        <Textarea
-                          placeholder={`Compare ${documentA && documentB ? 'both documents' : documentA ? 'Document A' : 'Document B'}...`}
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                          className="flex-1"
-                          rows={2}
-                        />
-                        <Button
-                          onClick={handleSendMessage}
-                          disabled={!message.trim() || sendMessageMutation.isPending}
-                          size="sm"
-                          className="self-end"
-                        >
-                          {sendMessageMutation.isPending ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          ) : (
-                            <Send className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* Fixed Chat Input at Bottom of Screen */}
+        {(documentA || documentB) && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600 shadow-lg z-50">
+            <div className="p-4">
+              <div className="flex space-x-3 max-w-7xl mx-auto">
+                <div className="flex-1">
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder={`Compare ${documentA && documentB ? 'both documents' : documentA ? 'Document A' : 'Document B'}...`}
+                    className="w-full h-20 resize-none text-lg border-2 border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    disabled={sendMessageMutation.isPending}
+                    autoComplete="off"
+                    spellCheck="true"
+                  />
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <select
+                    value={provider}
+                    onChange={(e) => setProvider(e.target.value)}
+                    className="w-32 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="perplexity">Perplexity</option>
+                  </select>
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={!message.trim() || sendMessageMutation.isPending}
+                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    type="button"
+                  >
+                    {sendMessageMutation.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
