@@ -29,6 +29,7 @@ export default function ComparePage() {
   const [message, setMessage] = useState("");
   const [provider, setProvider] = useState("deepseek");
   const [sessionId, setSessionId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("documents");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -94,6 +95,11 @@ export default function ComparePage() {
 
       const document = await response.json();
       setDocument(document);
+      
+      // Auto-switch to chat tab when a document is uploaded
+      if (activeTab === "documents") {
+        setActiveTab("chat");
+      }
       
       toast({
         title: "Success",
@@ -236,10 +242,12 @@ export default function ComparePage() {
           </Button>
         </div>
 
-        <Tabs defaultValue="documents" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="chat">AI Chat</TabsTrigger>
+            <TabsTrigger value="chat" className={documentA || documentB ? "bg-blue-50 dark:bg-blue-900" : ""}>
+              AI Chat {(documentA || documentB) && "✨"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="documents" className="space-y-6">
