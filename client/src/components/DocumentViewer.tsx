@@ -11,9 +11,31 @@ interface DocumentViewerProps {
   onAskAboutSelection?: (selectedText: string) => void;
   onUploadClick?: () => void;
   onRewriteClick?: () => void;
+  onFileDrop?: (file: File) => void;
 }
 
-export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick }: DocumentViewerProps) {
+export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick, onFileDrop }: DocumentViewerProps) {
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0] && onFileDrop) {
+      onFileDrop(e.dataTransfer.files[0]);
+    }
+  };
   const formatContent = (content: string) => {
     if (!content) return '';
     
@@ -62,19 +84,31 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             ) : !document ? (
               <div 
-                className="flex flex-col items-center justify-center py-12 text-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors border-2 border-dashed border-gray-300 hover:border-primary"
+                className={`flex flex-col items-center justify-center py-12 text-center cursor-pointer rounded-lg transition-colors border-2 border-dashed ${
+                  dragActive 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-gray-300 hover:border-primary hover:bg-gray-50'
+                }`}
                 onClick={onUploadClick}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
               >
                 <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                   <FileText className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Click here to upload a document</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {dragActive ? 'Drop your document here' : 'Click or drag to upload a document'}
+                </h3>
                 <p className="text-sm text-gray-500 max-w-sm">
                   Upload a PDF, Word document, or text file to view its content with properly rendered mathematical notation.
                 </p>
-                <Button className="mt-4 bg-primary hover:bg-primary/90">
-                  Choose File
-                </Button>
+                {!dragActive && (
+                  <Button className="mt-4 bg-primary hover:bg-primary/90">
+                    Choose File
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="w-full">

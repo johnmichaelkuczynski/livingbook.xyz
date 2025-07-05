@@ -30,6 +30,8 @@ export default function ComparePage() {
   const [provider, setProvider] = useState("deepseek");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("documents");
+  const [dragActiveA, setDragActiveA] = useState(false);
+  const [dragActiveB, setDragActiveB] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -116,8 +118,31 @@ export default function ComparePage() {
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent, column: 'A' | 'B') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (column === 'A') setDragActiveA(true);
+    else setDragActiveB(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent, column: 'A' | 'B') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (column === 'A') setDragActiveA(false);
+    else setDragActiveB(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   const handleDrop = (e: React.DragEvent, column: 'A' | 'B') => {
     e.preventDefault();
+    e.stopPropagation();
+    setDragActiveA(false);
+    setDragActiveB(false);
+    
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileUpload(files[0], column);
@@ -171,9 +196,15 @@ export default function ComparePage() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               />
               <div
-                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors w-full min-h-[300px] flex items-center justify-center"
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] flex items-center justify-center ${
+                  (column === 'A' ? dragActiveA : dragActiveB)
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                }`}
                 onDrop={(e) => handleDrop(e, column)}
-                onDragOver={(e) => e.preventDefault()}
+                onDragEnter={(e) => handleDragEnter(e, column)}
+                onDragLeave={(e) => handleDragLeave(e, column)}
+                onDragOver={handleDragOver}
             >
               {isUploading ? (
                 <div className="space-y-2">
@@ -182,16 +213,26 @@ export default function ComparePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+                  <Upload className={`w-12 h-12 mx-auto ${
+                    (column === 'A' ? dragActiveA : dragActiveB) 
+                      ? 'text-blue-500' 
+                      : 'text-gray-400'
+                  }`} />
                   <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                    Upload Document {column}
+                    {(column === 'A' ? dragActiveA : dragActiveB) 
+                      ? `Drop Document ${column} here` 
+                      : `Upload Document ${column}`}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Drop a file here or click to browse
+                    {(column === 'A' ? dragActiveA : dragActiveB) 
+                      ? 'Release to upload' 
+                      : 'Drop a file here or click to browse'}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Supports PDF, Word, and TXT files
-                  </p>
+                  {!(column === 'A' ? dragActiveA : dragActiveB) && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      Supports PDF, Word, and TXT files
+                    </p>
+                  )}
                 </div>
               )}
               </div>
