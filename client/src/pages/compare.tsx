@@ -148,24 +148,24 @@ export default function ComparePage() {
     column: 'A' | 'B';
   }) => (
     <div className="flex-1">
-      <Card className="h-full">
+      <Card className="h-full min-h-[500px] flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col">
           {!doc ? (
-            <div className="relative">
+            <div className="relative flex-1 flex items-center justify-center">
               <input
                 type="file"
                 accept=".pdf,.docx,.txt"
                 onChange={(e) => handleFileSelect(e, column)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               />
               <div
-                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors w-full min-h-[300px] flex items-center justify-center"
                 onDrop={(e) => handleDrop(e, column)}
                 onDragOver={(e) => e.preventDefault()}
             >
@@ -191,12 +191,12 @@ export default function ComparePage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex-1 flex flex-col space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-gray-900 dark:text-gray-100">{doc.title}</h3>
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
-              <div className="max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
                 <SimpleMathRenderer content={doc.content} className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" />
               </div>
               <Button
