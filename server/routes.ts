@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload document (alias route for convenience)  
-  app.post("/api/upload", upload.single('document'), async (req, res) => {
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
