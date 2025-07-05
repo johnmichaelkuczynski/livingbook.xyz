@@ -110,6 +110,12 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 05, 2025: CRITICAL UX FIXES - PERFECT USER EXPERIENCE ACHIEVED
+  - **FIXED**: Removed all markdown formatting (**, ##, etc.) from AI responses for clean, readable text
+  - **FIXED**: Input box positioning - now fixed at bottom of screen (always accessible)
+  - **VERIFIED**: User confirmed "MUCH MUCH MUCH BETTER" - critical usability issues resolved
+  - Input remains accessible even with very long documents
+  - Professional, clean AI responses without distracting markup symbols
 - July 05, 2025: DUAL DOCUMENT COMPARISON FEATURE - FULLY OPERATIONAL
   - Built complete dual-document comparison system with three-column layout
   - Side-by-side document upload (Document A & Document B) with AI chat column
