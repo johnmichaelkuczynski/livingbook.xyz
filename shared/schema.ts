@@ -14,9 +14,7 @@ export const documents = pgTable("documents", {
 
 export const chatSessions = pgTable("chat_sessions", {
   id: serial("id").primaryKey(),
-  documentId: integer("document_id").references(() => documents.id),
-  documentId2: integer("document_id_2").references(() => documents.id),
-  sessionType: text("session_type").notNull().default("single"), // 'single' or 'dual'
+  documentId: integer("document_id").references(() => documents.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

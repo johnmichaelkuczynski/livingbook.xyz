@@ -15,7 +15,6 @@ import { apiRequest } from '@/lib/queryClient';
 
 interface ChatInterfaceProps {
   document: any | null;
-  documents?: any[] | null; // For dual document mode
   showInputInline?: boolean;
   onMessageToDocument?: (content: string, title: string) => void;
 }
@@ -48,7 +47,7 @@ function removeMarkupSymbols(text: string): string {
     .trim();
 }
 
-export default function ChatInterface({ document, documents, showInputInline = true, onMessageToDocument }: ChatInterfaceProps) {
+export default function ChatInterface({ document, showInputInline = true, onMessageToDocument }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isTyping, setIsTyping] = useState(false);
@@ -58,37 +57,16 @@ export default function ChatInterface({ document, documents, showInputInline = t
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Determine if we're in dual document mode
-  const isDualMode = documents && documents.length === 2;
-  
-  // Generate query key based on mode
-  const getQueryKey = () => {
-    if (isDualMode) {
-      return ['/api/chat/' + documents[0].id + '/' + documents[1].id + '/messages'];
-    } else if (document) {
-      return ['/api/chat/' + document.id + '/messages'];
-    } else {
-      return ['/api/chat/messages'];
-    }
-  };
-
-  // Fetch chat messages for the current document(s) or global chat
+  // Fetch chat messages for the current document or global chat
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
-    queryKey: getQueryKey(),
+    queryKey: document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'],
     refetchInterval: 2000, // Refetch every 2 seconds to see new messages
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageContent: string) => {
-      let endpoint: string;
-      if (isDualMode) {
-        endpoint = `/api/chat/${documents[0].id}/${documents[1].id}/message`;
-      } else if (document) {
-        endpoint = `/api/chat/${document.id}/message`;
-      } else {
-        endpoint = '/api/chat/message';
-      }
+      const endpoint = document ? `/api/chat/${document.id}/message` : '/api/chat/message';
       return apiRequest('POST', endpoint, {
         message: messageContent,
         provider: selectedProvider,
@@ -98,8 +76,8 @@ export default function ChatInterface({ document, documents, showInputInline = t
       setIsTyping(true);
     },
     onSuccess: () => {
-      // Invalidate and refetch messages based on current mode
-      const queryKey = getQueryKey();
+      // Invalidate and refetch messages
+      const queryKey = document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'];
       queryClient.invalidateQueries({ queryKey });
       setMessage('');
       setIsTyping(false);
@@ -306,14 +284,7 @@ export default function ChatInterface({ document, documents, showInputInline = t
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-              <p className="text-xs text-gray-500">
-                {isDualMode 
-                  ? "Compare and analyze both documents" 
-                  : document 
-                    ? "Ask questions about your document" 
-                    : "Chat with AI assistant"
-                }
-              </p>
+              <p className="text-xs text-gray-500">Ask questions about your document</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -357,11 +328,9 @@ export default function ChatInterface({ document, documents, showInputInline = t
               <div className="flex-1">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm text-gray-700">
-                    Hi! I'm your AI assistant. {isDualMode
-                      ? `I've analyzed both "${documents[0].originalName}" and "${documents[1].originalName}" and I'm ready to help you compare them, find similarities and differences, explain concepts from either document, or answer any questions about both materials.`
-                      : document 
-                        ? "I've analyzed your document and I'm ready to help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
-                        : "Once you upload a document, I can help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
+                    Hi! I'm your AI assistant. {document 
+                      ? "I've analyzed your document and I'm ready to help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
+                      : "Once you upload a document, I can help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
                     }
                   </p>
                 </div>
