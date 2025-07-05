@@ -11,13 +11,31 @@ interface SimpleMathRendererProps {
   className?: string;
 }
 
+// Helper function to clean markdown formatting
+function cleanMarkdownFormatting(text: string): string {
+  return text
+    .replace(/\*\*/g, '')         // Remove bold markdown
+    .replace(/\*/g, '')           // Remove italic markdown  
+    .replace(/#{1,6}\s?/g, '')    // Remove headers
+    .replace(/`{1,3}/g, '')       // Remove code blocks
+    .replace(/^\s*[-\*\+]\s+/gm, '') // Remove bullet points
+    .replace(/^\s*\d+\.\s+/gm, '')   // Remove numbered lists
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links, keep text
+    .replace(/^\s*>\s?/gm, '')    // Remove blockquotes
+    .replace(/\|/g, ' ')          // Remove table separators
+    .replace(/---+/g, '')         // Remove horizontal rules
+    .replace(/\n{3,}/g, '\n\n')   // Reduce multiple newlines
+    .trim();
+}
+
 export default function SimpleMathRenderer({ content, className = '' }: SimpleMathRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    let processedContent = content;
+    // Clean markdown formatting first
+    let processedContent = cleanMarkdownFormatting(content);
 
     // Preserve original math notation for MathJax processing
     // Convert line breaks to HTML
