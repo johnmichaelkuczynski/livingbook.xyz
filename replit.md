@@ -110,6 +110,14 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 05, 2025: DUAL DOCUMENT COMPARISON FEATURE - Major new functionality added
+  - Built complete dual-document comparison system with separate "/compare" route
+  - Added side-by-side document upload interface (Document A & Document B columns)
+  - Implemented comparison-specific chat sessions and message storage
+  - AI can analyze and compare content from both documents simultaneously
+  - Added navigation between single-document mode and comparison mode
+  - Extended database schema with comparison_sessions and comparison_messages tables
+  - All four AI providers support dual-document analysis context
 - July 05, 2025: FULL REACTIVATION - All AI services operational
   - All four AI provider API keys configured and active (OpenAI, DeepSeek, Anthropic, Perplexity)
   - Application successfully responding to chat requests with 30+ second processing times

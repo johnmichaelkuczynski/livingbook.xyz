@@ -10,7 +10,7 @@ import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
-import { insertDocumentSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema } from "@shared/schema";
 
 // Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
@@ -686,6 +686,132 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
       console.error("Email error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to send email" 
+      });
+    }
+  });
+
+  // Comparison API endpoints
+  
+  // Send comparison message
+  app.post("/api/compare/message", async (req, res) => {
+    try {
+      const { message, provider = 'deepseek', documentAId, documentBId } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Get or create comparison session
+      let session = await storage.createComparisonSession({ 
+        documentAId: documentAId || null, 
+        documentBId: documentBId || null 
+      });
+
+      // Get documents content if provided
+      let documentAContent = "";
+      let documentBContent = "";
+      
+      if (documentAId) {
+        const docA = await storage.getDocument(documentAId);
+        if (docA) documentAContent = docA.content;
+      }
+      
+      if (documentBId) {
+        const docB = await storage.getDocument(documentBId);
+        if (docB) documentBContent = docB.content;
+      }
+
+      // Get conversation history
+      const messages = await storage.getComparisonMessages(session.id);
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Save user message
+      const userMessageData = {
+        sessionId: session.id,
+        role: "user",
+        content: message
+      };
+      const validatedUserMessage = insertComparisonMessageSchema.parse(userMessageData);
+      await storage.createComparisonMessage(validatedUserMessage);
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      // Create context from both documents
+      let documentContext = "";
+      if (documentAContent && documentBContent) {
+        documentContext = `Document A:\n${documentAContent}\n\nDocument B:\n${documentBContent}`;
+      } else if (documentAContent) {
+        documentContext = `Document A:\n${documentAContent}`;
+      } else if (documentBContent) {
+        documentContext = `Document B:\n${documentBContent}`;
+      }
+      
+      // Generate AI response with both documents context
+      const aiResponse = await generateChatResponse(
+        message,
+        documentContext,
+        conversationHistory
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      // Save AI response
+      const aiMessageData = {
+        sessionId: session.id,
+        role: "assistant",
+        content: aiResponse.message
+      };
+      const validatedAiMessage = insertComparisonMessageSchema.parse(aiMessageData);
+      const savedAiMessage = await storage.createComparisonMessage(validatedAiMessage);
+      
+      res.json({
+        sessionId: session.id,
+        id: savedAiMessage.id,
+        role: savedAiMessage.role,
+        content: savedAiMessage.content,
+        timestamp: savedAiMessage.timestamp
+      });
+      
+    } catch (error) {
+      console.error("Comparison chat error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process comparison message" 
+      });
+    }
+  });
+
+  // Get comparison messages for a session
+  app.get("/api/compare/messages/:sessionId", async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      
+      const messages = await storage.getComparisonMessages(sessionId);
+      res.json(messages);
+      
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get comparison messages" 
       });
     }
   });

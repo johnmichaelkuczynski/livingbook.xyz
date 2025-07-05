@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import FormatterPage from "@/pages/formatter";
+import ComparePage from "@/pages/compare";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -12,6 +13,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/formatter" component={FormatterPage} />
+      <Route path="/compare" component={ComparePage} />
       <Route component={NotFound} />
     </Switch>
   );
