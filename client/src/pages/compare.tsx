@@ -242,63 +242,56 @@ export default function ComparePage() {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="chat" className={documentA || documentB ? "bg-blue-50 dark:bg-blue-900" : ""}>
-              AI Chat {(documentA || documentB) && "✨"}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="documents" className="space-y-6">
-            <div className="flex gap-6 min-h-[600px]">
-              <DocumentColumn
-                title="Document A"
-                document={documentA}
-                isUploading={isUploadingA}
-                column="A"
-              />
-              <DocumentColumn
-                title="Document B"
-                document={documentB}
-                isUploading={isUploadingB}
-                column="B"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="chat" className="space-y-6">
-            <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px]">
+          {/* Document A */}
+          <DocumentColumn
+            title="Document A"
+            document={documentA}
+            isUploading={isUploadingA}
+            column="A"
+          />
+          
+          {/* Document B */}
+          <DocumentColumn
+            title="Document B"
+            document={documentB}
+            isUploading={isUploadingB}
+            column="B"
+          />
+          
+          {/* AI Chat Column */}
+          <div className="lg:col-span-1">
+            <Card className="h-full min-h-[500px] flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   AI Comparison Chat
                   {(documentA || documentB) && (
-                    <div className="flex gap-2 ml-auto">
-                      {documentA && <Badge variant="outline">Doc A: {documentA.title}</Badge>}
-                      {documentB && <Badge variant="outline">Doc B: {documentB.title}</Badge>}
+                    <div className="flex gap-1 ml-auto">
+                      {documentA && <Badge variant="outline" className="text-xs">A</Badge>}
+                      {documentB && <Badge variant="outline" className="text-xs">B</Badge>}
                     </div>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-1 flex flex-col space-y-4">
                 {!documentA && !documentB && (
-                  <div className="text-center p-8 text-gray-500 dark:text-gray-400">
-                    Upload at least one document to start chatting with AI
+                  <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-center text-sm">
+                    Upload documents to start AI comparison chat
                   </div>
                 )}
                 
                 {(documentA || documentB) && (
                   <>
-                    <div className="max-h-96 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                    <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px]">
                       {messages.length === 0 ? (
-                        <p className="text-gray-500 dark:text-gray-400 text-center">
-                          No messages yet. Start a conversation about your documents!
+                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                          Ask AI to compare your documents!
                         </p>
                       ) : (
                         messages.map((msg) => (
                           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[70%] p-3 rounded-lg ${
+                            <div className={`max-w-[85%] p-2 rounded-lg text-sm ${
                               msg.role === 'user' 
                                 ? 'bg-blue-600 text-white' 
                                 : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -310,9 +303,9 @@ export default function ComparePage() {
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
                       <Select value={provider} onValueChange={setProvider}>
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -322,37 +315,40 @@ export default function ComparePage() {
                           <SelectItem value="perplexity">Perplexity</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Textarea
-                        placeholder={`Ask AI about ${documentA && documentB ? 'both documents' : documentA ? 'Document A' : 'Document B'}...`}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                        }}
-                        className="flex-1"
-                        rows={3}
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!message.trim() || sendMessageMutation.isPending}
-                        size="sm"
-                      >
-                        {sendMessageMutation.isPending ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Textarea
+                          placeholder={`Compare ${documentA && documentB ? 'both documents' : documentA ? 'Document A' : 'Document B'}...`}
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          className="flex-1"
+                          rows={2}
+                        />
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!message.trim() || sendMessageMutation.isPending}
+                          size="sm"
+                          className="self-end"
+                        >
+                          {sendMessageMutation.isPending ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );
