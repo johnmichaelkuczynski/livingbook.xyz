@@ -313,6 +313,55 @@ Return only the formatted text without any explanations or markdown formatting. 
     }
   });
 
+  // Rewrite text chunk
+  app.post("/api/rewrite-chunk", async (req, res) => {
+    try {
+      const { chunkText, instructions, provider = 'deepseek' } = req.body;
+      
+      if (!chunkText || !instructions) {
+        return res.status(400).json({ error: "Chunk text and instructions are required" });
+      }
+
+      const rewritePrompt = `You are tasked with rewriting the following text according to the user's instructions. Follow the instructions precisely while maintaining the original meaning and important information.
+
+User Instructions: ${instructions}
+
+Original Text:
+"""
+${chunkText}
+"""
+
+Please rewrite the text according to the instructions. Return only the rewritten text without any explanations, quotation marks, or markdown formatting.`;
+
+      let response;
+      switch (provider) {
+        case 'openai':
+          response = await import('./services/openai').then(m => m.generateChatResponse(rewritePrompt, '', []));
+          break;
+        case 'anthropic':
+          response = await import('./services/anthropic').then(m => m.generateChatResponse(rewritePrompt, '', []));
+          break;
+        case 'perplexity':
+          response = await import('./services/perplexity').then(m => m.generateChatResponse(rewritePrompt, '', []));
+          break;
+        default:
+          response = await import('./services/deepseek').then(m => m.generateChatResponse(rewritePrompt, '', []));
+      }
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Clean the response of any markdown formatting
+      const cleanedText = removeMarkupSymbols(response.message);
+      
+      res.json({ rewrittenText: cleanedText });
+    } catch (error) {
+      console.error("Rewrite chunk error:", error);
+      res.status(500).json({ error: "Failed to rewrite chunk" });
+    }
+  });
+
   // Export document
   app.post("/api/export-document", async (req, res) => {
     try {
