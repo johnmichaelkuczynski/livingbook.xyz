@@ -30,7 +30,7 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   // Simple client-side chunking function
-  const chunkDocumentClient = (content: string, maxWords: number = 1000) => {
+  const chunkDocumentClient = (content: string, maxWords: number = 10000) => {
     const words = content.split(/\s+/).filter(word => word.length > 0);
     const totalWordCount = words.length;
     
