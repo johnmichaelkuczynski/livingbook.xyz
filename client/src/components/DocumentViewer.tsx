@@ -50,8 +50,8 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
 
 
   return (
-    <Card className="flex-1 flex flex-col">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+    <Card className="flex-1 flex flex-col h-full">
+      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
         <h2 className="text-lg font-semibold text-gray-900">Document Content</h2>
         <div className="flex items-center space-x-2">
           {document && (
@@ -85,7 +85,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
         </div>
       </div>
       
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-6">
             {isLoading ? (
@@ -95,7 +95,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             ) : !document ? (
               <div 
-                className={`flex flex-col items-center justify-center py-12 text-center cursor-pointer rounded-lg transition-colors border-2 border-dashed ${
+                className={`flex flex-col items-center justify-center py-12 text-center cursor-pointer rounded-lg transition-colors border-2 border-dashed min-h-[400px] ${
                   dragActive 
                     ? 'border-primary bg-primary/10' 
                     : 'border-gray-300 hover:border-primary hover:bg-gray-50'
