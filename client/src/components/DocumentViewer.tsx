@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MoreHorizontal, FileText, MessageCircle, Edit3 } from 'lucide-react';
+import { Search, MoreHorizontal, FileText, MessageCircle, Edit3, Upload, RotateCcw } from 'lucide-react';
 import SimpleMathRenderer from './SimpleMathRenderer';
 
 interface DocumentViewerProps {
@@ -55,15 +55,26 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
         <h2 className="text-lg font-semibold text-gray-900">Document Content</h2>
         <div className="flex items-center space-x-2">
           {document && (
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={onRewriteClick}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Edit3 className="w-4 h-4 mr-1" />
-              Rewrite
-            </Button>
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onUploadClick}
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                <Upload className="w-4 h-4 mr-1" />
+                Replace Document
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={onRewriteClick}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Edit3 className="w-4 h-4 mr-1" />
+                Rewrite
+              </Button>
+            </>
           )}
           <Button variant="ghost" size="sm">
             <Search className="w-4 h-4" />
