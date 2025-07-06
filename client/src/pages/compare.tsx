@@ -91,39 +91,61 @@ export default function ComparePage() {
     const setUploading = column === 'A' ? setIsUploadingA : setIsUploadingB;
     const setDocument = column === 'A' ? setDocumentA : setDocumentB;
     
+    // Check file size (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: `File size must be under 50MB. Current file: ${Math.round(file.size / 1024 / 1024)}MB`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setUploading(true);
     
     try {
       const formData = new FormData();
       formData.append("file", file);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
       }
 
       const document = await response.json();
       setDocument(document);
       
-      // Auto-switch to chat tab when a document is uploaded
-      if (activeTab === "documents") {
-        setActiveTab("chat");
-      }
-      
       toast({
         title: "Success",
-        description: `Document ${column} uploaded successfully`,
+        description: `Document ${column} uploaded successfully (${Math.round(file.size / 1024)}KB)`,
       });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to upload document ${column}`,
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Upload Timeout",
+          description: `Upload took too long. Try with a smaller file or check your connection.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload document ${column}: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     } finally {
       setUploading(false);
     }
@@ -222,6 +244,7 @@ export default function ComparePage() {
                 <div className="space-y-2">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                  <p className="text-xs text-gray-500">Large files may take up to 2 minutes</p>
                 </div>
               ) : (
                 <div className="space-y-2">
