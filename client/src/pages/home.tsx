@@ -420,6 +420,36 @@ export default function Home() {
         document={currentDocument}
         isOpen={isRewritePanelOpen}
         onClose={handleCloseRewritePanel}
+        onApplyChunkToDocument={(chunkIndex: number, newContent: string) => {
+          if (documentChunks && currentDocument) {
+            // Update the specific chunk in document chunks
+            const updatedChunks = [...documentChunks.chunks];
+            if (updatedChunks[chunkIndex]) {
+              updatedChunks[chunkIndex] = {
+                ...updatedChunks[chunkIndex],
+                content: newContent,
+                isModified: true
+              };
+              
+              setDocumentChunks({
+                ...documentChunks,
+                chunks: updatedChunks
+              });
+
+              // Also update the main document content
+              const reconstructedContent = updatedChunks.map(chunk => chunk.content).join('\n\n');
+              setCurrentDocument({
+                ...currentDocument,
+                content: reconstructedContent
+              });
+
+              toast({
+                title: "Document Updated",
+                description: `Chunk ${chunkIndex + 1} has been applied to the main document.`,
+              });
+            }
+          }
+        }}
       />
 
     </div>
