@@ -24,6 +24,7 @@ export interface IStorage {
   // Comparison session methods
   createComparisonSession(session: InsertComparisonSession): Promise<ComparisonSession>;
   getComparisonSession(id: number): Promise<ComparisonSession | undefined>;
+  updateComparisonSession(id: number, updates: Partial<ComparisonSession>): Promise<ComparisonSession | undefined>;
   
   // Comparison message methods
   createComparisonMessage(message: InsertComparisonMessage): Promise<ComparisonMessage>;
@@ -158,6 +159,15 @@ export class MemStorage implements IStorage {
 
   async getComparisonSession(id: number): Promise<ComparisonSession | undefined> {
     return this.comparisonSessions.get(id);
+  }
+
+  async updateComparisonSession(id: number, updates: Partial<ComparisonSession>): Promise<ComparisonSession | undefined> {
+    const session = this.comparisonSessions.get(id);
+    if (!session) return undefined;
+    
+    const updatedSession = { ...session, ...updates };
+    this.comparisonSessions.set(id, updatedSession);
+    return updatedSession;
   }
 
   async createComparisonMessage(insertMessage: InsertComparisonMessage): Promise<ComparisonMessage> {

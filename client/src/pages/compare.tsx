@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, MessageSquare, Send } from "lucide-react";
+import { FileText, Upload, MessageSquare, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import SimpleMathRenderer from "@/components/SimpleMathRenderer";
@@ -241,22 +241,48 @@ export default function ComparePage() {
           ) : (
             <div className="flex-1 flex flex-col space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">{doc.title}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{doc.title}</h3>
+                  {sessionId && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      ✓ Chat history preserved when replacing documents
+                    </p>
+                  )}
+                </div>
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
                 <SimpleMathRenderer content={doc.content} className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const setDocument = column === 'A' ? setDocumentA : setDocumentB;
-                  setDocument(null);
-                }}
-              >
-                Remove Document
-              </Button>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={(e) => handleFileSelect(e, column)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Replace Document
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const setDocument = column === 'A' ? setDocumentA : setDocumentB;
+                    setDocument(null);
+                  }}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Remove
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

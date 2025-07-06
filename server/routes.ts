@@ -705,6 +705,14 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
       let session;
       if (sessionId) {
         session = await storage.getComparisonSession(sessionId);
+        
+        // If session exists and documents have changed, update the session
+        if (session && (session.documentAId !== documentAId || session.documentBId !== documentBId)) {
+          session = await storage.updateComparisonSession(sessionId, {
+            documentAId: documentAId || null,
+            documentBId: documentBId || null
+          });
+        }
       }
       
       if (!session) {
