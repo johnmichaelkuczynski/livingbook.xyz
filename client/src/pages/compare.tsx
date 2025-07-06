@@ -257,18 +257,26 @@ export default function ComparePage() {
               <div className="flex gap-2">
                 <div className="relative">
                   <input
+                    id={`replace-${column}`}
                     type="file"
                     accept=".pdf,.docx,.txt"
-                    onChange={(e) => handleFileSelect(e, column)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0], column);
+                        e.target.value = ''; // Reset input
+                      }
+                    }}
+                    className="hidden"
                   />
                   <Button
                     variant="default"
                     size="sm"
                     className="w-full"
+                    onClick={() => document.getElementById(`replace-${column}`)?.click()}
+                    disabled={isUploading}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Replace Document
+                    {isUploading ? 'Uploading...' : 'Replace Document'}
                   </Button>
                 </div>
                 <Button
@@ -302,12 +310,30 @@ export default function ComparePage() {
               Upload two documents and chat with AI about both simultaneously
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/'}
-          >
-            ← Back to Home
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/'}
+            >
+              ← Back to Home
+            </Button>
+            {(documentA || documentB || sessionId) && (
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  setDocumentA(null);
+                  setDocumentB(null);
+                  setSessionId(null);
+                  setMessage('');
+                  queryClient.invalidateQueries({ queryKey: ["/api/compare/messages"] });
+                }}
+                className="flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Start Fresh
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px] pb-32">
