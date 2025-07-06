@@ -60,7 +60,9 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   // Fetch chat messages for the current document or global chat
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'],
-    refetchInterval: 2000, // Refetch every 2 seconds to see new messages
+    refetchInterval: false, // Disable aggressive polling to improve input performance
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Send message mutation
