@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -141,6 +141,16 @@ export default function Home() {
     setIsRewritePanelOpen(false);
   };
 
+  const handleStartFresh = () => {
+    setCurrentDocument(null);
+    setMessage('');
+    queryClient.clear();
+    toast({
+      title: "Fresh start",
+      description: "All documents and conversation history cleared.",
+    });
+  };
+
   // Mutation to create document from AI message
   const createDocumentMutation = useMutation({
     mutationFn: async ({ title, content }: { title: string; content: string }) => {
@@ -207,6 +217,16 @@ export default function Home() {
                 </svg>
                 Formatter
               </Button>
+              {currentDocument && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleStartFresh}
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Start Fresh
+                </Button>
+              )}
               <Button 
                 variant="default" 
                 onClick={() => fileInputRef.current?.click()}
