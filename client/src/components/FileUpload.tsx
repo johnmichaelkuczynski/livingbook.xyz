@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, File, X, CheckCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Upload, File, X, CheckCircle, Type, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface FileUploadProps {
@@ -13,6 +15,8 @@ interface FileUploadProps {
 export default function FileUpload({ onFileUploaded, isUploading, setIsUploading }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<any>(null);
+  const [textInput, setTextInput] = useState('');
+  const [activeTab, setActiveTab] = useState('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -100,8 +104,38 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
     }
   };
 
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) {
+      toast({
+        title: "Empty text",
+        description: "Please enter some text before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a document object from the text input
+    const textDocument = {
+      id: Date.now(), // Simple ID generation
+      originalName: `Text Input (${new Date().toLocaleTimeString()})`,
+      fileType: 'text/plain',
+      fileSize: new Blob([textInput]).size,
+      content: textInput.trim(),
+      uploadedAt: new Date().toISOString()
+    };
+
+    setUploadedFile(textDocument);
+    onFileUploaded(textDocument);
+    
+    toast({
+      title: "Text processed successfully",
+      description: "Your text is ready for analysis.",
+    });
+  };
+
   const handleRemoveFile = () => {
     setUploadedFile(null);
+    setTextInput('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -118,44 +152,84 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
   return (
     <div className="mb-4">
       {!uploadedFile ? (
-        <div
-          className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-            dragActive || isUploading
-              ? 'border-primary bg-primary/5'
-              : 'border-gray-300 hover:border-primary hover:bg-primary/5'
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <div className="flex items-center justify-center space-x-3">
-            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-              {isUploading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              ) : (
-                <Upload className="w-4 h-4 text-gray-500" />
-              )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Upload File
+            </TabsTrigger>
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="w-4 h-4" />
+              Enter Text
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upload" className="mt-4">
+            <div
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                dragActive || isUploading
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-300 hover:border-primary hover:bg-primary/5'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="flex items-center justify-center space-x-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  ) : (
+                    <Upload className="w-4 h-4 text-gray-500" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900">
+                    {isUploading ? 'Processing...' : 'Upload Document'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PDF, DOCX, TXT (Max 10MB)
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileInput}
+                disabled={isUploading}
+              />
             </div>
-            <div className="text-left">
-              <p className="text-sm font-medium text-gray-900">
-                {isUploading ? 'Processing...' : 'Upload Document'}
-              </p>
-              <p className="text-xs text-gray-500">
-                PDF, DOCX, TXT (Max 10MB)
-              </p>
+          </TabsContent>
+          
+          <TabsContent value="text" className="mt-4">
+            <div className="space-y-4">
+              <Textarea
+                placeholder="Type or paste your text here..."
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                className="min-h-[200px] resize-vertical"
+                disabled={isUploading}
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
+                </p>
+                <Button 
+                  onClick={handleTextSubmit} 
+                  disabled={!textInput.trim() || isUploading}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Process Text
+                </Button>
+              </div>
             </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept=".pdf,.docx,.txt"
-            onChange={handleFileInput}
-            disabled={isUploading}
-          />
-        </div>
+          </TabsContent>
+        </Tabs>
       ) : (
         <div className="p-3 bg-gray-50 rounded-lg">
           <div className="flex items-center justify-between">

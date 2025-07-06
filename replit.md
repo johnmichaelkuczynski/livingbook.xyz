@@ -110,6 +110,14 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 06, 2025: TEXT INPUT CAPABILITIES ADDED - COMPLETE INPUT FLEXIBILITY
+  - **ENHANCED**: Both single-document and dual-document interfaces now support text input alternatives
+  - **ADDED**: Tabbed interface with "Upload File" and "Enter Text" options in all document input areas
+  - **IMPROVED**: Users can now type or copy-paste text directly instead of only uploading files
+  - **FEATURES**: Real-time character/word count, text validation, and proper document object creation
+  - **ENHANCED**: Dual-document comparison now supports any combination: file+file, text+text, or file+text
+  - **PERFECTED**: Synthesis modal works seamlessly with both uploaded files and entered text
+  - Complete flexibility for users who want to work with text content without file uploads
 - July 06, 2025: DOWNLOAD FORMATTING FIXED - ACCESSIBILITY WORKFLOW PERFECTED
   - **FIXED**: Download formatting issue - PDF downloads now have proper paragraph structure instead of one giant paragraph
   - **ENHANCED**: PDF styling with proper margins, headings, justified text, and professional typography

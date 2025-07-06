@@ -50,6 +50,10 @@ export default function ComparePage() {
   const [activeTab, setActiveTab] = useState("documents");
   const [dragActiveA, setDragActiveA] = useState(false);
   const [dragActiveB, setDragActiveB] = useState(false);
+  const [textInputA, setTextInputA] = useState('');
+  const [textInputB, setTextInputB] = useState('');
+  const [inputModeA, setInputModeA] = useState<'upload' | 'text'>('upload');
+  const [inputModeB, setInputModeB] = useState<'upload' | 'text'>('upload');
   
   // Synthesis Modal State
   const [showSynthesisModal, setShowSynthesisModal] = useState(false);
@@ -203,6 +207,42 @@ export default function ComparePage() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  const handleTextSubmit = (column: 'A' | 'B') => {
+    const textInput = column === 'A' ? textInputA : textInputB;
+    
+    if (!textInput.trim()) {
+      toast({
+        title: "Empty text",
+        description: `Please enter some text for Document ${column} before submitting.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a document object from the text input
+    const textDocument = {
+      id: Date.now() + (column === 'B' ? 1 : 0), // Simple ID generation with offset for B
+      originalName: `Text Input ${column} (${new Date().toLocaleTimeString()})`,
+      fileType: 'text/plain',
+      fileSize: new Blob([textInput]).size,
+      content: textInput.trim(),
+      uploadedAt: new Date().toISOString()
+    };
+
+    if (column === 'A') {
+      setDocumentA(textDocument);
+      setTextInputA('');
+    } else {
+      setDocumentB(textDocument);
+      setTextInputB('');
+    }
+    
+    toast({
+      title: "Text processed successfully",
+      description: `Document ${column} is ready for analysis.`,
+    });
   };
 
   const handleDrop = (e: React.DragEvent, column: 'A' | 'B') => {
@@ -425,56 +465,104 @@ export default function ComparePage() {
         </CardHeader>
         <CardContent className="flex-1 flex flex-col">
           {!doc ? (
-            <div className="relative flex-1 flex items-center justify-center">
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt"
-                onChange={(e) => handleFileSelect(e, column)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] flex items-center justify-center ${
-                  (column === 'A' ? dragActiveA : dragActiveB)
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                }`}
-                onDrop={(e) => handleDrop(e, column)}
-                onDragEnter={(e) => handleDragEnter(e, column)}
-                onDragLeave={(e) => handleDragLeave(e, column)}
-                onDragOver={handleDragOver}
+            <Tabs 
+              value={column === 'A' ? inputModeA : inputModeB} 
+              onValueChange={(value) => {
+                if (column === 'A') setInputModeA(value as 'upload' | 'text');
+                else setInputModeB(value as 'upload' | 'text');
+              }}
+              className="flex-1 flex flex-col"
             >
-              {isUploading ? (
-                <div className="space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
-                  <p className="text-xs text-gray-500">Large files may take up to 2 minutes</p>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="upload" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Upload File
+                </TabsTrigger>
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Enter Text
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upload" className="flex-1 flex items-center justify-center">
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={(e) => handleFileSelect(e, column)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] flex items-center justify-center ${
+                      (column === 'A' ? dragActiveA : dragActiveB)
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                    }`}
+                    onDrop={(e) => handleDrop(e, column)}
+                    onDragEnter={(e) => handleDragEnter(e, column)}
+                    onDragLeave={(e) => handleDragLeave(e, column)}
+                    onDragOver={handleDragOver}
+                  >
+                    {isUploading ? (
+                      <div className="space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                        <p className="text-xs text-gray-500">Large files may take up to 2 minutes</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Upload className={`w-12 h-12 mx-auto ${
+                          (column === 'A' ? dragActiveA : dragActiveB) 
+                            ? 'text-blue-500' 
+                            : 'text-gray-400'
+                        }`} />
+                        <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                          {(column === 'A' ? dragActiveA : dragActiveB) 
+                            ? `Drop Document ${column} here` 
+                            : `Upload Document ${column}`}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {(column === 'A' ? dragActiveA : dragActiveB) 
+                            ? 'Release to upload' 
+                            : 'Drop a file here or click to browse'}
+                        </p>
+                        {!(column === 'A' ? dragActiveA : dragActiveB) && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            Supports PDF, Word, and TXT files
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <Upload className={`w-12 h-12 mx-auto ${
-                    (column === 'A' ? dragActiveA : dragActiveB) 
-                      ? 'text-blue-500' 
-                      : 'text-gray-400'
-                  }`} />
-                  <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                    {(column === 'A' ? dragActiveA : dragActiveB) 
-                      ? `Drop Document ${column} here` 
-                      : `Upload Document ${column}`}
+              </TabsContent>
+              
+              <TabsContent value="text" className="flex-1 flex flex-col space-y-4">
+                <Textarea
+                  placeholder={`Type or paste your text for Document ${column} here...`}
+                  value={column === 'A' ? textInputA : textInputB}
+                  onChange={(e) => {
+                    if (column === 'A') setTextInputA(e.target.value);
+                    else setTextInputB(e.target.value);
+                  }}
+                  className="flex-1 min-h-[250px] resize-vertical"
+                  disabled={isUploading}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    {(column === 'A' ? textInputA : textInputB).length} characters • {(column === 'A' ? textInputA : textInputB).trim().split(/\s+/).filter(word => word.length > 0).length} words
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {(column === 'A' ? dragActiveA : dragActiveB) 
-                      ? 'Release to upload' 
-                      : 'Drop a file here or click to browse'}
-                  </p>
-                  {!(column === 'A' ? dragActiveA : dragActiveB) && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      Supports PDF, Word, and TXT files
-                    </p>
-                  )}
+                  <Button 
+                    onClick={() => handleTextSubmit(column)} 
+                    disabled={!(column === 'A' ? textInputA : textInputB).trim() || isUploading}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Process Text
+                  </Button>
                 </div>
-              )}
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           ) : (
             <div className="flex-1 flex flex-col space-y-4">
               <div className="flex items-center justify-between">
