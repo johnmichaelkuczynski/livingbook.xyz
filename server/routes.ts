@@ -102,8 +102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload document (main route)
-  app.post("/api/documents/upload", upload.single('document'), async (req, res) => {
+  // Upload document (main route) - keeping legacy /api/upload for compatibility
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -123,9 +123,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalName: originalname,
         fileType: mimetype,
         fileSize: size,
-        content: extractedText
+        content: extractedText,
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
       };
       
+
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
       
@@ -183,7 +185,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalName: originalname,
         fileType: mimetype,
         fileSize: size,
-        content: extractedText
+        content: extractedText,
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
       };
       
       const validatedData = insertDocumentSchema.parse(documentData);

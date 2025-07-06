@@ -33,13 +33,13 @@ export default function Home() {
   };
 
   const handleFile = async (file: File) => {
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 50 * 1024 * 1024; // 50MB
     const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
     
     if (file.size > maxSize) {
       toast({
         title: "File too large",
-        description: "Please select a file smaller than 10MB.",
+        description: "Please select a file smaller than 50MB.",
         variant: "destructive",
       });
       return;
@@ -58,7 +58,7 @@ export default function Home() {
     
     try {
       const formData = new FormData();
-      formData.append('document', file);
+      formData.append('file', file);
       
       const response = await fetch('/api/upload', {
         method: 'POST',

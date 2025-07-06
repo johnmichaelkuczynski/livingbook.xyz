@@ -79,9 +79,13 @@ export class MemStorage implements IStorage {
 
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
     const id = this.currentDocumentId++;
+    const wordCount = insertDocument.content.split(/\s+/).filter(word => word.length > 0).length;
     const document: Document = { 
       ...insertDocument, 
       id,
+      totalWords: wordCount,
+      isChunked: wordCount > 1000,
+      chunkCount: wordCount > 1000 ? Math.ceil(wordCount / 1000) : 1,
       uploadedAt: new Date()
     };
     this.documents.set(id, document);

@@ -22,7 +22,7 @@ export default function FormatterPage() {
     setIsUploading(true);
 
     const formData = new FormData();
-    formData.append('document', file);
+    formData.append('file', file);
 
     try {
       const response = await fetch('/api/upload', {
