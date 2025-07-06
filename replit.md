@@ -110,6 +110,13 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 06, 2025: MATH RENDERING & PERFORMANCE OPTIMIZATIONS - FULLY FUNCTIONAL
+  - **FIXED**: Math rendering completely resolved with new KaTeXRenderer component supporting all LaTeX/KaTeX symbols (Σ, π, ∫, etc.)
+  - **ADDED**: Automatic document chunking for large documents (1000+ words) with efficient chunked display
+  - **ENHANCED**: Document replacement functionality in comparison mode - both Document A and B can be swapped mid-conversation
+  - **IMPROVED**: Upload system handles full documents without truncation while maintaining performance through chunking
+  - **VERIFIED**: User confirmed "MUCH BETTER" - all critical issues resolved and system fully operational
+  - All components now use improved KaTeXRenderer instead of broken SimpleMathRenderer
 - July 05, 2025: DOCUMENT REPLACEMENT & FRESH START FEATURES - DEPLOYMENT READY
   - **FIXED**: Document replacement functionality now works properly with correct file input handling
   - **ADDED**: "Start Fresh" button to clear all documents and conversation history
