@@ -103,7 +103,7 @@ export default function Home() {
     }
   };
 
-  const handleTextSubmit = () => {
+  const handleTextSubmit = async () => {
     if (!textInput.trim()) {
       toast({
         title: "Empty text",
@@ -113,23 +113,44 @@ export default function Home() {
       return;
     }
 
-    // Create a document object from the text input
-    const textDocument = {
-      id: Date.now(),
-      originalName: `Text Input (${new Date().toLocaleTimeString()})`,
-      fileType: 'text/plain',
-      fileSize: new Blob([textInput]).size,
-      content: textInput.trim(),
-      uploadedAt: new Date().toISOString()
-    };
-
-    handleFileUploaded(textDocument);
-    setTextInput('');
+    setIsUploading(true);
     
-    toast({
-      title: "Text processed successfully",
-      description: "Your text is ready for analysis.",
-    });
+    try {
+      // Send text to backend for processing
+      const response = await fetch('/api/documents/create-from-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: textInput.trim(),
+          title: `Text Input (${new Date().toLocaleTimeString()})`
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Text processing failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      handleFileUploaded(result);
+      setTextInput('');
+      
+      toast({
+        title: "Text processed successfully",
+        description: "Your text is ready for analysis.",
+      });
+      
+    } catch (error) {
+      console.error('Text processing error:', error);
+      toast({
+        title: "Text processing failed",
+        description: "There was an error processing your text. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleFile = async (file: File) => {

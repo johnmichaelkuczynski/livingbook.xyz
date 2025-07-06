@@ -209,7 +209,7 @@ export default function ComparePage() {
     e.stopPropagation();
   };
 
-  const handleTextSubmit = (column: 'A' | 'B') => {
+  const handleTextSubmit = async (column: 'A' | 'B') => {
     const textInput = column === 'A' ? textInputA : textInputB;
     
     if (!textInput.trim()) {
@@ -221,28 +221,58 @@ export default function ComparePage() {
       return;
     }
 
-    // Create a document object from the text input
-    const textDocument = {
-      id: Date.now() + (column === 'B' ? 1 : 0), // Simple ID generation with offset for B
-      originalName: `Text Input ${column} (${new Date().toLocaleTimeString()})`,
-      fileType: 'text/plain',
-      fileSize: new Blob([textInput]).size,
-      content: textInput.trim(),
-      uploadedAt: new Date().toISOString()
-    };
-
     if (column === 'A') {
-      setDocumentA(textDocument);
-      setTextInputA('');
+      setIsUploadingA(true);
     } else {
-      setDocumentB(textDocument);
-      setTextInputB('');
+      setIsUploadingB(true);
     }
     
-    toast({
-      title: "Text processed successfully",
-      description: `Document ${column} is ready for analysis.`,
-    });
+    try {
+      // Send text to backend for processing
+      const response = await fetch('/api/documents/create-from-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: textInput.trim(),
+          title: `Text Input ${column} (${new Date().toLocaleTimeString()})`
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Text processing failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (column === 'A') {
+        setDocumentA(result);
+        setTextInputA('');
+      } else {
+        setDocumentB(result);
+        setTextInputB('');
+      }
+      
+      toast({
+        title: "Text processed successfully",
+        description: `Document ${column} is ready for analysis.`,
+      });
+      
+    } catch (error) {
+      console.error('Text processing error:', error);
+      toast({
+        title: "Text processing failed",
+        description: `There was an error processing your text for Document ${column}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      if (column === 'A') {
+        setIsUploadingA(false);
+      } else {
+        setIsUploadingB(false);
+      }
+    }
   };
 
   const handleDrop = (e: React.DragEvent, column: 'A' | 'B') => {
