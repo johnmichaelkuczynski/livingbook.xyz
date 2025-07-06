@@ -116,6 +116,8 @@ DocMath AI is a full-stack web application that allows users to upload documents
   - **ENHANCED**: Documents are automatically chunked for better performance
   - **IMPROVED**: AI chat now handles large documents gracefully with partial content
   - **FIXED**: Document scrolling issue in single view mode - full document navigation now works
+  - **APPLIED TO DUAL COMPARISON**: Extended chunked document handling to dual document interface
+  - **ENHANCED**: Both single and dual document modes now handle large texts (1,000+ words) with automatic chunking
   - Large documents processed intelligently to stay within API token limits
 - July 06, 2025: TEXT INPUT CAPABILITIES ADDED - COMPLETE INPUT FLEXIBILITY
   - **ENHANCED**: Both single-document and dual-document interfaces now support text input alternatives
