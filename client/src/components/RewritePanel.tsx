@@ -9,7 +9,7 @@ import { X, Play, CheckSquare, Square, Download, Expand, Minimize } from 'lucide
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import SimpleMathRenderer from './SimpleMathRenderer';
+import KaTeXRenderer from './KaTeXRenderer';
 
 interface RewritePanelProps {
   document: any | null;
@@ -579,7 +579,7 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                         <div className={`text-sm text-gray-700 bg-gray-50 p-3 rounded overflow-y-auto ${
                           expandedChunks.has(chunk.id) ? 'max-h-none h-auto' : 'max-h-32'
                         }`}>
-                          <SimpleMathRenderer content={
+                          <KaTeXRenderer content={
                             expandedChunks.has(chunk.id) 
                               ? chunk.text 
                               : chunk.text.substring(0, 300) + (chunk.text.length > 300 ? '...' : '')
@@ -593,7 +593,7 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                           <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 ${
                             expandedChunks.has(chunk.id) ? 'max-h-none h-auto' : 'max-h-32'
                           }`}>
-                            <SimpleMathRenderer content={
+                            <KaTeXRenderer content={
                               expandedChunks.has(chunk.id) 
                                 ? chunk.rewrittenText 
                                 : chunk.rewrittenText.substring(0, 300) + (chunk.rewrittenText.length > 300 ? '...' : '')
