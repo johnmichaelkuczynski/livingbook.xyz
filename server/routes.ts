@@ -598,10 +598,20 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
       
+      // Truncate document content if too large to fit in context window
+      const maxContentLength = 50000; // Roughly 12,500 tokens at 4 chars per token
+      let documentContent = document.content;
+      
+      if (document.content.length > maxContentLength) {
+        // For large documents, take the first portion and add a note
+        documentContent = document.content.substring(0, maxContentLength) + 
+          `\n\n[Note: Document is ${document.content.length} characters. Only first ${maxContentLength} characters shown. For specific sections, please ask the user to use the chunked document view or ask about specific topics.]`;
+      }
+      
       // Generate AI response
       const aiResponse = await generateChatResponse(
         message,
-        document.content,
+        documentContent,
         conversationHistory
       );
       
