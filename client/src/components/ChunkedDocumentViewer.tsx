@@ -105,6 +105,25 @@ export default function ChunkedDocumentViewer({
             <div className="flex items-center gap-2">
               <Badge variant="outline">{chunks.length} chunks</Badge>
               <Badge variant="secondary">{document.fileType.toUpperCase()}</Badge>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={() => {
+                  // Open main RewritePanel for document rewriting
+                  if (onRewriteChunk) {
+                    onRewriteChunk(0, "open_rewrite_panel"); // Signal to open main rewrite panel
+                  } else {
+                    toast({
+                      title: "Rewrite Mode",
+                      description: "Click the main Rewrite button to access document rewriting features.",
+                    });
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white ml-2"
+              >
+                <Edit3 className="w-4 h-4 mr-1" />
+                Rewrite Document
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>

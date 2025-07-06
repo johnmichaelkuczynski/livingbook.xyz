@@ -346,10 +346,8 @@ export default function Home() {
                   });
                 }}
                 onRewriteChunk={(chunkIndex, instructions) => {
-                  toast({
-                    title: "Chunk Rewrite",
-                    description: `Rewrite request for chunk ${chunkIndex + 1}: ${instructions}`,
-                  });
+                  // Handle rewrite from chunk view - open main rewrite panel
+                  setIsRewritePanelOpen(true);
                 }}
               />
             ) : (
