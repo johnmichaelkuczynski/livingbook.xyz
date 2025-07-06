@@ -992,14 +992,30 @@ Instructions: ${instructions}
           break;
       }
 
-      // Create context from both documents
+      // Truncate document content if too large to fit in context window
+      const maxContentLength = 25000; // Roughly 6,250 tokens at 4 chars per token (split between two docs)
+      
+      let truncatedDocAContent = documentAContent;
+      let truncatedDocBContent = documentBContent;
+      
+      if (documentAContent.length > maxContentLength) {
+        truncatedDocAContent = documentAContent.substring(0, maxContentLength) + 
+          `\n\n[Note: Document A is ${documentAContent.length} characters. Only first ${maxContentLength} characters shown. For specific sections, please ask about particular topics or use the chunked document view.]`;
+      }
+      
+      if (documentBContent.length > maxContentLength) {
+        truncatedDocBContent = documentBContent.substring(0, maxContentLength) + 
+          `\n\n[Note: Document B is ${documentBContent.length} characters. Only first ${maxContentLength} characters shown. For specific sections, please ask about particular topics or use the chunked document view.]`;
+      }
+
+      // Create context from both documents with truncated content
       let documentContext = "";
-      if (documentAContent && documentBContent) {
-        documentContext = `Document A:\n${documentAContent}\n\nDocument B:\n${documentBContent}`;
-      } else if (documentAContent) {
-        documentContext = `Document A:\n${documentAContent}`;
-      } else if (documentBContent) {
-        documentContext = `Document B:\n${documentBContent}`;
+      if (truncatedDocAContent && truncatedDocBContent) {
+        documentContext = `Document A:\n${truncatedDocAContent}\n\nDocument B:\n${truncatedDocBContent}`;
+      } else if (truncatedDocAContent) {
+        documentContext = `Document A:\n${truncatedDocAContent}`;
+      } else if (truncatedDocBContent) {
+        documentContext = `Document B:\n${truncatedDocBContent}`;
       }
       
       // Generate AI response with both documents context
