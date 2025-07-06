@@ -45,7 +45,7 @@ export default function ComparePage() {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number }) => {
+    mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number; sessionId?: number }) => {
       const response = await fetch("/api/compare/message", {
         method: "POST",
         headers: {
@@ -64,7 +64,7 @@ export default function ComparePage() {
       if (!sessionId && data.sessionId) {
         setSessionId(data.sessionId);
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/compare/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/compare/messages", sessionId || data.sessionId] });
       setMessage("");
     },
     onError: (error: any) => {
@@ -164,6 +164,7 @@ export default function ComparePage() {
       provider,
       documentAId: documentA?.id,
       documentBId: documentB?.id,
+      sessionId: sessionId,
     });
   };
 

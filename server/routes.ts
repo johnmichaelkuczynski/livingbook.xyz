@@ -695,17 +695,24 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
   // Send comparison message
   app.post("/api/compare/message", async (req, res) => {
     try {
-      const { message, provider = 'deepseek', documentAId, documentBId } = req.body;
+      const { message, provider = 'deepseek', documentAId, documentBId, sessionId } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
 
       // Get or create comparison session
-      let session = await storage.createComparisonSession({ 
-        documentAId: documentAId || null, 
-        documentBId: documentBId || null 
-      });
+      let session;
+      if (sessionId) {
+        session = await storage.getComparisonSession(sessionId);
+      }
+      
+      if (!session) {
+        session = await storage.createComparisonSession({ 
+          documentAId: documentAId || null, 
+          documentBId: documentBId || null 
+        });
+      }
 
       // Get documents content if provided
       let documentAContent = "";
