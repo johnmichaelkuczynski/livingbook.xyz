@@ -628,7 +628,8 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                               onClick={() => togglePreviewExpanded(chunk.id)}
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0"
+                              className="h-6 w-6 p-0 hover:bg-green-100"
+                              title={expandedPreviews.has(chunk.id) ? "Minimize preview" : "Expand preview to read full content"}
                             >
                               {expandedPreviews.has(chunk.id) ? (
                                 <Minimize className="w-3 h-3" />
@@ -637,14 +638,10 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                               )}
                             </Button>
                           </div>
-                          <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 ${
-                            expandedPreviews.has(chunk.id) ? 'max-h-96 h-auto' : 'max-h-32'
+                          <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 transition-all duration-300 ${
+                            expandedPreviews.has(chunk.id) ? 'max-h-[80vh] min-h-96' : 'max-h-32'
                           }`}>
-                            <KaTeXRenderer content={
-                              expandedPreviews.has(chunk.id) 
-                                ? chunk.rewrittenText 
-                                : chunk.rewrittenText.substring(0, 300) + (chunk.rewrittenText.length > 300 ? '...' : '')
-                            } />
+                            <KaTeXRenderer content={chunk.rewrittenText} />
                           </div>
                         </div>
                       )}
