@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export default function ComparePage() {
   const [isUploadingA, setIsUploadingA] = useState(false);
   const [isUploadingB, setIsUploadingB] = useState(false);
   const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [provider, setProvider] = useState("deepseek");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("documents");
@@ -35,6 +36,11 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Optimized onChange handler to reduce re-renders
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+  }, []);
 
   // Fetch comparison messages for the session
   const { data: messages = [] } = useQuery<ChatMessage[]>({
@@ -193,15 +199,20 @@ export default function ComparePage() {
   };
 
   const handleSendMessage = () => {
-    if (!message.trim()) return;
+    if (!inputRef.current) return;
+    const messageText = inputRef.current.value.trim();
+    if (!messageText) return;
     
     sendMessageMutation.mutate({
-      message: message.trim(),
+      message: messageText,
       provider,
       documentAId: documentA?.id,
       documentBId: documentB?.id,
       sessionId: sessionId,
     });
+    
+    // Clear the input after sending
+    inputRef.current.value = '';
   };
 
   const DocumentColumn = ({ 
@@ -455,16 +466,15 @@ export default function ComparePage() {
               <div className="flex space-x-3 max-w-7xl mx-auto">
                 <div className="flex-1">
                   <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    ref={inputRef}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
                     }}
-                    placeholder={`Compare ${documentA && documentB ? 'both documents' : documentA ? 'Document A' : 'Document B'}...`}
-                    className="w-full h-20 resize-none text-lg border-2 border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    placeholder="Type your message..."
+                    className="w-full h-20 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     disabled={sendMessageMutation.isPending}
                     autoComplete="off"
                     spellCheck="false"
@@ -486,7 +496,7 @@ export default function ComparePage() {
                   </select>
                   <button 
                     onClick={handleSendMessage}
-                    disabled={!message.trim() || sendMessageMutation.isPending}
+                    disabled={sendMessageMutation.isPending}
                     className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     type="button"
                   >
