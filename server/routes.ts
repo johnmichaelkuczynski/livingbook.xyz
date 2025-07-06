@@ -81,13 +81,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process the text content like we do with uploaded documents
       const processedContent = processMathNotation(content);
       
+      // Calculate word count
+      const totalWords = processedContent.split(/\s+/).filter(word => word.length > 0).length;
+      
       // Create document entry
       const documentData = {
         originalName: title,
-        filename: `ai_generated_${Date.now()}.txt`,
+        filename: `text_input_${Date.now()}.txt`,
         content: processedContent,
         fileType: 'text/plain',
-        fileSize: content.length
+        fileSize: content.length,
+        totalWords: totalWords
       };
       
       const validatedDocument = insertDocumentSchema.parse(documentData);
