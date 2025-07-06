@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, MessageSquare, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import SimpleMathRenderer from "@/components/SimpleMathRenderer";
+import KaTeXRenderer from "@/components/KaTeXRenderer";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -286,7 +286,10 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
-                <SimpleMathRenderer content={doc.content} className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" />
+                <KaTeXRenderer 
+                  content={doc.content.length > 5000 ? doc.content.substring(0, 5000) + '\n\n[Document truncated for performance - full content sent to AI]' : doc.content} 
+                  className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
+                />
               </div>
               <div className="flex gap-2">
                 <div className="relative">
@@ -430,7 +433,7 @@ export default function ComparePage() {
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                           }`}>
-                            <SimpleMathRenderer content={msg.content} />
+                            <KaTeXRenderer content={msg.content} />
                           </div>
                         </div>
                       ))

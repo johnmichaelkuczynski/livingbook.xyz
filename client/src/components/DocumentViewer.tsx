@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MoreHorizontal, FileText, MessageCircle, Edit3, Upload, RotateCcw } from 'lucide-react';
-import SimpleMathRenderer from './SimpleMathRenderer';
+import KaTeXRenderer from './KaTeXRenderer';
 
 interface DocumentViewerProps {
   document: any | null;
@@ -40,7 +40,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
     if (!content) return '';
     
     return (
-      <SimpleMathRenderer 
+      <KaTeXRenderer 
         content={content} 
         className="text-gray-700 leading-relaxed text-lg"
       />
