@@ -59,6 +59,8 @@ export const chatMessages = pgTable("chat_messages", {
 export const insertDocumentSchema = createInsertSchema(documents).omit({
   id: true,
   uploadedAt: true,
+  isChunked: true,
+  chunkCount: true,
 });
 
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({

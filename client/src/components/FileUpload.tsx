@@ -54,11 +54,11 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
       return;
     }
 
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "File size must be less than 10MB.",
+        description: "File size must be less than 50MB.",
         variant: "destructive",
       });
       return;
@@ -68,9 +68,9 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
     
     try {
       const formData = new FormData();
-      formData.append('document', file);
+      formData.append('file', file);
 
-      const response = await fetch('/api/documents/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
