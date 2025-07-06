@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator, Upload } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
-import SimpleMathRenderer from './SimpleMathRenderer';
+import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';

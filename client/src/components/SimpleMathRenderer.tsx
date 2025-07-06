@@ -47,12 +47,26 @@ export default function SimpleMathRenderer({ content, className = '' }: SimpleMa
     // Trigger MathJax re-typesetting after content is set
     const typesetMath = () => {
       if (window.MathJax && window.MathJax.typesetPromise) {
+        // Clear any existing MathJax output first
+        if (containerRef.current) {
+          const mathElements = containerRef.current.querySelectorAll('.MathJax, mjx-container');
+          mathElements.forEach(el => el.remove());
+        }
+        
         window.MathJax.typesetPromise([containerRef.current])
           .then(() => {
             console.log('MathJax typeset complete');
           })
           .catch((err: any) => {
             console.warn('MathJax typeset failed:', err);
+            // Fallback: try to re-render basic math expressions
+            if (containerRef.current) {
+              const content = containerRef.current.innerHTML;
+              const fallbackContent = content
+                .replace(/\$([^$]+)\$/g, '<span style="font-style: italic; font-family: serif; background: #f0f0f0; padding: 2px 4px; border-radius: 3px;">$1</span>')
+                .replace(/\$\$([^$]+)\$\$/g, '<div style="text-align: center; font-style: italic; font-family: serif; margin: 1em 0; background: #f0f0f0; padding: 8px; border-radius: 5px;">$1</div>');
+              containerRef.current.innerHTML = fallbackContent;
+            }
           });
       } else if (window.MathJax && window.MathJax.Hub) {
         // Fallback for MathJax v2
