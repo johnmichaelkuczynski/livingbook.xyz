@@ -110,6 +110,12 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 05, 2025: DOCUMENT REPLACEMENT & FRESH START FEATURES - DEPLOYMENT READY
+  - **FIXED**: Document replacement functionality now works properly with correct file input handling
+  - **ADDED**: "Start Fresh" button to clear all documents and conversation history
+  - **IMPROVED**: Enhanced error handling and logging for deployment debugging
+  - **ADDED**: Session ID display and visual indicators for better user feedback
+  - Users can now replace documents mid-conversation or start completely fresh
 - July 05, 2025: COMPARISON CHAT FOLLOW-UP FIXES - SESSION MANAGEMENT PERFECTED
   - **FIXED**: Follow-up questions in comparison mode no longer stall
   - **IMPLEMENTED**: Proper session tracking to maintain conversation context

@@ -46,19 +46,29 @@ export default function ComparePage() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number; sessionId?: number }) => {
-      const response = await fetch("/api/compare/message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(messageData),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to send message");
+      try {
+        console.log('Sending comparison message:', messageData);
+        const response = await fetch("/api/compare/message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messageData),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', response.status, errorText);
+          throw new Error(`Failed to send message: ${response.status} ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API Response:', result);
+        return result;
+      } catch (error) {
+        console.error('Network/Parse Error:', error);
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: (data: any) => {
       if (!sessionId && data.sessionId) {
@@ -68,9 +78,10 @@ export default function ComparePage() {
       setMessage("");
     },
     onError: (error: any) => {
+      console.error('Send message mutation error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send message",
+        description: error.message || "Failed to send message. Check console for details.",
         variant: "destructive",
       });
     },
@@ -378,9 +389,16 @@ export default function ComparePage() {
                 {(documentA || documentB) && (
                   <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px] mb-4">
                     {messages.length === 0 ? (
-                      <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
-                        Ask AI to compare your documents!
-                      </p>
+                      <div className="text-center">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          Ask AI to compare your documents!
+                        </p>
+                        {sessionId && (
+                          <p className="text-xs text-gray-400 mt-2">
+                            Session ID: {sessionId}
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
