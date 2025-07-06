@@ -48,7 +48,8 @@ function removeMarkupSymbols(text: string): string {
 const upload = multer({
   dest: "uploads/",
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 50 * 1024 * 1024, // 50MB limit for large documents
+    fieldSize: 50 * 1024 * 1024, // 50MB field size limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
