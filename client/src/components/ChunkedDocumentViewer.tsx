@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Edit3, Save, X, RotateCcw, Download } from "lucide-react";
-import SimpleMathRenderer from "./SimpleMathRenderer";
+import KaTeXRenderer from "./KaTeXRenderer";
 import { useToast } from "@/hooks/use-toast";
 
 interface DocumentChunk {
@@ -171,7 +171,7 @@ export default function ChunkedDocumentViewer({
                   </div>
                 ) : (
                   <div className="prose prose-sm max-w-none">
-                    <SimpleMathRenderer 
+                    <KaTeXRenderer 
                       content={chunk.content} 
                       className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
                     />

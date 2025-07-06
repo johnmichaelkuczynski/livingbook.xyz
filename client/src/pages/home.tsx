@@ -8,11 +8,14 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
+import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
+// Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
   const [currentDocument, setCurrentDocument] = useState<any>(null);
+  const [documentChunks, setDocumentChunks] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
@@ -22,8 +25,72 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Simple client-side chunking function
+  const chunkDocumentClient = (content: string, maxWords: number = 1000) => {
+    const words = content.split(/\s+/).filter(word => word.length > 0);
+    const totalWordCount = words.length;
+    
+    if (totalWordCount <= maxWords) {
+      return {
+        originalContent: content,
+        chunks: [{
+          id: `chunk-0`,
+          chunkIndex: 0,
+          content: content.trim(),
+          wordCount: totalWordCount,
+          isModified: false,
+          isEditing: false
+        }],
+        totalWordCount,
+        chunkCount: 1
+      };
+    }
+    
+    const chunks = [];
+    let chunkIndex = 0;
+    
+    for (let i = 0; i < words.length; i += maxWords) {
+      const chunkWords = words.slice(i, i + maxWords);
+      const chunkContent = chunkWords.join(' ');
+      
+      chunks.push({
+        id: `chunk-${chunkIndex}`,
+        chunkIndex,
+        content: chunkContent,
+        wordCount: chunkWords.length,
+        isModified: false,
+        isEditing: false
+      });
+      
+      chunkIndex++;
+    }
+    
+    return {
+      originalContent: content,
+      chunks,
+      totalWordCount,
+      chunkCount: chunks.length
+    };
+  };
+
   const handleFileUploaded = (document: any) => {
     setCurrentDocument(document);
+    
+    // Check if document is large and needs chunking
+    if (document && document.content) {
+      const wordCount = document.content.split(/\s+/).filter((word: string) => word.length > 0).length;
+      if (wordCount > 1000) {
+        // Chunk the document for better performance
+        const chunkedDoc = chunkDocumentClient(document.content, 1000);
+        setDocumentChunks(chunkedDoc);
+        toast({
+          title: "Large Document Detected",
+          description: `Document split into ${chunkedDoc.chunkCount} chunks for better performance (${wordCount} words total).`,
+        });
+      } else {
+        setDocumentChunks(null);
+      }
+    }
   };
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,6 +210,7 @@ export default function Home() {
 
   const handleStartFresh = () => {
     setCurrentDocument(null);
+    setDocumentChunks(null);
     setMessage('');
     queryClient.clear();
     toast({
@@ -260,13 +328,39 @@ export default function Home() {
           />
           
           <div className="flex-1">
-            <DocumentViewer 
-              document={currentDocument}
-              isLoading={isUploading}
-              onUploadClick={() => fileInputRef.current?.click()}
-              onRewriteClick={handleRewriteClick}
-              onFileDrop={handleFile}
-            />
+            {documentChunks && documentChunks.chunkCount > 1 ? (
+              <ChunkedDocumentViewer 
+                document={currentDocument}
+                chunks={documentChunks.chunks}
+                onChunkUpdate={(chunkIndex, newContent) => {
+                  // Update chunk content
+                  const updatedChunks = [...documentChunks.chunks];
+                  updatedChunks[chunkIndex] = {
+                    ...updatedChunks[chunkIndex],
+                    content: newContent,
+                    isModified: true
+                  };
+                  setDocumentChunks({
+                    ...documentChunks,
+                    chunks: updatedChunks
+                  });
+                }}
+                onRewriteChunk={(chunkIndex, instructions) => {
+                  toast({
+                    title: "Chunk Rewrite",
+                    description: `Rewrite request for chunk ${chunkIndex + 1}: ${instructions}`,
+                  });
+                }}
+              />
+            ) : (
+              <DocumentViewer 
+                document={currentDocument}
+                isLoading={isUploading}
+                onUploadClick={() => fileInputRef.current?.click()}
+                onRewriteClick={handleRewriteClick}
+                onFileDrop={handleFile}
+              />
+            )}
           </div>
         </div>
 

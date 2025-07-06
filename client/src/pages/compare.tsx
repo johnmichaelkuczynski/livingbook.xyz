@@ -287,7 +287,7 @@ export default function ComparePage() {
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
                 <KaTeXRenderer 
-                  content={doc.content.length > 5000 ? doc.content.substring(0, 5000) + '\n\n[Document truncated for performance - full content sent to AI]' : doc.content} 
+                  content={doc.content} 
                   className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
                 />
               </div>
