@@ -110,6 +110,12 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 05, 2025: COMPARISON CHAT FOLLOW-UP FIXES - SESSION MANAGEMENT PERFECTED
+  - **FIXED**: Follow-up questions in comparison mode no longer stall
+  - **IMPLEMENTED**: Proper session tracking to maintain conversation context
+  - **VERIFIED**: User confirmed "MUCH BETTER" - comparison chat fully functional for multiple questions
+  - Backend now reuses existing sessions instead of creating new ones per message
+  - All conversation history properly maintained between follow-up questions
 - July 05, 2025: CRITICAL UX FIXES - PERFECT USER EXPERIENCE ACHIEVED
   - **FIXED**: Removed all markdown formatting (**, ##, etc.) from AI responses for clean, readable text
   - **FIXED**: Input box positioning - now fixed at bottom of screen (always accessible)
