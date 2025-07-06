@@ -848,7 +848,11 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         }
 
         // Create synthesis prompt
-        let synthesisPrompt = `Please synthesize the following content according to these instructions: ${instructions}\n\n`;
+        let synthesisPrompt = `You are a professional content synthesizer. Your task is to follow the instructions exactly and return ONLY the synthesized content with no introductory text, explanatory notes, or metadata. Do not include phrases like "Here's a dialogue" or "This synthesizes" or any commentary about what you're doing.
+
+Instructions: ${instructions}
+
+`;
         
         if (chunkAContent && chunkBContent) {
           synthesisPrompt += `Content from Document A:\n${chunkAContent}\n\nContent from Document B:\n${chunkBContent}`;
@@ -861,6 +865,8 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         if (chatContext) {
           synthesisPrompt += `\n\nRelevant conversation context:\n${chatContext}`;
         }
+
+        synthesisPrompt += `\n\nRemember: Return ONLY the synthesized content. No introductions, explanations, or meta-commentary.`;
 
         // Generate synthesis
         const aiResponse = await generateChatResponse(synthesisPrompt, "", []);
