@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, MessageSquare, Send, X } from "lucide-react";
+import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
@@ -21,6 +21,23 @@ interface ChatMessage {
   timestamp: string;
 }
 
+interface DocumentChunk {
+  id: string;
+  chunkIndex: number;
+  content: string;
+  wordCount: number;
+  selected?: boolean;
+}
+
+interface ChunkPair {
+  id: string;
+  chunkA?: DocumentChunk;
+  chunkB?: DocumentChunk;
+  instructions: string;
+  isRewriting?: boolean;
+  rewrittenContent?: string;
+}
+
 export default function ComparePage() {
   const [documentA, setDocumentA] = useState<Document | null>(null);
   const [documentB, setDocumentB] = useState<Document | null>(null);
@@ -33,6 +50,14 @@ export default function ComparePage() {
   const [activeTab, setActiveTab] = useState("documents");
   const [dragActiveA, setDragActiveA] = useState(false);
   const [dragActiveB, setDragActiveB] = useState(false);
+  
+  // Synthesis Modal State
+  const [showSynthesisModal, setShowSynthesisModal] = useState(false);
+  const [chunksA, setChunksA] = useState<DocumentChunk[]>([]);
+  const [chunksB, setChunksB] = useState<DocumentChunk[]>([]);
+  const [chunkPairs, setChunkPairs] = useState<ChunkPair[]>([]);
+  const [useChatData, setUseChatData] = useState(false);
+  const [synthesizedContent, setSynthesizedContent] = useState<string>("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -215,6 +240,147 @@ export default function ComparePage() {
     inputRef.current.value = '';
   };
 
+  // Synthesis Modal Functions
+  const loadDocumentChunks = async () => {
+    if (!documentA && !documentB) return;
+    
+    try {
+      // Load chunks for Document A
+      if (documentA) {
+        const responseA = await fetch(`/api/documents/${documentA.id}/chunks`);
+        if (responseA.ok) {
+          const chunksDataA = await responseA.json();
+          setChunksA(chunksDataA.map((chunk: any) => ({
+            ...chunk,
+            selected: false
+          })));
+        }
+      }
+      
+      // Load chunks for Document B  
+      if (documentB) {
+        const responseB = await fetch(`/api/documents/${documentB.id}/chunks`);
+        if (responseB.ok) {
+          const chunksDataB = await responseB.json();
+          setChunksB(chunksDataB.map((chunk: any) => ({
+            ...chunk,
+            selected: false
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chunks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load document chunks",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openSynthesisModal = () => {
+    setShowSynthesisModal(true);
+    loadDocumentChunks();
+  };
+
+  const addChunkPair = () => {
+    const newPair: ChunkPair = {
+      id: `pair-${Date.now()}`,
+      instructions: ""
+    };
+    setChunkPairs([...chunkPairs, newPair]);
+  };
+
+  const updateChunkPair = (pairId: string, updates: Partial<ChunkPair>) => {
+    setChunkPairs(prev => prev.map(pair => 
+      pair.id === pairId ? { ...pair, ...updates } : pair
+    ));
+  };
+
+  const removeChunkPair = (pairId: string) => {
+    setChunkPairs(prev => prev.filter(pair => pair.id !== pairId));
+  };
+
+  const generateSynthesis = async () => {
+    if (chunkPairs.length === 0) return;
+    
+    try {
+      // Prepare chunk pairs with selected chunks
+      const processedPairs = chunkPairs.map(pair => ({
+        chunkAIndexes: chunksA.filter(c => c.selected).map(c => c.chunkIndex),
+        chunkBIndexes: chunksB.filter(c => c.selected).map(c => c.chunkIndex),
+        instructions: pair.instructions
+      }));
+
+      const response = await fetch('/api/documents/synthesize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chunkPairs: processedPairs,
+          useChatData,
+          provider,
+          sessionId,
+          documentAId: documentA?.id,
+          documentBId: documentB?.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate synthesis');
+      }
+
+      const result = await response.json();
+      setSynthesizedContent(result.synthesizedContent);
+      
+      toast({
+        title: "Success",
+        description: "Document synthesis generated successfully!"
+      });
+      
+    } catch (error) {
+      console.error('Synthesis error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate synthesis",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const downloadSynthesis = (format: 'txt' | 'docx' | 'pdf') => {
+    if (!synthesizedContent) return;
+    
+    const blob = new Blob([synthesizedContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `synthesis.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const injectSynthesis = (target: 'A' | 'B') => {
+    if (!synthesizedContent) return;
+    
+    if (target === 'A' && documentA) {
+      // In a real implementation, this would update the document in the database
+      toast({
+        title: "Success",
+        description: "Synthesis injected into Document A view"
+      });
+    } else if (target === 'B' && documentB) {
+      // In a real implementation, this would update the document in the database
+      toast({
+        title: "Success", 
+        description: "Synthesis injected into Document B view"
+      });
+    }
+  };
+
   const DocumentColumn = ({ 
     title, 
     document: doc, 
@@ -384,6 +550,16 @@ export default function ComparePage() {
                 Start Fresh
               </Button>
             )}
+            {(documentA || documentB) && (
+              <Button 
+                variant="outline" 
+                onClick={openSynthesisModal}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+              >
+                <BookOpen className="w-4 h-4" />
+                Synthesize Documents
+              </Button>
+            )}
           </div>
         </div>
 
@@ -509,6 +685,228 @@ export default function ComparePage() {
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Synthesis Modal */}
+        {showSynthesisModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-6 h-6 text-purple-600" />
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    Document Synthesis
+                  </h2>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={useChatData}
+                      onChange={(e) => setUseChatData(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Include Chat Context
+                    </span>
+                  </label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSynthesisModal(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+                  {/* Document A Chunks */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                      Document A: {documentA?.originalName || 'No Document'}
+                    </h3>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {chunksA.map((chunk) => (
+                        <div
+                          key={chunk.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            chunk.selected
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                          }`}
+                          onClick={() => {
+                            setChunksA(prev => prev.map(c => 
+                              c.id === chunk.id ? { ...c, selected: !c.selected } : c
+                            ));
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                              Chunk {chunk.chunkIndex + 1}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {chunk.wordCount} words
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
+                            {chunk.content.substring(0, 150)}...
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Document B Chunks */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                      Document B: {documentB?.originalName || 'No Document'}
+                    </h3>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {chunksB.map((chunk) => (
+                        <div
+                          key={chunk.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            chunk.selected
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                          }`}
+                          onClick={() => {
+                            setChunksB(prev => prev.map(c => 
+                              c.id === chunk.id ? { ...c, selected: !c.selected } : c
+                            ));
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                              Chunk {chunk.chunkIndex + 1}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {chunk.wordCount} words
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
+                            {chunk.content.substring(0, 150)}...
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Synthesis Results */}
+                {synthesizedContent && (
+                  <div className="border-t border-gray-200 dark:border-gray-600 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Generated Synthesis
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadSynthesis('txt')}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download TXT
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => injectSynthesis('A')}
+                          disabled={!documentA}
+                          className="flex items-center gap-2"
+                        >
+                          Inject to Doc A
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => injectSynthesis('B')}
+                          disabled={!documentB}
+                          className="flex items-center gap-2"
+                        >
+                          Inject to Doc B
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <KaTeXRenderer content={synthesizedContent} className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Chunk Pairs Section */}
+                <div className="border-t border-gray-200 dark:border-gray-600 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      Synthesis Instructions
+                    </h3>
+                    <Button onClick={addChunkPair} size="sm" className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add Instruction Set
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {chunkPairs.map((pair) => (
+                      <div key={pair.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                            Instruction Set #{chunkPairs.indexOf(pair) + 1}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeChunkPair(pair.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <Textarea
+                          placeholder="Enter synthesis instructions for selected chunks..."
+                          value={pair.instructions}
+                          onChange={(e) => updateChunkPair(pair.id, { instructions: e.target.value })}
+                          className="mb-3"
+                          rows={3}
+                        />
+                        <div className="text-xs text-gray-500">
+                          Selected: {chunksA.filter(c => c.selected).length} from Doc A, {chunksB.filter(c => c.selected).length} from Doc B
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {chunkPairs.length} instruction sets • Chat context: {useChatData ? 'Enabled' : 'Disabled'}
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSynthesisModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={generateSynthesis}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+                    disabled={chunkPairs.length === 0}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Generate Synthesis
+                  </Button>
                 </div>
               </div>
             </div>

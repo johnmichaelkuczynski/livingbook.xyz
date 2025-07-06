@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs/promises";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
+import { chunkDocument } from "./services/documentChunker";
 import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
@@ -739,6 +740,154 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
       console.error("Email error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to send email" 
+      });
+    }
+  });
+
+  // Document chunking API endpoints
+  
+  // Get chunks for a document
+  app.get("/api/documents/:documentId/chunks", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      
+      // Get document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Generate chunks
+      const chunkedDocument = chunkDocument(document.content, 1000);
+      
+      res.json(chunkedDocument.chunks);
+      
+    } catch (error) {
+      console.error("Document chunking error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to chunk document" 
+      });
+    }
+  });
+
+  // Synthesize chunks from multiple documents
+  app.post("/api/documents/synthesize", async (req, res) => {
+    try {
+      const { 
+        chunkPairs, 
+        useChatData = false, 
+        provider = 'deepseek',
+        sessionId,
+        documentAId,
+        documentBId 
+      } = req.body;
+      
+      if (!chunkPairs || chunkPairs.length === 0) {
+        return res.status(400).json({ error: "Chunk pairs are required" });
+      }
+
+      // Get documents
+      let documentA = null;
+      let documentB = null;
+      
+      if (documentAId) {
+        documentA = await storage.getDocument(documentAId);
+      }
+      
+      if (documentBId) {
+        documentB = await storage.getDocument(documentBId);
+      }
+
+      // Get chat context if requested
+      let chatContext = "";
+      if (useChatData && sessionId) {
+        const messages = await storage.getComparisonMessages(sessionId);
+        chatContext = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
+      }
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const synthesizedSections = [];
+
+      // Process each chunk pair
+      for (const pair of chunkPairs) {
+        const { chunkAIndexes = [], chunkBIndexes = [], instructions } = pair;
+        
+        // Get chunk content for Document A
+        let chunkAContent = "";
+        if (documentA && chunkAIndexes.length > 0) {
+          const chunkedDocA = chunkDocument(documentA.content, 1000);
+          chunkAContent = chunkAIndexes
+            .map(index => chunkedDocA.chunks[index]?.content || "")
+            .join("\n\n");
+        }
+        
+        // Get chunk content for Document B
+        let chunkBContent = "";
+        if (documentB && chunkBIndexes.length > 0) {
+          const chunkedDocB = chunkDocument(documentB.content, 1000);
+          chunkBContent = chunkBIndexes
+            .map(index => chunkedDocB.chunks[index]?.content || "")
+            .join("\n\n");
+        }
+
+        // Create synthesis prompt
+        let synthesisPrompt = `Please synthesize the following content according to these instructions: ${instructions}\n\n`;
+        
+        if (chunkAContent && chunkBContent) {
+          synthesisPrompt += `Content from Document A:\n${chunkAContent}\n\nContent from Document B:\n${chunkBContent}`;
+        } else if (chunkAContent) {
+          synthesisPrompt += `Content to process:\n${chunkAContent}`;
+        } else if (chunkBContent) {
+          synthesisPrompt += `Content to process:\n${chunkBContent}`;
+        }
+
+        if (chatContext) {
+          synthesisPrompt += `\n\nRelevant conversation context:\n${chatContext}`;
+        }
+
+        // Generate synthesis
+        const aiResponse = await generateChatResponse(synthesisPrompt, "", []);
+        
+        if (aiResponse.error) {
+          throw new Error(aiResponse.error);
+        }
+
+        // Clean up markup symbols
+        const cleanedSynthesis = removeMarkupSymbols(aiResponse.message);
+        synthesizedSections.push(cleanedSynthesis);
+      }
+
+      // Combine all synthesized sections
+      const finalSynthesis = synthesizedSections.join('\n\n---\n\n');
+      
+      res.json({ 
+        synthesizedContent: finalSynthesis,
+        sections: synthesizedSections,
+        provider: provider,
+        usedChatData: useChatData
+      });
+      
+    } catch (error) {
+      console.error("Document synthesis error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to synthesize documents" 
       });
     }
   });
