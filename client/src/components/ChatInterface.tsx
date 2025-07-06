@@ -356,7 +356,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                       : 'bg-gray-50 text-gray-700'
                   }`}>
                     {mathRenderingEnabled ? (
-                      <SimpleMathRenderer content={removeMarkupSymbols(msg.content)} className="whitespace-pre-wrap text-lg" />
+                      <KaTeXRenderer content={removeMarkupSymbols(msg.content)} className="whitespace-pre-wrap text-lg" />
                     ) : (
                       <div className="text-lg whitespace-pre-wrap">{removeMarkupSymbols(msg.content)}</div>
                     )}
