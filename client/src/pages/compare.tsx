@@ -58,6 +58,7 @@ export default function ComparePage() {
   const [chunkPairs, setChunkPairs] = useState<ChunkPair[]>([]);
   const [useChatData, setUseChatData] = useState(false);
   const [synthesizedContent, setSynthesizedContent] = useState<string>("");
+  const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -304,13 +305,30 @@ export default function ComparePage() {
   const generateSynthesis = async () => {
     if (chunkPairs.length === 0) return;
     
+    setIsGeneratingSynthesis(true);
+    
     try {
+      // Show loading state
+      toast({
+        title: "Generating",
+        description: "Creating synthesis... This may take 30-60 seconds."
+      });
+
       // Prepare chunk pairs with selected chunks
       const processedPairs = chunkPairs.map(pair => ({
         chunkAIndexes: chunksA.filter(c => c.selected).map(c => c.chunkIndex),
         chunkBIndexes: chunksB.filter(c => c.selected).map(c => c.chunkIndex),
         instructions: pair.instructions
       }));
+
+      console.log('Sending synthesis request:', {
+        chunkPairs: processedPairs,
+        useChatData,
+        provider,
+        sessionId,
+        documentAId: documentA?.id,
+        documentBId: documentB?.id
+      });
 
       const response = await fetch('/api/documents/synthesize', {
         method: 'POST',
@@ -328,10 +346,13 @@ export default function ComparePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate synthesis');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate synthesis');
       }
 
       const result = await response.json();
+      console.log('Synthesis result:', result);
+      
       setSynthesizedContent(result.synthesizedContent);
       
       toast({
@@ -343,9 +364,11 @@ export default function ComparePage() {
       console.error('Synthesis error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate synthesis",
+        description: error instanceof Error ? error.message : "Failed to generate synthesis",
         variant: "destructive"
       });
+    } finally {
+      setIsGeneratingSynthesis(false);
     }
   };
 
@@ -902,10 +925,19 @@ export default function ComparePage() {
                   <Button
                     onClick={generateSynthesis}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-                    disabled={chunkPairs.length === 0}
+                    disabled={chunkPairs.length === 0 || isGeneratingSynthesis}
                   >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Generate Synthesis
+                    {isGeneratingSynthesis ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Generate Synthesis
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
