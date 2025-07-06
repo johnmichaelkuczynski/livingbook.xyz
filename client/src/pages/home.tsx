@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,6 +22,8 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isRewritePanelOpen, setIsRewritePanelOpen] = useState(false);
+  const [textInput, setTextInput] = useState('');
+  const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -97,6 +101,35 @@ export default function Home() {
     if (e.target.files && e.target.files[0]) {
       await handleFile(e.target.files[0]);
     }
+  };
+
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) {
+      toast({
+        title: "Empty text",
+        description: "Please enter some text before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a document object from the text input
+    const textDocument = {
+      id: Date.now(),
+      originalName: `Text Input (${new Date().toLocaleTimeString()})`,
+      fileType: 'text/plain',
+      fileSize: new Blob([textInput]).size,
+      content: textInput.trim(),
+      uploadedAt: new Date().toISOString()
+    };
+
+    handleFileUploaded(textDocument);
+    setTextInput('');
+    
+    toast({
+      title: "Text processed successfully",
+      description: "Your text is ready for analysis.",
+    });
   };
 
   const handleFile = async (file: File) => {
@@ -328,36 +361,143 @@ export default function Home() {
           />
           
           <div className="flex-1">
-            {documentChunks && documentChunks.chunkCount > 1 ? (
-              <ChunkedDocumentViewer 
-                document={currentDocument}
-                chunks={documentChunks.chunks}
-                onChunkUpdate={(chunkIndex, newContent) => {
-                  // Update chunk content
-                  const updatedChunks = [...documentChunks.chunks];
-                  updatedChunks[chunkIndex] = {
-                    ...updatedChunks[chunkIndex],
-                    content: newContent,
-                    isModified: true
-                  };
-                  setDocumentChunks({
-                    ...documentChunks,
-                    chunks: updatedChunks
-                  });
-                }}
-                onRewriteChunk={(chunkIndex, instructions) => {
-                  // Handle rewrite from chunk view - open main rewrite panel
-                  setIsRewritePanelOpen(true);
-                }}
-              />
+            {currentDocument ? (
+              documentChunks && documentChunks.chunkCount > 1 ? (
+                <ChunkedDocumentViewer 
+                  document={currentDocument}
+                  chunks={documentChunks.chunks}
+                  onChunkUpdate={(chunkIndex, newContent) => {
+                    // Update chunk content
+                    const updatedChunks = [...documentChunks.chunks];
+                    updatedChunks[chunkIndex] = {
+                      ...updatedChunks[chunkIndex],
+                      content: newContent,
+                      isModified: true
+                    };
+                    setDocumentChunks({
+                      ...documentChunks,
+                      chunks: updatedChunks
+                    });
+                  }}
+                  onRewriteChunk={(chunkIndex, instructions) => {
+                    // Handle rewrite from chunk view - open main rewrite panel
+                    setIsRewritePanelOpen(true);
+                  }}
+                />
+              ) : (
+                <DocumentViewer 
+                  document={currentDocument}
+                  isLoading={isUploading}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  onRewriteClick={handleRewriteClick}
+                  onFileDrop={handleFile}
+                />
+              )
             ) : (
-              <DocumentViewer 
-                document={currentDocument}
-                isLoading={isUploading}
-                onUploadClick={() => fileInputRef.current?.click()}
-                onRewriteClick={handleRewriteClick}
-                onFileDrop={handleFile}
-              />
+              <Card className="h-full min-h-[500px] flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Document Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col">
+                  <Tabs 
+                    value={inputMode} 
+                    onValueChange={(value) => setInputMode(value as 'upload' | 'text')}
+                    className="flex-1 flex flex-col"
+                  >
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="upload" className="flex items-center gap-2">
+                        <Upload className="w-4 h-4" />
+                        Upload File
+                      </TabsTrigger>
+                      <TabsTrigger value="text" className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Enter Text
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="upload" className="flex-1 flex items-center justify-center">
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <input
+                          type="file"
+                          accept=".pdf,.docx,.txt"
+                          onChange={handleFileInput}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div
+                          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[400px] flex items-center justify-center border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const files = Array.from(e.dataTransfer.files);
+                            if (files.length > 0) {
+                              handleFile(files[0]);
+                            }
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          {isUploading ? (
+                            <div className="space-y-2">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                              <p className="text-xs text-gray-500">Large files may take up to 2 minutes</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <Upload className="w-12 h-12 mx-auto text-gray-400" />
+                              <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                                Click or drag to upload a document
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Upload a PDF, Word document, or text file to view its content with properly rendered mathematical notation.
+                              </p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                                Supports PDF, Word, and TXT files
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="text" className="flex-1 flex flex-col space-y-4">
+                      <Textarea
+                        placeholder="Type or paste your text here..."
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        className="flex-1 min-h-[350px] resize-vertical"
+                        disabled={isUploading}
+                      />
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">
+                          {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
+                        </p>
+                        <Button 
+                          onClick={handleTextSubmit} 
+                          disabled={!textInput.trim() || isUploading}
+                          className="flex items-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Process Text
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>
