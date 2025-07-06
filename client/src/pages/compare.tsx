@@ -41,6 +41,9 @@ export default function ComparePage() {
     queryKey: ["/api/compare/messages", sessionId],
     enabled: !!sessionId,
     queryFn: () => fetch(`/api/compare/messages/${sessionId}`).then(res => res.json()),
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Send message mutation
@@ -464,7 +467,10 @@ export default function ComparePage() {
                     className="w-full h-20 resize-none text-lg border-2 border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     disabled={sendMessageMutation.isPending}
                     autoComplete="off"
-                    spellCheck="true"
+                    spellCheck="false"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    data-gramm="false"
                   />
                 </div>
                 <div className="flex flex-col space-y-2">
