@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Play, CheckSquare, Square, Download, Expand, Minimize } from 'lucide-react';
+import { X, Play, CheckSquare, Square, Download, Expand, Minimize, Check, ZoomIn } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ interface RewritePanelProps {
   document: any | null;
   isOpen: boolean;
   onClose: () => void;
+  onApplyChunkToDocument?: (chunkIndex: number, newContent: string) => void;
 }
 
 interface TextChunk {
@@ -65,12 +66,13 @@ function splitIntoChunks(text: string, maxWords: number = 500): TextChunk[] {
   return chunks;
 }
 
-export default function RewritePanel({ document, isOpen, onClose }: RewritePanelProps) {
+export default function RewritePanel({ document, isOpen, onClose, onApplyChunkToDocument }: RewritePanelProps) {
   const [chunks, setChunks] = useState<TextChunk[]>([]);
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isRewriting, setIsRewriting] = useState(false);
   const [expandedChunks, setExpandedChunks] = useState<Set<number>>(new Set());
+  const [expandedPreviews, setExpandedPreviews] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -380,6 +382,28 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
     });
   };
 
+  const togglePreviewExpanded = (chunkId: string) => {
+    setExpandedPreviews(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chunkId)) {
+        newSet.delete(chunkId);
+      } else {
+        newSet.add(chunkId);
+      }
+      return newSet;
+    });
+  };
+
+  const applyChunkToDocument = (chunk: TextChunk) => {
+    if (chunk.rewrittenText && onApplyChunkToDocument) {
+      onApplyChunkToDocument(parseInt(chunk.id) - 1, chunk.rewrittenText);
+      toast({
+        title: "Applied to Document",
+        description: `Chunk ${chunk.id} has been applied to the main document view.`,
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -523,9 +547,18 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                           <div className="text-green-600 text-xs font-medium">✓ Rewritten</div>
                         )}
                         
-                        {/* Individual chunk download buttons */}
+                        {/* Individual chunk action buttons */}
                         {chunk.rewritten && (
                           <div className="flex items-center space-x-1 ml-2">
+                            <Button
+                              onClick={() => applyChunkToDocument(chunk)}
+                              variant="default"
+                              size="sm"
+                              className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Check className="w-3 h-3 mr-1" />
+                              Apply to Doc
+                            </Button>
                             <Button
                               onClick={() => downloadChunk(chunk, 'txt')}
                               variant="outline"
@@ -589,12 +622,26 @@ export default function RewritePanel({ document, isOpen, onClose }: RewritePanel
                       
                       {chunk.rewrittenText && (
                         <div>
-                          <p className="text-xs font-medium text-green-600 mb-2">Rewritten:</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-medium text-green-600">Rewritten:</p>
+                            <Button
+                              onClick={() => togglePreviewExpanded(chunk.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                            >
+                              {expandedPreviews.has(chunk.id) ? (
+                                <Minimize className="w-3 h-3" />
+                              ) : (
+                                <ZoomIn className="w-3 h-3" />
+                              )}
+                            </Button>
+                          </div>
                           <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 ${
-                            expandedChunks.has(chunk.id) ? 'max-h-none h-auto' : 'max-h-32'
+                            expandedPreviews.has(chunk.id) ? 'max-h-96 h-auto' : 'max-h-32'
                           }`}>
                             <KaTeXRenderer content={
-                              expandedChunks.has(chunk.id) 
+                              expandedPreviews.has(chunk.id) 
                                 ? chunk.rewrittenText 
                                 : chunk.rewrittenText.substring(0, 300) + (chunk.rewrittenText.length > 300 ? '...' : '')
                             } />
