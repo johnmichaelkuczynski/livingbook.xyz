@@ -110,12 +110,13 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
-- July 06, 2025: EXPANDABLE REWRITE PREVIEW - ACCESSIBILITY WORKFLOW PERFECTED
-  - **PERFECTED**: Expandable rewrite preview windows with zoom functionality - users can now properly read full rewritten content before applying
+- July 06, 2025: DOWNLOAD FORMATTING FIXED - ACCESSIBILITY WORKFLOW PERFECTED
+  - **FIXED**: Download formatting issue - PDF downloads now have proper paragraph structure instead of one giant paragraph
+  - **ENHANCED**: PDF styling with proper margins, headings, justified text, and professional typography
+  - **PERFECTED**: Expandable rewrite preview windows with zoom functionality - users can thoroughly read full rewritten content before applying
   - **ENHANCED**: "Apply to Doc" functionality connects rewrite panel to main document - progressive chunk replacement working perfectly
-  - **IMPROVED**: Rewrite preview boxes expand to 80% screen height with smooth transitions and helpful tooltips
-  - **VERIFIED**: User confirmed "EXCELLENT!" - complete accessibility workflow now functional for making documents accessible
-  - **CRITICAL FEATURE**: Users can thoroughly review all AI-rewritten content before applying changes to main document
+  - **VERIFIED**: User confirmed "EXCELLENT!" and "GOOD" - complete accessibility workflow now functional for making documents accessible
+  - **CRITICAL FEATURES**: Users can review all AI-rewritten content before applying changes AND download properly formatted documents
   - Full math rendering, document chunking, and all previous features remain fully operational
 - July 05, 2025: DOCUMENT REPLACEMENT & FRESH START FEATURES - DEPLOYMENT READY
   - **FIXED**: Document replacement functionality now works properly with correct file input handling
