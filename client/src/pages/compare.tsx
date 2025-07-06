@@ -55,6 +55,10 @@ export default function ComparePage() {
   const [inputModeA, setInputModeA] = useState<'upload' | 'text'>('upload');
   const [inputModeB, setInputModeB] = useState<'upload' | 'text'>('upload');
   
+  // Document chunking states for large documents
+  const [documentChunksA, setDocumentChunksA] = useState<any>(null);
+  const [documentChunksB, setDocumentChunksB] = useState<any>(null);
+  
   // Synthesis Modal State
   const [showSynthesisModal, setShowSynthesisModal] = useState(false);
   const [chunksA, setChunksA] = useState<DocumentChunk[]>([]);
@@ -66,6 +70,78 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Simple client-side chunking function for compare page
+  const chunkDocumentClient = (content: string, maxWords: number = 1000) => {
+    const words = content.split(/\s+/).filter(word => word.length > 0);
+    const totalWordCount = words.length;
+    
+    if (totalWordCount <= maxWords) {
+      return {
+        originalContent: content,
+        chunks: [{
+          id: `chunk-0`,
+          chunkIndex: 0,
+          content: content.trim(),
+          wordCount: totalWordCount,
+          isModified: false,
+          isEditing: false
+        }],
+        totalWordCount,
+        chunkCount: 1
+      };
+    }
+    
+    const chunks = [];
+    let chunkIndex = 0;
+    
+    for (let i = 0; i < words.length; i += maxWords) {
+      const chunkWords = words.slice(i, i + maxWords);
+      const chunkContent = chunkWords.join(' ');
+      
+      chunks.push({
+        id: `chunk-${chunkIndex}`,
+        chunkIndex,
+        content: chunkContent,
+        wordCount: chunkWords.length,
+        isModified: false,
+        isEditing: false
+      });
+      
+      chunkIndex++;
+    }
+    
+    return {
+      originalContent: content,
+      chunks,
+      totalWordCount,
+      chunkCount: chunks.length
+    };
+  };
+
+  // Handle document processing with chunking for large documents
+  const handleDocumentProcessing = (document: any, column: 'A' | 'B') => {
+    const setDocument = column === 'A' ? setDocumentA : setDocumentB;
+    const setDocumentChunks = column === 'A' ? setDocumentChunksA : setDocumentChunksB;
+    
+    setDocument(document);
+    
+    // Check if document is large and needs chunking
+    if (document && document.content) {
+      const wordCount = document.content.split(/\s+/).filter((word: string) => word.length > 0).length;
+      if (wordCount > 1000) {
+        // Chunk the document for better performance
+        const chunkedDoc = chunkDocumentClient(document.content, 1000);
+        setDocumentChunks(chunkedDoc);
+        toast({
+          title: `Large Document ${column} Detected`,
+          description: `Document split into ${chunkedDoc.chunkCount} chunks for better performance (${wordCount} words total).`,
+        });
+      } else {
+        setDocumentChunks(null);
+      }
+    }
+  };
 
   // Optimized onChange handler to reduce re-renders
   const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -164,7 +240,7 @@ export default function ComparePage() {
       }
 
       const document = await response.json();
-      setDocument(document);
+      handleDocumentProcessing(document, column);
       
       toast({
         title: "Success",
@@ -245,12 +321,11 @@ export default function ComparePage() {
       }
       
       const result = await response.json();
+      handleDocumentProcessing(result, column);
       
       if (column === 'A') {
-        setDocumentA(result);
         setTextInputA('');
       } else {
-        setDocumentB(result);
         setTextInputB('');
       }
       
@@ -602,10 +677,49 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
-                <KaTeXRenderer 
-                  content={doc.content} 
-                  className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
-                />
+                {(() => {
+                  const docChunks = column === 'A' ? documentChunksA : documentChunksB;
+                  
+                  if (docChunks && docChunks.chunkCount > 1) {
+                    // Display chunked document viewer for large documents
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Badge variant="outline">{docChunks.chunkCount} chunks</Badge>
+                          <Badge variant="secondary">{docChunks.totalWordCount} words</Badge>
+                        </div>
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                          {docChunks.chunks.map((chunk: any) => (
+                            <div key={chunk.id} className="bg-white dark:bg-gray-700 rounded-lg p-3 border">
+                              <div className="flex items-center justify-between mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  Chunk {chunk.chunkIndex + 1}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {chunk.wordCount} words
+                                </Badge>
+                              </div>
+                              <div className="text-sm">
+                                <KaTeXRenderer 
+                                  content={chunk.content} 
+                                  className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // Display regular content for smaller documents
+                    return (
+                      <KaTeXRenderer 
+                        content={doc.content} 
+                        className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
+                      />
+                    );
+                  }
+                })()}
               </div>
               <div className="flex gap-2">
                 <div className="relative">
@@ -637,7 +751,9 @@ export default function ComparePage() {
                   size="sm"
                   onClick={() => {
                     const setDocument = column === 'A' ? setDocumentA : setDocumentB;
+                    const setDocumentChunks = column === 'A' ? setDocumentChunksA : setDocumentChunksB;
                     setDocument(null);
+                    setDocumentChunks(null);
                   }}
                 >
                   <X className="w-4 h-4 mr-2" />
