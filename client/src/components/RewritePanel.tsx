@@ -339,18 +339,31 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
             <title>All Rewritten Chunks</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
-              h1 { color: #333; }
+              h1 { color: #333; margin-bottom: 30px; }
+              h2 { color: #666; margin-top: 30px; margin-bottom: 15px; }
+              p { margin: 15px 0; text-align: justify; }
               .chunk-separator { border-top: 2px solid #eee; margin: 30px 0; padding-top: 20px; }
               @media print { 
                 body { margin: 20px; } 
                 h1 { page-break-after: avoid; }
+                h2 { page-break-after: avoid; }
                 .chunk-separator { page-break-inside: avoid; }
+                p { margin: 10px 0; }
               }
             </style>
           </head>
           <body>
             <h1>All Rewritten Chunks</h1>
-            <div>${cleanAllContent.replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>').replace(/\n/g, '<br>')}</div>
+            <div>${cleanAllContent
+              .replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>')
+              .replace(/\n\n/g, '</p><p>')
+              .replace(/\n/g, '<br>')
+              .replace(/^/, '<p>')
+              .replace(/$/, '</p>')
+              .replace(/<p><\/p>/g, '')
+              .replace(/<p><div/g, '<div')
+              .replace(/<\/div><\/p>/g, '</div>')
+            }</div>
             <script>
               window.onload = function() {
                 setTimeout(() => window.print(), 500);
