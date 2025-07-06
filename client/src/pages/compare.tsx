@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, memo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -454,7 +454,14 @@ export default function ComparePage() {
     document: Document | null; 
     isUploading: boolean; 
     column: 'A' | 'B';
-  }) => (
+  }) => {
+    const textInput = column === 'A' ? textInputA : textInputB;
+    const setTextInput = column === 'A' ? setTextInputA : setTextInputB;
+    const inputMode = column === 'A' ? inputModeA : inputModeB;
+    const setInputMode = column === 'A' ? setInputModeA : setInputModeB;
+    const dragActive = column === 'A' ? dragActiveA : dragActiveB;
+    
+    return (
     <div className="flex-1">
       <Card className="h-full min-h-[500px] flex flex-col">
         <CardHeader>
@@ -466,11 +473,8 @@ export default function ComparePage() {
         <CardContent className="flex-1 flex flex-col">
           {!doc ? (
             <Tabs 
-              value={column === 'A' ? inputModeA : inputModeB} 
-              onValueChange={(value) => {
-                if (column === 'A') setInputModeA(value as 'upload' | 'text');
-                else setInputModeB(value as 'upload' | 'text');
-              }}
+              value={inputMode} 
+              onValueChange={(value) => setInputMode(value as 'upload' | 'text')}
               className="flex-1 flex flex-col"
             >
               <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -494,7 +498,7 @@ export default function ComparePage() {
                   />
                   <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] flex items-center justify-center ${
-                      (column === 'A' ? dragActiveA : dragActiveB)
+                      dragActive
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                     }`}
@@ -512,21 +516,15 @@ export default function ComparePage() {
                     ) : (
                       <div className="space-y-2">
                         <Upload className={`w-12 h-12 mx-auto ${
-                          (column === 'A' ? dragActiveA : dragActiveB) 
-                            ? 'text-blue-500' 
-                            : 'text-gray-400'
+                          dragActive ? 'text-blue-500' : 'text-gray-400'
                         }`} />
                         <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                          {(column === 'A' ? dragActiveA : dragActiveB) 
-                            ? `Drop Document ${column} here` 
-                            : `Upload Document ${column}`}
+                          {dragActive ? `Drop Document ${column} here` : `Upload Document ${column}`}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {(column === 'A' ? dragActiveA : dragActiveB) 
-                            ? 'Release to upload' 
-                            : 'Drop a file here or click to browse'}
+                          {dragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
                         </p>
-                        {!(column === 'A' ? dragActiveA : dragActiveB) && (
+                        {!dragActive && (
                           <p className="text-xs text-gray-400 dark:text-gray-500">
                             Supports PDF, Word, and TXT files
                           </p>
@@ -540,21 +538,18 @@ export default function ComparePage() {
               <TabsContent value="text" className="flex-1 flex flex-col space-y-4">
                 <Textarea
                   placeholder={`Type or paste your text for Document ${column} here...`}
-                  value={column === 'A' ? textInputA : textInputB}
-                  onChange={(e) => {
-                    if (column === 'A') setTextInputA(e.target.value);
-                    else setTextInputB(e.target.value);
-                  }}
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
                   className="flex-1 min-h-[250px] resize-vertical"
                   disabled={isUploading}
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-gray-500">
-                    {(column === 'A' ? textInputA : textInputB).length} characters • {(column === 'A' ? textInputA : textInputB).trim().split(/\s+/).filter(word => word.length > 0).length} words
+                    {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
                   </p>
                   <Button 
                     onClick={() => handleTextSubmit(column)} 
-                    disabled={!(column === 'A' ? textInputA : textInputB).trim() || isUploading}
+                    disabled={!textInput.trim() || isUploading}
                     className="flex items-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
@@ -624,7 +619,8 @@ export default function ComparePage() {
         </CardContent>
       </Card>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
