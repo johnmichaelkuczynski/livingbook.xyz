@@ -440,15 +440,10 @@ export default function Home() {
                     </TabsList>
                     
                     <TabsContent value="upload" className="flex-1 flex items-center justify-center">
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        <input
-                          type="file"
-                          accept=".pdf,.docx,.txt"
-                          onChange={handleFileInput}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        />
+                      <div className="w-full h-full flex items-center justify-center">
                         <div
-                          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[400px] flex items-center justify-center border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                          className="border-2 border-dashed rounded-lg p-4 md:p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] md:min-h-[400px] flex items-center justify-center border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 touch-manipulation select-none"
+                          onClick={() => fileInputRef.current?.click()}
                           onDrop={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -477,7 +472,7 @@ export default function Home() {
                               <p className="text-xs text-gray-500">Large files may take up to 2 minutes</p>
                             </div>
                           ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                               <Upload className="w-12 h-12 mx-auto text-gray-400" />
                               <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
                                 Click or drag to upload a document
@@ -488,6 +483,15 @@ export default function Home() {
                               <p className="text-xs text-gray-400 dark:text-gray-500">
                                 Supports PDF, Word, and TXT files
                               </p>
+                              <Button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  fileInputRef.current?.click();
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 touch-manipulation"
+                              >
+                                Select File
+                              </Button>
                             </div>
                           )}
                         </div>

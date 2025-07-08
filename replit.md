@@ -110,6 +110,13 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 07, 2025: MOBILE UPLOAD COMPATIBILITY FIXED - CROSS-DEVICE FUNCTIONALITY
+  - **FIXED**: Mobile device file upload malfunctions - documents can now be uploaded on mobile
+  - **ENHANCED**: Replaced problematic absolute-positioned hidden inputs with direct click handlers
+  - **ADDED**: Prominent "Select File" buttons for touch-friendly mobile interaction
+  - **IMPROVED**: Responsive design with proper touch event handling and mobile CSS
+  - **VERIFIED**: Both single and dual document interfaces now work on mobile devices
+  - Mobile users can now upload documents reliably across all device types
 - July 06, 2025: LARGE DOCUMENT HANDLING FIXED - TOKEN LIMIT PROTECTION
   - **FIXED**: Large document token limit issue that caused API errors
   - **ADDED**: Automatic content truncation for documents over 50,000 characters

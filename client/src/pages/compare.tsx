@@ -594,19 +594,21 @@ export default function ComparePage() {
               </TabsList>
               
               <TabsContent value="upload" className="flex-1 flex items-center justify-center">
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center">
                   <input
+                    id={`file-input-${column}`}
                     type="file"
                     accept=".pdf,.docx,.txt"
                     onChange={(e) => handleFileSelect(e, column)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    className="hidden"
                   />
                   <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors w-full min-h-[300px] flex items-center justify-center ${
+                    className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center cursor-pointer transition-colors w-full min-h-[250px] md:min-h-[300px] flex items-center justify-center touch-manipulation select-none ${
                       dragActive
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                     }`}
+                    onClick={() => document.getElementById(`file-input-${column}`)?.click()}
                     onDrop={(e) => handleDrop(e, column)}
                     onDragEnter={(e) => handleDragEnter(e, column)}
                     onDragLeave={(e) => handleDragLeave(e, column)}
@@ -630,9 +632,20 @@ export default function ComparePage() {
                           {dragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
                         </p>
                         {!dragActive && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
-                            Supports PDF, Word, and TXT files
-                          </p>
+                          <>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Supports PDF, Word, and TXT files
+                            </p>
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                document.getElementById(`file-input-${column}`)?.click();
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-3 touch-manipulation"
+                            >
+                              Select File
+                            </Button>
+                          </>
                         )}
                       </div>
                     )}
