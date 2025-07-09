@@ -45,6 +45,59 @@ function removeMarkupSymbols(text: string): string {
   return cleaned;
 }
 
+// Create fallback concept lattice when AI generates generic content
+function createFallbackConceptLattice(text: string, title: string) {
+  // Extract key concepts from the actual text
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 20);
+  
+  const nodes = [];
+  const timestamp = new Date().toISOString();
+  
+  // Create main ideas from key paragraphs or sentences
+  const mainIdeas = paragraphs.slice(0, 3).map((paragraph, index) => {
+    const firstSentence = paragraph.split(/[.!?]/)[0].trim();
+    return {
+      id: `main_${index + 1}`,
+      type: "main_idea",
+      content: firstSentence.length > 100 ? firstSentence.substring(0, 100) + "..." : firstSentence,
+      isExpanded: true,
+      connections: []
+    };
+  });
+  
+  nodes.push(...mainIdeas);
+  
+  // Create supporting arguments from remaining sentences
+  let nodeId = 1;
+  mainIdeas.forEach((mainIdea, mainIndex) => {
+    const relevantSentences = sentences.slice(mainIndex * 2, (mainIndex + 1) * 2 + 2);
+    
+    relevantSentences.forEach((sentence, sentIndex) => {
+      if (sentence.trim().length > 20) {
+        nodeId++;
+        nodes.push({
+          id: `arg_${nodeId}`,
+          type: "basic_argument",
+          content: sentence.trim(),
+          parentId: mainIdea.id,
+          isExpanded: true,
+          connections: [mainIdea.id]
+        });
+      }
+    });
+  });
+  
+  return {
+    nodes,
+    metadata: {
+      sourceText: text.substring(0, 200) + "...",
+      title: `Analysis of ${title}`,
+      generatedAt: timestamp
+    }
+  };
+}
+
 
 
 // Configure multer for file uploads
@@ -575,37 +628,41 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      const prompt = `Analyze the following text and create a structured concept lattice. Return ONLY valid JSON with this exact structure:
+      const prompt = `You are analyzing real document content to create a concept lattice. NEVER use generic placeholders or examples about JSON, data structures, or technical concepts unless the actual text is about those topics.
+
+ANALYZE THIS SPECIFIC TEXT CONTENT:
+"${text}"
+
+Create a structured concept lattice that reflects the ACTUAL content and ideas from this text. Return ONLY valid JSON with this exact structure:
 
 {
   "nodes": [
     {
       "id": "unique_id",
       "type": "main_idea" | "basic_argument" | "example" | "supporting_quote" | "fine_argument",
-      "content": "node content",
+      "content": "actual content from the text being analyzed",
       "parentId": "parent_id_if_applicable",
       "isExpanded": true,
       "connections": ["connected_node_ids"]
     }
   ],
   "metadata": {
-    "sourceText": "original text",
-    "title": "analysis title",
-    "generatedAt": "timestamp"
+    "sourceText": "${text.substring(0, 200)}...",
+    "title": "Analysis of actual document content",
+    "generatedAt": "${new Date().toISOString()}"
   }
 }
 
-Rules:
-1. Start with 2-4 main_idea nodes (large, distinct concepts)
-2. Each main_idea should have 2-3 basic_argument nodes as children
-3. Each basic_argument should have 1-2 example nodes and 1-2 supporting_quote nodes
-4. Add fine_argument nodes where appropriate as children of basic_argument
-5. Use actual content from the text, not generic placeholders
-6. Make connections meaningful and logical
-7. Keep content concise but informative
+CRITICAL RULES:
+1. Extract 2-4 main ideas that are ACTUALLY present in the provided text
+2. Create basic arguments that directly support these main ideas from the text
+3. Find real examples and quotes from the provided text content
+4. DO NOT create generic examples about JSON, data structures, APIs, or other technical topics unless the text is specifically about those subjects
+5. If this is from "The Art of War", focus on military strategy, leadership, tactics, and warfare concepts
+6. Use the actual language, concepts, and terminology from the source text
+7. Every node must contain content that comes directly from or is directly derived from the provided text
 
-Text to analyze:
-${text}`;
+Remember: You are analyzing the specific content provided, not creating general examples about data processing or technical concepts.`;
 
       const response = await generateChatResponse(prompt, "", []);
       
@@ -616,24 +673,71 @@ ${text}`;
       try {
         // Clean the response and parse JSON
         let cleanedResponse = response.message.trim();
+        
+        // Remove markdown code blocks
         if (cleanedResponse.startsWith('```json')) {
           cleanedResponse = cleanedResponse.slice(7);
+        }
+        if (cleanedResponse.startsWith('```')) {
+          cleanedResponse = cleanedResponse.slice(3);
         }
         if (cleanedResponse.endsWith('```')) {
           cleanedResponse = cleanedResponse.slice(0, -3);
         }
         
+        // Try to find JSON in the response if it's embedded in text
+        const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cleanedResponse = jsonMatch[0];
+        }
+        
+        console.log('Attempting to parse lattice response:', cleanedResponse.substring(0, 500));
+        
         const latticeData = JSON.parse(cleanedResponse);
         
         // Validate structure
         if (!latticeData.nodes || !Array.isArray(latticeData.nodes)) {
-          throw new Error('Invalid lattice structure');
+          throw new Error('Invalid lattice structure - missing nodes array');
+        }
+        
+        if (latticeData.nodes.length === 0) {
+          throw new Error('No nodes generated in lattice');
+        }
+        
+        // Validate that nodes contain actual content, not generic placeholders
+        const hasGenericContent = latticeData.nodes.some(node => 
+          node.content && (
+            node.content.toLowerCase().includes('json') ||
+            node.content.toLowerCase().includes('data structure') ||
+            node.content.toLowerCase().includes('api') ||
+            node.content.toLowerCase().includes('placeholder')
+          ) && !text.toLowerCase().includes('json') && !text.toLowerCase().includes('data')
+        );
+        
+        if (hasGenericContent) {
+          console.warn('Generated lattice contains generic content, creating fallback...');
+          
+          // Create a simple fallback lattice based on the actual text
+          const fallbackLattice = createFallbackConceptLattice(text, title);
+          return res.json(fallbackLattice);
         }
 
         res.json(latticeData);
       } catch (parseError) {
         console.error('Failed to parse concept lattice response:', parseError);
-        res.status(500).json({ error: 'Failed to generate structured concept lattice' });
+        console.error('Raw response:', response.message.substring(0, 1000));
+        
+        // Try to create a fallback lattice from the actual text
+        try {
+          console.log('Creating fallback concept lattice from actual text...');
+          const fallbackLattice = createFallbackConceptLattice(text, title || 'Document');
+          res.json(fallbackLattice);
+        } catch (fallbackError) {
+          console.error('Failed to create fallback lattice:', fallbackError);
+          res.status(500).json({ 
+            error: 'Failed to generate concept lattice. Please try selecting a smaller section of text or try again.' 
+          });
+        }
       }
     } catch (error) {
       console.error('Concept lattice generation error:', error);
