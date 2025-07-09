@@ -6,11 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings, Brain } from "lucide-react";
+import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
-import MindMapViewer from "@/components/MindMapViewer";
+
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -69,9 +69,7 @@ export default function ComparePage() {
   const [synthesizedContent, setSynthesizedContent] = useState<string>("");
   const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false);
   
-  // Mind Map State  
-  const [isMindMapOpen, setIsMindMapOpen] = useState(false);
-  const [mindMapDocument, setMindMapDocument] = useState<Document | null>(null);
+
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1207,12 +1205,7 @@ export default function ComparePage() {
         )}
       </div>
       
-      {/* Mind Map Viewer */}
-      <MindMapViewer
-        document={mindMapDocument}
-        isOpen={isMindMapOpen}
-        onClose={() => setIsMindMapOpen(false)}
-      />
+
     </div>
   );
 }
