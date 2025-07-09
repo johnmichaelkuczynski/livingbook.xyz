@@ -135,45 +135,8 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
     const container = networkRef.current;
     container.innerHTML = '';
     
-    try {
-      // Import vis-network for proper graph rendering
-      const { Network, DataSet } = await import('vis-network');
-      
-      // Prepare nodes with proper positioning based on layout type
-      const layoutNodes = calculateLayout(data.nodes, data.edges, mapType);
-      const nodes = new DataSet(layoutNodes);
-      const edges = new DataSet(data.edges);
-      
-      // Configure layout options based on map type
-      const options = getLayoutOptions(mapType);
-      
-      // Create the network
-      const network = new Network(container, { nodes, edges }, options);
-      
-      // Add interactivity
-      network.on('click', (params) => {
-        if (params.nodes.length > 0) {
-          const nodeId = params.nodes[0];
-          const node = data.nodes.find(n => n.id === nodeId);
-          if (node) {
-            console.log('Node clicked:', node.label);
-          }
-        }
-      });
-      
-      // Store reference
-      visNetworkRef.current = network;
-      
-      // Fit the network after a short delay
-      setTimeout(() => {
-        network.fit();
-      }, 100);
-      
-      console.log('✓ Graph visualization created successfully');
-    } catch (error) {
-      console.error('Graph creation failed, using canvas fallback:', error);
-      createCanvasVisualization(data);
-    }
+    // Use canvas-based visualization for reliability
+    createInteractiveCanvasVisualization(data);
   };
 
   // Calculate node positions based on layout type
@@ -300,82 +263,203 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
     }
   };
 
-  // Canvas fallback for when vis.js fails
-  const createCanvasVisualization = (data: NetworkData) => {
+  // Interactive canvas visualization with proper graph rendering
+  const createInteractiveCanvasVisualization = (data: NetworkData) => {
     const container = networkRef.current!;
     const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 600;
+    const rect = container.getBoundingClientRect();
+    
+    // Set canvas size to container size
+    canvas.width = Math.max(800, rect.width);
+    canvas.height = Math.max(600, rect.height);
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.border = '1px solid #ddd';
+    canvas.style.cursor = 'grab';
     
     const ctx = canvas.getContext('2d')!;
     const layoutNodes = calculateLayout(data.nodes, data.edges, mapType);
     
-    // Clear canvas
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Interaction state
+    let isDragging = false;
+    let selectedNode: any = null;
+    let mousePos = { x: 0, y: 0 };
+    let offset = { x: 0, y: 0 };
+    let scale = 1;
     
     // Transform coordinates to canvas space
     const transform = (x: number, y: number) => ({
-      x: canvas.width / 2 + x,
-      y: canvas.height / 2 + y
+      x: canvas.width / 2 + (x + offset.x) * scale,
+      y: canvas.height / 2 + (y + offset.y) * scale
     });
     
-    // Draw edges first
-    ctx.strokeStyle = '#666';
-    ctx.lineWidth = 2;
-    data.edges.forEach(edge => {
-      const fromNode = layoutNodes.find(n => n.id === edge.from);
-      const toNode = layoutNodes.find(n => n.id === edge.to);
-      
-      if (fromNode && toNode) {
-        const from = transform(fromNode.x || 0, fromNode.y || 0);
-        const to = transform(toNode.x || 0, toNode.y || 0);
-        
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-        
-        // Draw arrow
-        const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        const arrowLength = 15;
-        ctx.beginPath();
-        ctx.moveTo(to.x, to.y);
-        ctx.lineTo(to.x - arrowLength * Math.cos(angle - Math.PI/6), to.y - arrowLength * Math.sin(angle - Math.PI/6));
-        ctx.moveTo(to.x, to.y);
-        ctx.lineTo(to.x - arrowLength * Math.cos(angle + Math.PI/6), to.y - arrowLength * Math.sin(angle + Math.PI/6));
-        ctx.stroke();
-      }
+    // Inverse transform for mouse coordinates
+    const inverseTransform = (x: number, y: number) => ({
+      x: ((x - canvas.width / 2) / scale) - offset.x,
+      y: ((y - canvas.height / 2) / scale) - offset.y
     });
     
-    // Draw nodes
-    layoutNodes.forEach(node => {
+    // Check if point is inside node
+    const isPointInNode = (x: number, y: number, node: any) => {
       const pos = transform(node.x || 0, node.y || 0);
-      const radius = node.size || 25;
+      const radius = (node.size || 25) * scale;
+      const dx = x - pos.x;
+      const dy = y - pos.y;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
+    };
+    
+    // Draw the complete graph
+    const draw = () => {
+      // Clear canvas
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw node circle
-      ctx.fillStyle = node.color || '#3b82f6';
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.stroke();
+      // Save context for transformations
+      ctx.save();
       
-      // Draw label
-      ctx.fillStyle = '#333';
+      // Draw edges first
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2 * scale;
+      data.edges.forEach(edge => {
+        const fromNode = layoutNodes.find(n => n.id === edge.from);
+        const toNode = layoutNodes.find(n => n.id === edge.to);
+        
+        if (fromNode && toNode) {
+          const from = transform(fromNode.x || 0, fromNode.y || 0);
+          const to = transform(toNode.x || 0, toNode.y || 0);
+          
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          
+          // Draw arrow
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const arrowLength = 15 * scale;
+          ctx.beginPath();
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - arrowLength * Math.cos(angle - Math.PI/6), to.y - arrowLength * Math.sin(angle - Math.PI/6));
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - arrowLength * Math.cos(angle + Math.PI/6), to.y - arrowLength * Math.sin(angle + Math.PI/6));
+          ctx.stroke();
+          
+          // Draw edge label
+          if (edge.label) {
+            const midX = (from.x + to.x) / 2;
+            const midY = (from.y + to.y) / 2;
+            ctx.fillStyle = '#333';
+            ctx.font = `${10 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(edge.label, midX, midY - 5);
+          }
+        }
+      });
+      
+      // Draw nodes
+      layoutNodes.forEach(node => {
+        const pos = transform(node.x || 0, node.y || 0);
+        const radius = (node.size || 25) * scale;
+        
+        // Highlight selected node
+        if (selectedNode && selectedNode.id === node.id) {
+          ctx.strokeStyle = '#ff6b6b';
+          ctx.lineWidth = 4 * scale;
+        } else {
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 3 * scale;
+        }
+        
+        // Draw node circle
+        ctx.fillStyle = node.color || '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw label
+        ctx.fillStyle = '#333';
+        ctx.font = `${12 * scale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const label = node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label;
+        ctx.fillText(label, pos.x, pos.y + radius + 20 * scale);
+      });
+      
+      ctx.restore();
+      
+      // Draw UI controls
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
       ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const label = node.label.length > 12 ? node.label.substring(0, 12) + '...' : node.label;
-      ctx.fillText(label, pos.x, pos.y + radius + 15);
+      ctx.textAlign = 'left';
+      ctx.fillText(`${mapType.toUpperCase()} LAYOUT | Zoom: ${Math.round(scale * 100)}% | Drag to pan, scroll to zoom`, 10, 20);
+    };
+    
+    // Mouse event handlers
+    const getMousePos = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+    
+    canvas.addEventListener('mousedown', (e) => {
+      mousePos = getMousePos(e);
+      
+      // Check if clicking on a node
+      selectedNode = layoutNodes.find(node => isPointInNode(mousePos.x, mousePos.y, node));
+      
+      if (selectedNode) {
+        isDragging = true;
+        canvas.style.cursor = 'grabbing';
+        console.log('Selected node:', selectedNode.label);
+      } else {
+        // Start panning
+        isDragging = true;
+        canvas.style.cursor = 'grabbing';
+      }
+      
+      draw();
     });
+    
+    canvas.addEventListener('mousemove', (e) => {
+      const newMousePos = getMousePos(e);
+      
+      if (isDragging) {
+        if (selectedNode) {
+          // Move selected node
+          const worldDelta = inverseTransform(newMousePos.x - mousePos.x, newMousePos.y - mousePos.y);
+          selectedNode.x = (selectedNode.x || 0) + worldDelta.x;
+          selectedNode.y = (selectedNode.y || 0) + worldDelta.y;
+        } else {
+          // Pan view
+          offset.x += (newMousePos.x - mousePos.x) / scale;
+          offset.y += (newMousePos.y - mousePos.y) / scale;
+        }
+        draw();
+      }
+      
+      mousePos = newMousePos;
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+    });
+    
+    // Zoom with mouse wheel
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      scale = Math.max(0.1, Math.min(3, scale * zoomFactor));
+      draw();
+    });
+    
+    // Initial draw
+    draw();
     
     container.appendChild(canvas);
-    console.log('✓ Canvas visualization created');
+    console.log(`✓ Interactive ${mapType} visualization created with ${data.nodes.length} nodes`);
   };
 
   // Regenerate mind map with feedback
