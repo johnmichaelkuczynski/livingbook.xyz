@@ -548,6 +548,279 @@ Please rewrite the text according to the instructions. Return only the rewritten
 
 
 
+  // Generate concept lattice
+  app.post("/api/concept-lattice/generate", async (req, res) => {
+    try {
+      const { text, title, provider = 'deepseek' } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const prompt = `Analyze the following text and create a structured concept lattice. Return ONLY valid JSON with this exact structure:
+
+{
+  "nodes": [
+    {
+      "id": "unique_id",
+      "type": "main_idea" | "basic_argument" | "example" | "supporting_quote" | "fine_argument",
+      "content": "node content",
+      "parentId": "parent_id_if_applicable",
+      "isExpanded": true,
+      "connections": ["connected_node_ids"]
+    }
+  ],
+  "metadata": {
+    "sourceText": "original text",
+    "title": "analysis title",
+    "generatedAt": "timestamp"
+  }
+}
+
+Rules:
+1. Start with 2-4 main_idea nodes (large, distinct concepts)
+2. Each main_idea should have 2-3 basic_argument nodes as children
+3. Each basic_argument should have 1-2 example nodes and 1-2 supporting_quote nodes
+4. Add fine_argument nodes where appropriate as children of basic_argument
+5. Use actual content from the text, not generic placeholders
+6. Make connections meaningful and logical
+7. Keep content concise but informative
+
+Text to analyze:
+${text}`;
+
+      const response = await generateChatResponse(prompt, "", []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      try {
+        // Clean the response and parse JSON
+        let cleanedResponse = response.message.trim();
+        if (cleanedResponse.startsWith('```json')) {
+          cleanedResponse = cleanedResponse.slice(7);
+        }
+        if (cleanedResponse.endsWith('```')) {
+          cleanedResponse = cleanedResponse.slice(0, -3);
+        }
+        
+        const latticeData = JSON.parse(cleanedResponse);
+        
+        // Validate structure
+        if (!latticeData.nodes || !Array.isArray(latticeData.nodes)) {
+          throw new Error('Invalid lattice structure');
+        }
+
+        res.json(latticeData);
+      } catch (parseError) {
+        console.error('Failed to parse concept lattice response:', parseError);
+        res.status(500).json({ error: 'Failed to generate structured concept lattice' });
+      }
+    } catch (error) {
+      console.error('Concept lattice generation error:', error);
+      res.status(500).json({ error: 'Failed to generate concept lattice' });
+    }
+  });
+
+  // Modify concept lattice globally
+  app.post("/api/concept-lattice/global-modify", async (req, res) => {
+    try {
+      const { instruction, currentData, provider = 'deepseek' } = req.body;
+      
+      if (!instruction || !currentData) {
+        return res.status(400).json({ error: "Instruction and current data are required" });
+      }
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const prompt = `You are modifying a concept lattice based on user instructions. 
+
+Current lattice data:
+${JSON.stringify(currentData, null, 2)}
+
+User instruction: ${instruction}
+
+Please modify the lattice according to the instruction and return ONLY valid JSON with the same structure. Make sure to:
+1. Keep all existing IDs unless specifically changing structure
+2. Maintain parent-child relationships
+3. Update connections appropriately
+4. Follow the user's specific requests
+
+Return the complete modified lattice structure:`;
+
+      const response = await generateChatResponse(prompt, "", []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      try {
+        // Clean the response and parse JSON
+        let cleanedResponse = response.message.trim();
+        if (cleanedResponse.startsWith('```json')) {
+          cleanedResponse = cleanedResponse.slice(7);
+        }
+        if (cleanedResponse.endsWith('```')) {
+          cleanedResponse = cleanedResponse.slice(0, -3);
+        }
+        
+        const updatedLattice = JSON.parse(cleanedResponse);
+        res.json(updatedLattice);
+      } catch (parseError) {
+        console.error('Failed to parse modified lattice response:', parseError);
+        res.status(500).json({ error: 'Failed to process global modification' });
+      }
+    } catch (error) {
+      console.error('Global modification error:', error);
+      res.status(500).json({ error: 'Failed to process global modification' });
+    }
+  });
+
+  // Modify specific node
+  app.post("/api/concept-lattice/node-modify", async (req, res) => {
+    try {
+      const { nodeId, instruction, currentData, provider = 'deepseek' } = req.body;
+      
+      if (!nodeId || !instruction || !currentData) {
+        return res.status(400).json({ error: "Node ID, instruction, and current data are required" });
+      }
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const targetNode = currentData.nodes.find((n: any) => n.id === nodeId);
+      if (!targetNode) {
+        return res.status(404).json({ error: "Node not found" });
+      }
+
+      const prompt = `You are modifying a specific node in a concept lattice.
+
+Current lattice data:
+${JSON.stringify(currentData, null, 2)}
+
+Target node to modify:
+${JSON.stringify(targetNode, null, 2)}
+
+User instruction for this node: ${instruction}
+
+Please modify only the specified node according to the instruction and return ONLY valid JSON with the complete lattice structure. The modification should:
+1. Update the target node's content as requested
+2. Keep all other nodes unchanged unless they need to be updated due to the modification
+3. Maintain proper parent-child relationships
+4. Update connections if necessary
+
+Return the complete modified lattice structure:`;
+
+      const response = await generateChatResponse(prompt, "", []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      try {
+        // Clean the response and parse JSON
+        let cleanedResponse = response.message.trim();
+        if (cleanedResponse.startsWith('```json')) {
+          cleanedResponse = cleanedResponse.slice(7);
+        }
+        if (cleanedResponse.endsWith('```')) {
+          cleanedResponse = cleanedResponse.slice(0, -3);
+        }
+        
+        const updatedLattice = JSON.parse(cleanedResponse);
+        res.json(updatedLattice);
+      } catch (parseError) {
+        console.error('Failed to parse node modification response:', parseError);
+        res.status(500).json({ error: 'Failed to process node modification' });
+      }
+    } catch (error) {
+      console.error('Node modification error:', error);
+      res.status(500).json({ error: 'Failed to process node modification' });
+    }
+  });
+
+  // Email concept lattice
+  app.post("/api/concept-lattice/email", async (req, res) => {
+    try {
+      const { imageData, title, sourceText } = req.body;
+      
+      if (!imageData) {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+
+      // Send email with concept lattice attachment
+      const emailContent = `
+        <h2>Concept Lattice: ${title}</h2>
+        <p>Generated from your document analysis.</p>
+        <p><strong>Source text excerpt:</strong></p>
+        <p style="font-style: italic; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px;">${sourceText}</p>
+        <p>Please find your concept lattice attached as an image.</p>
+      `;
+
+      await emailService.sendEmail({
+        to: 'user@example.com', // This would come from user settings
+        subject: `Concept Lattice: ${title}`,
+        content: emailContent,
+        contentType: 'html'
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Email concept lattice error:", error);
+      res.status(500).json({ error: "Failed to email concept lattice" });
+    }
+  });
+
   // Send chat message with document
   app.post("/api/chat/:documentId/message", async (req, res) => {
     try {
