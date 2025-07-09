@@ -322,46 +322,48 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 flex gap-4 p-4">
-          {/* Left Panel - Controls */}
-          <div className="w-80 flex flex-col space-y-4">
+        <CardContent className="flex-1 flex gap-6 p-6">
+          {/* Left Panel - Controls - Made Much Bigger */}
+          <div className="w-[600px] flex flex-col space-y-6">
             {/* Source Selection */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Source Selection</CardTitle>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Source Selection</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-6">
                 <div>
-                  <label className="text-xs font-medium text-gray-700">Selected Text (Optional)</label>
+                  <label className="text-base font-medium text-gray-700 mb-3 block">Selected Text (Optional)</label>
                   <Textarea
                     placeholder="Paste or type specific text to map..."
                     value={selectedText}
                     onChange={(e) => setSelectedText(e.target.value)}
-                    className="mt-1 h-20 text-xs"
+                    className="mt-2 h-32 text-base leading-relaxed"
                   />
                 </div>
                 
                 {availableChunks.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">Or Select Chunks:</label>
-                    <ScrollArea className="h-64 border rounded p-3">
-                      {availableChunks.map((chunk) => (
-                        <div
-                          key={chunk.id}
-                          className={`p-4 mb-3 rounded-lg text-sm cursor-pointer transition-colors border-2 ${
-                            selectedChunks.includes(chunk.id)
-                              ? 'bg-blue-50 border-blue-300 shadow-sm'
-                              : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                          }`}
-                          onClick={() => toggleChunkSelection(chunk.id)}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-semibold text-gray-900">Chunk {chunk.index + 1}</span>
-                            <Badge variant="outline" className="text-sm px-2 py-1">{chunk.wordCount} words</Badge>
+                    <label className="text-base font-medium text-gray-700 mb-4 block">Or Select Chunks:</label>
+                    <ScrollArea className="h-96 border rounded-lg p-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        {availableChunks.map((chunk) => (
+                          <div
+                            key={chunk.id}
+                            className={`p-6 rounded-lg text-base cursor-pointer transition-colors border-2 ${
+                              selectedChunks.includes(chunk.id)
+                                ? 'bg-blue-50 border-blue-400 shadow-md'
+                                : 'bg-gray-50 hover:bg-gray-100 border-gray-300'
+                            }`}
+                            onClick={() => toggleChunkSelection(chunk.id)}
+                          >
+                            <div className="flex justify-between items-center mb-3">
+                              <span className="font-bold text-gray-900 text-lg">Chunk {chunk.index + 1}</span>
+                              <Badge variant="outline" className="text-base px-3 py-1 font-medium">{chunk.wordCount} words</Badge>
+                            </div>
+                            <p className="text-gray-700 leading-relaxed text-base">{chunk.preview}</p>
                           </div>
-                          <p className="text-gray-700 leading-relaxed">{chunk.preview}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </ScrollArea>
                   </div>
                 )}
@@ -370,44 +372,43 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
 
             {/* Generation Controls */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Generation & Feedback</CardTitle>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Generation & Feedback</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-6">
                 <Button
                   onClick={generateMindMap}
                   disabled={isGenerating || !document}
-                  className="w-full"
+                  className="w-full h-12 text-base"
                 >
                   {isGenerating ? (
                     <>
-                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      <div className="w-5 h-5 mr-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                       Generating...
                     </>
                   ) : (
                     <>
-                      <Brain className="w-4 h-4 mr-2" />
+                      <Brain className="w-5 h-5 mr-3" />
                       Generate {mapType} Map
                     </>
                   )}
                 </Button>
                 
                 <div>
-                  <label className="text-xs font-medium text-gray-700">Refinement Feedback</label>
+                  <label className="text-base font-medium text-gray-700 mb-3 block">Refinement Feedback</label>
                   <Textarea
                     placeholder="Provide feedback to refine the mind map..."
                     value={feedbackText}
                     onChange={(e) => setFeedbackText(e.target.value)}
-                    className="mt-1 h-20 text-xs"
+                    className="mt-2 h-32 text-base leading-relaxed"
                   />
                   <Button
                     onClick={regenerateWithFeedback}
                     disabled={isGenerating || !feedbackText.trim()}
                     variant="outline"
-                    size="sm"
-                    className="w-full mt-2"
+                    className="w-full mt-4 h-12 text-base"
                   >
-                    <RefreshCw className="w-4 h-4 mr-1" />
+                    <RefreshCw className="w-5 h-5 mr-2" />
                     Refine Map
                   </Button>
                 </div>
