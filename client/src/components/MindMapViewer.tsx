@@ -217,70 +217,85 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
 
   // Create a simple fallback visualization
   const createFallbackVisualization = (data: NetworkData) => {
-    if (!networkRef.current || !data.nodes.length) return;
+    if (!networkRef.current || !data.nodes.length || typeof document === 'undefined') return;
     
     const container = networkRef.current;
     container.innerHTML = '';
     
-    // Create SVG container
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', '0 0 800 600');
-    svg.style.background = '#ffffff';
-    svg.style.border = '1px solid #ddd';
-    
-    const centerX = 400;
-    const centerY = 300;
-    const radius = 200;
-    
-    // Draw edges first
-    data.edges.forEach(edge => {
-      const fromNode = data.nodes.find(n => n.id === edge.from);
-      const toNode = data.nodes.find(n => n.id === edge.to);
+    try {
+      // Create SVG container
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.setAttribute('viewBox', '0 0 800 600');
+      svg.style.background = '#ffffff';
+      svg.style.border = '1px solid #ddd';
       
-      if (fromNode && toNode) {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', fromNode.x?.toString() || centerX.toString());
-        line.setAttribute('y1', fromNode.y?.toString() || centerY.toString());
-        line.setAttribute('x2', toNode.x?.toString() || centerX.toString());
-        line.setAttribute('y2', toNode.y?.toString() || centerY.toString());
-        line.setAttribute('stroke', '#666');
-        line.setAttribute('stroke-width', '2');
-        svg.appendChild(line);
-      }
-    });
-    
-    // Draw nodes
-    data.nodes.forEach((node, index) => {
-      const angle = (index * 2 * Math.PI) / data.nodes.length;
-      const x = node.x || (centerX + radius * Math.cos(angle));
-      const y = node.y || (centerY + radius * Math.sin(angle));
+      const centerX = 400;
+      const centerY = 300;
+      const radius = 200;
       
-      // Create node circle
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', x.toString());
-      circle.setAttribute('cy', y.toString());
-      circle.setAttribute('r', (node.size || 20).toString());
-      circle.setAttribute('fill', node.color || '#3b82f6');
-      circle.setAttribute('stroke', '#fff');
-      circle.setAttribute('stroke-width', '2');
-      svg.appendChild(circle);
+      // Draw edges first
+      data.edges.forEach(edge => {
+        const fromNode = data.nodes.find(n => n.id === edge.from);
+        const toNode = data.nodes.find(n => n.id === edge.to);
+        
+        if (fromNode && toNode) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', fromNode.x?.toString() || centerX.toString());
+          line.setAttribute('y1', fromNode.y?.toString() || centerY.toString());
+          line.setAttribute('x2', toNode.x?.toString() || centerX.toString());
+          line.setAttribute('y2', toNode.y?.toString() || centerY.toString());
+          line.setAttribute('stroke', '#666');
+          line.setAttribute('stroke-width', '2');
+          svg.appendChild(line);
+        }
+      });
       
-      // Create label
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', x.toString());
-      text.setAttribute('y', (y + 5).toString());
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('font-family', 'Arial, sans-serif');
-      text.setAttribute('font-size', '12');
-      text.setAttribute('fill', '#333');
-      text.textContent = node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label;
-      svg.appendChild(text);
-    });
-    
-    container.appendChild(svg);
-    console.log('✓ Fallback visualization created');
+      // Draw nodes
+      data.nodes.forEach((node, index) => {
+        const angle = (index * 2 * Math.PI) / data.nodes.length;
+        const x = node.x || (centerX + radius * Math.cos(angle));
+        const y = node.y || (centerY + radius * Math.sin(angle));
+        
+        // Create node circle
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x.toString());
+        circle.setAttribute('cy', y.toString());
+        circle.setAttribute('r', (node.size || 20).toString());
+        circle.setAttribute('fill', node.color || '#3b82f6');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        svg.appendChild(circle);
+        
+        // Create label
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x.toString());
+        text.setAttribute('y', (y + 5).toString());
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', 'Arial, sans-serif');
+        text.setAttribute('font-size', '12');
+        text.setAttribute('fill', '#333');
+        text.textContent = node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label;
+        svg.appendChild(text);
+      });
+      
+      container.appendChild(svg);
+      console.log('✓ Fallback visualization created');
+    } catch (error) {
+      console.error('SVG creation failed:', error);
+      // Simple HTML fallback
+      container.innerHTML = `
+        <div style="padding: 20px; text-align: center; background: #f0f8ff; border: 2px solid #007acc; border-radius: 8px; margin: 20px;">
+          <h3 style="color: #007acc; margin-bottom: 15px;">Mind Map Generated ✓</h3>
+          <p style="margin-bottom: 10px;"><strong>${data.nodes.length} concepts found:</strong></p>
+          <div style="text-align: left; max-height: 300px; overflow-y: auto; background: white; padding: 15px; border-radius: 4px;">
+            ${data.nodes.map(node => `<div style="margin: 5px 0; padding: 5px; background: ${node.color || '#e3f2fd'}; border-radius: 3px; font-size: 14px;">• ${node.label}</div>`).join('')}
+          </div>
+          <p style="font-size: 12px; color: #666; margin-top: 10px;">Concepts extracted from your document content</p>
+        </div>
+      `;
+    }
   };
 
   // Regenerate mind map with feedback
