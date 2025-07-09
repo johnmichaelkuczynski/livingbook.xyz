@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Edit3, Save, X, RotateCcw, Download } from "lucide-react";
+import { FileText, Edit3, Save, X, RotateCcw, Download, Network } from "lucide-react";
 import KaTeXRenderer from "./KaTeXRenderer";
+import ConceptLattice from "./ConceptLattice";
 import { useToast } from "@/hooks/use-toast";
 
 interface DocumentChunk {
@@ -34,6 +35,8 @@ export default function ChunkedDocumentViewer({
   const [editContent, setEditContent] = useState<string>("");
   const [rewriteInstructions, setRewriteInstructions] = useState<string>("");
   const [showRewriteDialog, setShowRewriteDialog] = useState<number | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const [showConceptLattice, setShowConceptLattice] = useState(false);
   const { toast } = useToast();
 
   const startEditing = (chunkIndex: number, content: string) => {
@@ -81,6 +84,19 @@ export default function ChunkedDocumentViewer({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      setSelectedText(selection.toString().trim());
+    }
+  };
+
+  const handleVisualize = () => {
+    if (selectedText) {
+      setShowConceptLattice(true);
+    }
   };
 
   if (!document || !chunks.length) {
@@ -165,6 +181,16 @@ export default function ChunkedDocumentViewer({
                     >
                       <Download className="w-4 h-4" />
                     </Button>
+                    {selectedText && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleVisualize}
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        <Network className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -189,7 +215,11 @@ export default function ChunkedDocumentViewer({
                     </div>
                   </div>
                 ) : (
-                  <div className="prose prose-sm max-w-none">
+                  <div 
+                    className="prose prose-sm max-w-none"
+                    onMouseUp={handleTextSelection}
+                    style={{ userSelect: 'text' }}
+                  >
                     <KaTeXRenderer 
                       content={chunk.content} 
                       className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
@@ -231,6 +261,14 @@ export default function ChunkedDocumentViewer({
           ))}
         </div>
       </ScrollArea>
+      
+      {showConceptLattice && selectedText && (
+        <ConceptLattice
+          selectedText={selectedText}
+          documentTitle={document?.originalName || 'Document'}
+          onClose={() => setShowConceptLattice(false)}
+        />
+      )}
     </div>
   );
 }

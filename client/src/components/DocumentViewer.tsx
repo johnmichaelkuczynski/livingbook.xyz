@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MoreHorizontal, FileText, MessageCircle, Edit3, Upload, RotateCcw } from 'lucide-react';
+import { Search, MoreHorizontal, FileText, MessageCircle, Edit3, Upload, RotateCcw, Network } from 'lucide-react';
 import KaTeXRenderer from './KaTeXRenderer';
+import ConceptLattice from './ConceptLattice';
 
 interface DocumentViewerProps {
   document: any | null;
@@ -16,6 +17,9 @@ interface DocumentViewerProps {
 
 export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick, onFileDrop }: DocumentViewerProps) {
   const [dragActive, setDragActive] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [showConceptLattice, setShowConceptLattice] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,6 +40,21 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
       onFileDrop(e.dataTransfer.files[0]);
     }
   };
+  // Handle text selection
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      setSelectedText(selection.toString().trim());
+    }
+  };
+
+  // Handle visualize button click
+  const handleVisualize = () => {
+    if (selectedText) {
+      setShowConceptLattice(true);
+    }
+  };
+
   const formatContent = (content: string) => {
     if (!content) return '';
     
@@ -74,6 +93,17 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
                 <Edit3 className="w-4 h-4 mr-1" />
                 Rewrite
               </Button>
+              {selectedText && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={handleVisualize}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Network className="w-4 h-4 mr-1" />
+                  Visualize
+                </Button>
+              )}
             </>
           )}
           <Button variant="ghost" size="sm">
@@ -123,7 +153,12 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             ) : (
               <div className="w-full">
-                <div className="space-y-4 text-lg leading-relaxed">
+                <div 
+                  ref={contentRef}
+                  className="space-y-4 text-lg leading-relaxed"
+                  onMouseUp={handleTextSelection}
+                  style={{ userSelect: 'text' }}
+                >
                   {formatContent(document.content)}
                 </div>
               </div>
@@ -131,6 +166,14 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
           </div>
         </ScrollArea>
       </div>
+      
+      {showConceptLattice && selectedText && (
+        <ConceptLattice
+          selectedText={selectedText}
+          documentTitle={document?.originalName || 'Document'}
+          onClose={() => setShowConceptLattice(false)}
+        />
+      )}
     </Card>
   );
 }
