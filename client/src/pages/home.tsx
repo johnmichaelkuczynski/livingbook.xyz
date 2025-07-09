@@ -13,6 +13,7 @@ import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
+import MindMapInterface from '@/components/MindMapInterface';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -527,13 +528,47 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right Side: AI Chat Messages */}
+        {/* Right Side: Tabbed Interface */}
         <div className="w-[600px] border-l border-gray-200 flex flex-col">
-          <ChatInterface 
-            document={currentDocument} 
-            showInputInline={false} 
-            onMessageToDocument={handleMessageToDocument}
-          />
+          <Tabs defaultValue="chat" className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-2 m-2">
+              <TabsTrigger value="chat" className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a9.863 9.863 0 01-4.906-1.308L3 21l2.308-5.094A9.863 9.863 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"></path>
+                </svg>
+                Chat
+              </TabsTrigger>
+              <TabsTrigger value="mindmap" className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                Mind Map
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chat" className="flex-1 m-0">
+              <ChatInterface 
+                document={currentDocument} 
+                showInputInline={false} 
+                onMessageToDocument={handleMessageToDocument}
+              />
+            </TabsContent>
+            
+            <TabsContent value="mindmap" className="flex-1 m-0">
+              <MindMapInterface 
+                document={currentDocument}
+                onAskAboutNode={(nodeContent) => {
+                  // Handle questions about mind map nodes
+                  setMessage(`Tell me more about: ${nodeContent}`);
+                }}
+                onJumpToText={(startPos, endPos) => {
+                  // Handle jumping to text segments
+                  // This could scroll to specific positions in the document
+                  console.log('Jump to text:', startPos, endPos);
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 

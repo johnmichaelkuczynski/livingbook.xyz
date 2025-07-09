@@ -6,6 +6,8 @@ import fs from "fs/promises";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
 import { chunkDocument } from "./services/documentChunker";
+import { segmentText, mergeSegments } from "./services/textSegmentation";
+import { generateLocalMindMap, generateMetaMindMap } from "./services/mindMapGenerator";
 import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
@@ -1090,6 +1092,177 @@ Instructions: ${instructions}
     } catch (error) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to get comparison messages" 
+      });
+    }
+  });
+
+  // Mind Map API endpoints
+  
+  // Get text segments for a document
+  app.get("/api/documents/:documentId/segments", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      const { method = 'auto' } = req.query;
+      
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      const segmentationResult = segmentText(document.content, method as any);
+      
+      res.json(segmentationResult.segments);
+      
+    } catch (error) {
+      console.error("Segmentation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to segment document" 
+      });
+    }
+  });
+
+  // Generate mind map for a segment
+  app.post("/api/mindmaps/generate", async (req, res) => {
+    try {
+      const { documentId, segmentId, provider = 'deepseek' } = req.body;
+      
+      if (!documentId || !segmentId) {
+        return res.status(400).json({ error: "Document ID and segment ID are required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      // Get text segments
+      const segmentationResult = segmentText(document.content);
+      const segment = segmentationResult.segments.find(s => s.id === segmentId);
+      
+      if (!segment) {
+        return res.status(404).json({ error: "Segment not found" });
+      }
+
+      // Generate mind map
+      const mindMap = await generateLocalMindMap(
+        segmentId,
+        segment.content,
+        segment.title || `Segment ${segmentId}`,
+        provider
+      );
+      
+      res.json(mindMap);
+      
+    } catch (error) {
+      console.error("Mind map generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate mind map" 
+      });
+    }
+  });
+
+  // Generate meta mind map from existing maps
+  app.post("/api/mindmaps/generate-meta", async (req, res) => {
+    try {
+      const { documentId, mapIds, provider = 'deepseek' } = req.body;
+      
+      if (!documentId || !mapIds || mapIds.length < 2) {
+        return res.status(400).json({ error: "Document ID and at least 2 map IDs are required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      // For now, we'll regenerate the local maps since we don't have persistent storage
+      // In a real implementation, you'd fetch stored mind maps
+      const segmentationResult = segmentText(document.content);
+      
+      const localMaps = [];
+      for (const mapId of mapIds) {
+        const segmentId = mapId.replace('mindmap_', '');
+        const segment = segmentationResult.segments.find(s => s.id === segmentId);
+        
+        if (segment) {
+          const mindMap = await generateLocalMindMap(
+            segmentId,
+            segment.content,
+            segment.title || `Segment ${segmentId}`,
+            provider
+          );
+          localMaps.push(mindMap);
+        }
+      }
+
+      if (localMaps.length < 2) {
+        return res.status(400).json({ error: "Could not generate enough local maps" });
+      }
+
+      const metaMap = await generateMetaMindMap(
+        localMaps,
+        `Meta Map: ${document.originalName}`,
+        provider
+      );
+      
+      res.json(metaMap);
+      
+    } catch (error) {
+      console.error("Meta mind map generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate meta mind map" 
+      });
+    }
+  });
+
+  // Merge segments and generate combined mind map
+  app.post("/api/mindmaps/merge-segments", async (req, res) => {
+    try {
+      const { documentId, segmentIds, provider = 'deepseek' } = req.body;
+      
+      if (!documentId || !segmentIds || segmentIds.length < 2) {
+        return res.status(400).json({ error: "Document ID and at least 2 segment IDs are required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      // Get text segments
+      const segmentationResult = segmentText(document.content);
+      
+      // Merge selected segments
+      const mergedSegment = mergeSegments(segmentationResult.segments, segmentIds);
+      
+      // Generate mind map for merged content
+      const mindMap = await generateLocalMindMap(
+        mergedSegment.id,
+        mergedSegment.content,
+        mergedSegment.title || 'Merged Segments',
+        provider
+      );
+      
+      res.json(mindMap);
+      
+    } catch (error) {
+      console.error("Segment merge error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to merge segments" 
+      });
+    }
+  });
+
+  // Get existing mind maps for a document (stub for now)
+  app.get("/api/documents/:documentId/mindmaps", async (req, res) => {
+    try {
+      // For now, return empty array since we don't have persistent mind map storage
+      // In a real implementation, you'd fetch stored mind maps from database
+      res.json([]);
+      
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get mind maps" 
       });
     }
   });
