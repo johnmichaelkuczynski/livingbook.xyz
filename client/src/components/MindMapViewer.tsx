@@ -343,23 +343,23 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
                 
                 {availableChunks.length > 0 && (
                   <div>
-                    <label className="text-xs font-medium text-gray-700 mb-2 block">Or Select Chunks:</label>
-                    <ScrollArea className="h-32 border rounded p-2">
+                    <label className="text-sm font-medium text-gray-700 mb-3 block">Or Select Chunks:</label>
+                    <ScrollArea className="h-64 border rounded p-3">
                       {availableChunks.map((chunk) => (
                         <div
                           key={chunk.id}
-                          className={`p-2 mb-1 rounded text-xs cursor-pointer transition-colors ${
+                          className={`p-4 mb-3 rounded-lg text-sm cursor-pointer transition-colors border-2 ${
                             selectedChunks.includes(chunk.id)
-                              ? 'bg-blue-100 border-blue-300'
-                              : 'bg-gray-50 hover:bg-gray-100'
+                              ? 'bg-blue-50 border-blue-300 shadow-sm'
+                              : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
                           }`}
                           onClick={() => toggleChunkSelection(chunk.id)}
                         >
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-medium">Chunk {chunk.index + 1}</span>
-                            <Badge variant="outline" className="text-xs">{chunk.wordCount} words</Badge>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-semibold text-gray-900">Chunk {chunk.index + 1}</span>
+                            <Badge variant="outline" className="text-sm px-2 py-1">{chunk.wordCount} words</Badge>
                           </div>
-                          <p className="text-gray-600">{chunk.preview}</p>
+                          <p className="text-gray-700 leading-relaxed">{chunk.preview}</p>
                         </div>
                       ))}
                     </ScrollArea>
