@@ -71,7 +71,19 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
   return (
     <Card className="flex-1 flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-        <h2 className="text-lg font-semibold text-gray-900">Document Content</h2>
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold text-gray-900">Document Content</h2>
+          {document && !selectedText && (
+            <p className="text-sm text-gray-500 mt-1">
+              💡 Select text below to see the "Visualize" button
+            </p>
+          )}
+          {selectedText && (
+            <p className="text-sm text-purple-600 mt-1">
+              ✓ Text selected: "{selectedText.substring(0, 50)}..." - Click Visualize!
+            </p>
+          )}
+        </div>
         <div className="flex items-center space-x-2">
           {document && (
             <>
@@ -93,15 +105,25 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
                 <Edit3 className="w-4 h-4 mr-1" />
                 Rewrite
               </Button>
-              {selectedText && (
+              {selectedText ? (
                 <Button 
                   variant="default" 
                   size="sm"
                   onClick={handleVisualize}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
                 >
                   <Network className="w-4 h-4 mr-1" />
-                  Visualize
+                  Visualize Selected Text
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled
+                  className="opacity-50"
+                >
+                  <Network className="w-4 h-4 mr-1" />
+                  Select Text First
                 </Button>
               )}
             </>
