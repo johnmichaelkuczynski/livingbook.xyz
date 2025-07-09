@@ -6,10 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
+import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
+import MindMapViewer from "@/components/MindMapViewer";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -67,6 +68,10 @@ export default function ComparePage() {
   const [useChatData, setUseChatData] = useState(false);
   const [synthesizedContent, setSynthesizedContent] = useState<string>("");
   const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false);
+  
+  // Mind Map State  
+  const [isMindMapOpen, setIsMindMapOpen] = useState(false);
+  const [mindMapDocument, setMindMapDocument] = useState<Document | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -817,14 +822,27 @@ export default function ComparePage() {
               </Button>
             )}
             {(documentA || documentB) && (
-              <Button 
-                variant="outline" 
-                onClick={openSynthesisModal}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-              >
-                <BookOpen className="w-4 h-4" />
-                Synthesize Documents
-              </Button>
+              <>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setMindMapDocument(documentA || documentB);
+                    setIsMindMapOpen(true);
+                  }}
+                  className="flex items-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  <Brain className="w-4 h-4" />
+                  Mind Map
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={openSynthesisModal}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Synthesize Documents
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -1188,6 +1206,13 @@ export default function ComparePage() {
           </div>
         )}
       </div>
+      
+      {/* Mind Map Viewer */}
+      <MindMapViewer
+        document={mindMapDocument}
+        isOpen={isMindMapOpen}
+        onClose={() => setIsMindMapOpen(false)}
+      />
     </div>
   );
 }
