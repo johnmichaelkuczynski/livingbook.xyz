@@ -8,7 +8,20 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const pdfParse = await import('pdf-parse');
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
-    return data.text;
+    
+    // Better paragraph handling for PDF
+    let text = data.text;
+    
+    // Normalize line breaks and preserve paragraph structure
+    text = text
+      .replace(/\r\n/g, '\n')  // Normalize Windows line breaks
+      .replace(/\r/g, '\n')    // Normalize Mac line breaks
+      .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2') // Add paragraph breaks after sentences
+      .replace(/\n{3,}/g, '\n\n') // Reduce excessive line breaks to double
+      .replace(/\n([A-Z][a-z])/g, '\n\n$1') // Add breaks before capitalized words (likely new paragraphs)
+      .trim();
+    
+    return text;
   } catch (error) {
     console.error('PDF parsing error:', error);
     throw new Error(`Failed to extract text from PDF: ${error}`);
@@ -21,8 +34,20 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
     // Dynamic import to avoid module loading issues
     const mammoth = await import('mammoth');
     const buffer = await fs.readFile(filePath);
+    // Use extractRawText to preserve paragraph structure
     const result = await mammoth.extractRawText({ buffer });
-    return result.value;
+    
+    // Better paragraph handling for DOCX
+    let text = result.value;
+    
+    // Normalize line breaks and preserve paragraph structure
+    text = text
+      .replace(/\r\n/g, '\n')  // Normalize Windows line breaks
+      .replace(/\r/g, '\n')    // Normalize Mac line breaks
+      .replace(/\n{3,}/g, '\n\n') // Reduce excessive line breaks to double
+      .trim();
+    
+    return text;
   } catch (error) {
     console.error('DOCX parsing error:', error);
     throw new Error(`Failed to extract text from DOCX: ${error}`);
@@ -32,7 +57,16 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
 // For TXT files
 async function extractTextFromTXT(filePath: string): Promise<string> {
   try {
-    return await fs.readFile(filePath, 'utf-8');
+    let text = await fs.readFile(filePath, 'utf-8');
+    
+    // Normalize line breaks and preserve paragraph structure
+    text = text
+      .replace(/\r\n/g, '\n')  // Normalize Windows line breaks
+      .replace(/\r/g, '\n')    // Normalize Mac line breaks
+      .replace(/\n{3,}/g, '\n\n') // Reduce excessive line breaks to double
+      .trim();
+    
+    return text;
   } catch (error) {
     throw new Error(`Failed to read text file: ${error}`);
   }

@@ -192,7 +192,7 @@ export default function ChunkedDocumentViewer({
                   <div className="prose prose-sm max-w-none">
                     <KaTeXRenderer 
                       content={chunk.content} 
-                      className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
+                      className="text-sm text-gray-700 dark:text-gray-300"
                     />
                   </div>
                 )}
