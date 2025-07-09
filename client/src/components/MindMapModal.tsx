@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Network, DataSet } from 'vis-network/standalone';
+import { Network } from 'vis-network';
+import { DataSet } from 'vis-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -78,8 +79,15 @@ export default function MindMapModal({ isOpen, onClose, mindMap, onAskAboutNode 
 
   useEffect(() => {
     if (!isOpen || !mindMap || !mindMap.nodes || !mindMap.edges || !networkRef.current) {
+      console.log('Mind map modal effect - early return:', { isOpen, hasMindMap: !!mindMap, hasNodes: !!mindMap?.nodes, hasEdges: !!mindMap?.edges, hasRef: !!networkRef.current });
       return;
     }
+
+    console.log('Creating mind map visualization with:', { 
+      nodes: mindMap.nodes?.length || 0, 
+      edges: mindMap.edges?.length || 0,
+      mindMapStructure: mindMap
+    });
 
     // Destroy existing network
     if (networkInstanceRef.current) {
@@ -168,8 +176,14 @@ export default function MindMapModal({ isOpen, onClose, mindMap, onAskAboutNode 
       }
     };
 
-    // Create network
-    networkInstanceRef.current = new Network(networkRef.current, { nodes: visNodes, edges: visEdges }, options);
+    // Create network with error handling
+    try {
+      networkInstanceRef.current = new Network(networkRef.current, { nodes: visNodes, edges: visEdges }, options);
+      console.log('Network created successfully with', visNodes.length, 'nodes and', visEdges.length, 'edges');
+    } catch (error) {
+      console.error('Failed to create vis-network:', error);
+      return;
+    }
 
     // Handle node selection
     networkInstanceRef.current.on('click', (params) => {

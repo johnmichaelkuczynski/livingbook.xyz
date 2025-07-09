@@ -9,16 +9,20 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
     
-    // Better paragraph handling for PDF
+    // Enhanced paragraph handling for PDF
     let text = data.text;
     
     // Normalize line breaks and preserve paragraph structure
     text = text
       .replace(/\r\n/g, '\n')  // Normalize Windows line breaks
       .replace(/\r/g, '\n')    // Normalize Mac line breaks
-      .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2') // Add paragraph breaks after sentences
+      .replace(/\s+/g, ' ')    // Normalize multiple spaces to single space
+      .replace(/([.!?])\s+([A-Z])/g, '$1\n\n$2') // Add paragraph breaks after sentences followed by capitals
+      .replace(/([a-z])\s+([A-Z][a-z]+\s+[A-Z])/g, '$1\n\n$2') // Break before title case (likely headings)
+      .replace(/\.\s*\n\s*([A-Z])/g, '.\n\n$1') // Ensure sentence endings start new paragraphs
+      .replace(/([a-z])\s*\n\s*([A-Z])/g, '$1\n\n$2') // Add breaks between lowercase-to-uppercase transitions
       .replace(/\n{3,}/g, '\n\n') // Reduce excessive line breaks to double
-      .replace(/\n([A-Z][a-z])/g, '\n\n$1') // Add breaks before capitalized words (likely new paragraphs)
+      .replace(/^\s+|\s+$/gm, '') // Trim whitespace from each line
       .trim();
     
     return text;
