@@ -737,7 +737,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
     }
   });
 
-  // Email route using SendGrid
+  // Email route using SendGrid - Legacy endpoint
   app.post("/api/email/send", async (req, res) => {
     try {
       const { subject, content, contentType = 'html' } = req.body;
@@ -746,7 +746,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         return res.status(400).json({ error: "Content is required" });
       }
 
-      await emailService.sendResponseEmail(content);
+      await emailService.sendResponseEmail(content, 'user@example.com');
       
       res.json({ success: true, message: "Email sent successfully" });
       
@@ -754,6 +754,31 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
       console.error("Email error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to send email" 
+      });
+    }
+  });
+
+  // Email API endpoint - Send AI response via email
+  app.post("/api/email/send-response", async (req, res) => {
+    try {
+      const { content, userEmail, timestamp } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+      
+      if (!userEmail || !userEmail.includes('@')) {
+        return res.status(400).json({ error: "Valid email address is required" });
+      }
+
+      await emailService.sendResponseEmail(content, userEmail, timestamp);
+      
+      res.json({ success: true, message: "Email sent successfully" });
+    } catch (error) {
+      console.error('Email sending error:', error);
+      res.status(500).json({ 
+        error: "Failed to send email", 
+        details: error instanceof Error ? error.message : "Unknown error" 
       });
     }
   });
