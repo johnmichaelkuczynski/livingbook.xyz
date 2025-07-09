@@ -149,9 +149,16 @@ IMPORTANT: Return ONLY the JSON object, no other text or explanation.`;
     }
     
     const analysis = JSON.parse(jsonContent);
+    console.log('Parsed analysis:', analysis);
     
     // Convert analysis to mind map format
     const mindMap = convertAnalysisToMindMap(segmentId, title, analysis);
+    console.log('Generated mind map:', {
+      id: mindMap.id,
+      title: mindMap.title,
+      nodesCount: mindMap.nodes.length,
+      edgesCount: mindMap.edges.length
+    });
     
     return mindMap;
     
