@@ -18,15 +18,16 @@ export interface ChunkedDocument {
  * Split document content into chunks of approximately maxWords
  */
 export function chunkDocument(content: string, maxWords: number = 1000): ChunkedDocument {
-  const words = content.split(/\s+/).filter(word => word.length > 0);
-  const totalWordCount = words.length;
+  // Split content into paragraphs, preserving structure
+  const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  const totalWords = content.split(/\s+/).filter(word => word.length > 0);
+  const totalWordCount = totalWords.length;
   
   if (totalWordCount <= maxWords) {
-    // Document is small enough, return as single chunk
     return {
       originalContent: content,
       chunks: [{
-        id: generateChunkId(0),
+        id: generateChunkId(0, 'full'),
         chunkIndex: 0,
         content: content.trim(),
         wordCount: totalWordCount,
@@ -39,28 +40,54 @@ export function chunkDocument(content: string, maxWords: number = 1000): Chunked
   }
   
   const chunks: DocumentChunk[] = [];
-  let currentPosition = 0;
   let chunkIndex = 0;
+  let currentChunk: string[] = [];
+  let currentWordCount = 0;
+  let startPosition = 0;
   
-  for (let i = 0; i < words.length; i += maxWords) {
-    const chunkWords = words.slice(i, i + maxWords);
-    const chunkContent = chunkWords.join(' ');
+  for (let i = 0; i < paragraphs.length; i++) {
+    const paragraph = paragraphs[i].trim();
+    const paragraphWords = paragraph.split(/\s+/).filter(word => word.length > 0);
+    const paragraphWordCount = paragraphWords.length;
     
-    // Find the actual start position in original text
-    const startPosition = findWordPosition(content, chunkWords[0], currentPosition);
+    // If adding this paragraph would exceed maxWords, finalize current chunk
+    if (currentWordCount + paragraphWordCount > maxWords && currentChunk.length > 0) {
+      const chunkContent = currentChunk.join('\n\n');
+      const endPosition = startPosition + chunkContent.length;
+      
+      chunks.push({
+        id: generateChunkId(chunkIndex, 'para'),
+        chunkIndex,
+        content: chunkContent,
+        wordCount: currentWordCount,
+        startPosition,
+        endPosition
+      });
+      
+      chunkIndex++;
+      startPosition = endPosition + 2; // +2 for paragraph break
+      currentChunk = [];
+      currentWordCount = 0;
+    }
+    
+    // Add current paragraph to chunk
+    currentChunk.push(paragraph);
+    currentWordCount += paragraphWordCount;
+  }
+  
+  // Add remaining content as final chunk
+  if (currentChunk.length > 0) {
+    const chunkContent = currentChunk.join('\n\n');
     const endPosition = startPosition + chunkContent.length;
     
     chunks.push({
-      id: generateChunkId(chunkIndex),
+      id: generateChunkId(chunkIndex, 'para'),
       chunkIndex,
       content: chunkContent,
-      wordCount: chunkWords.length,
+      wordCount: currentWordCount,
       startPosition,
       endPosition
     });
-    
-    currentPosition = endPosition;
-    chunkIndex++;
   }
   
   return {
@@ -120,8 +147,8 @@ export function findChunkByPosition(chunkedDoc: ChunkedDocument, position: numbe
 }
 
 // Helper functions
-function generateChunkId(index: number): string {
-  return `chunk_${index}_${Date.now()}`;
+function generateChunkId(index: number, type: string = 'chunk'): string {
+  return `${type}_${index}_${Date.now()}`;
 }
 
 function findWordPosition(text: string, word: string, startFrom: number = 0): number {

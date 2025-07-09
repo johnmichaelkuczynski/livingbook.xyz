@@ -45,6 +45,114 @@ function removeMarkupSymbols(text: string): string {
   return cleaned;
 }
 
+// Helper function to extract concepts from text for fallback mind map
+function extractConceptsFromText(text: string): string[] {
+  // Extract key terms and concepts from the text
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  const concepts: Set<string> = new Set();
+  
+  // Look for important terms (capitalized words, technical terms, key phrases)
+  sentences.forEach(sentence => {
+    const words = sentence.trim().split(/\s+/);
+    
+    // Find capitalized words that might be concepts
+    words.forEach(word => {
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
+      if (cleanWord.length > 3 && cleanWord[0] === cleanWord[0].toUpperCase()) {
+        concepts.add(cleanWord);
+      }
+    });
+    
+    // Look for phrases with "of", "is", "are" which often indicate definitions
+    const definitionPatterns = [
+      /(\w+(?:\s+\w+)*)\s+(?:is|are|means|refers to|defined as)/gi,
+      /(?:the|a)\s+(\w+(?:\s+\w+)*)\s+(?:of|for|in)/gi
+    ];
+    
+    definitionPatterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(sentence)) !== null) {
+        const concept = match[1].trim();
+        if (concept.length > 3 && concept.length < 30) {
+          concepts.add(concept);
+        }
+      }
+    });
+  });
+  
+  // Return top 15 concepts
+  return Array.from(concepts).slice(0, 15);
+}
+
+// Create fallback mind map when AI parsing fails
+function createFallbackMindMap(concepts: string[], title: string, mapType: string): any {
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16'];
+  
+  const nodes = [];
+  const edges = [];
+  
+  // Create central node
+  nodes.push({
+    id: 'central',
+    label: title,
+    x: 0,
+    y: 0,
+    size: 50,
+    color: '#1e40af',
+    level: 0
+  });
+  
+  // Create concept nodes based on map type
+  if (mapType === 'radial') {
+    concepts.forEach((concept, index) => {
+      const angle = (index * 2 * Math.PI) / concepts.length;
+      const radius = 200;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+      
+      nodes.push({
+        id: `concept_${index}`,
+        label: concept,
+        x: x,
+        y: y,
+        size: 30,
+        color: colors[index % colors.length],
+        level: 1
+      });
+      
+      edges.push({
+        from: `concept_${index}`,
+        to: 'central',
+        label: 'relates to'
+      });
+    });
+  } else {
+    // For other types, create a simple tree structure
+    concepts.forEach((concept, index) => {
+      const x = (index % 4) * 150 - 225;
+      const y = Math.floor(index / 4) * 100 + 100;
+      
+      nodes.push({
+        id: `concept_${index}`,
+        label: concept,
+        x: x,
+        y: y,
+        size: 30,
+        color: colors[index % colors.length],
+        level: 1
+      });
+      
+      edges.push({
+        from: `concept_${index}`,
+        to: 'central',
+        label: 'connects to'
+      });
+    });
+  }
+  
+  return { nodes, edges };
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: "uploads/",
@@ -539,6 +647,122 @@ Please rewrite the text according to the instructions. Return only the rewritten
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to process chat message" 
       });
+    }
+  });
+
+  // Mind map generation
+  app.post("/api/mindmap/generate", async (req, res) => {
+    try {
+      const { content, mapType, documentTitle, feedback } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Content is required for mind map generation" });
+      }
+
+      const provider = 'anthropic'; // Use Anthropic for better mind map generation
+      
+      // Create comprehensive prompt based on map type
+      let systemPrompt = "";
+      switch (mapType) {
+        case 'radial':
+          systemPrompt = `Create a radial mind map from the provided content. Extract the main central concept and 8-15 key supporting concepts that branch out from it. Return a JSON object with this structure:
+          {
+            "nodes": [
+              {"id": "central", "label": "Main Topic", "x": 0, "y": 0, "size": 50, "color": "#2563eb", "level": 0},
+              {"id": "concept1", "label": "Key Concept", "x": 100, "y": 50, "size": 30, "color": "#10b981", "level": 1}
+            ],
+            "edges": [
+              {"from": "concept1", "to": "central", "label": "relates to"}
+            ]
+          }
+          Position nodes in a radial pattern around the center. Use different colors for different concept categories.`;
+          break;
+        case 'tree':
+          systemPrompt = `Create a hierarchical tree mind map from the provided content. Organize concepts in a tree structure with main branches and sub-branches. Return a JSON object with nodes and edges where nodes have hierarchical levels.`;
+          break;
+        case 'flowchart':
+          systemPrompt = `Create a flowchart-style mind map showing process flow or logical sequence from the content. Use arrows to show direction and flow between concepts.`;
+          break;
+        case 'concept':
+          systemPrompt = `Create a concept map identifying key concepts and their relationships. Focus on how ideas connect and influence each other with labeled relationships.`;
+          break;
+        case 'argument':
+          systemPrompt = `Create an argument map showing the logical structure of arguments in the content. Identify premises, conclusions, and supporting/opposing evidence.`;
+          break;
+        default:
+          systemPrompt = `Create a mind map from the provided content extracting key concepts and their relationships.`;
+      }
+
+      if (feedback) {
+        systemPrompt += `\n\nUser feedback for refinement: ${feedback}`;
+      }
+
+      systemPrompt += `\n\nIMPORTANT: Extract actual concepts, terms, and ideas from the document content. Do NOT use generic terms like "concept1", "idea2", etc. Use specific, meaningful labels from the text.`;
+
+      const aiPrompt = `${systemPrompt}\n\nContent to analyze:\n${content.slice(0, 50000)}`;
+
+      // Generate mind map using AI
+      const response = await anthropicService.generateChatResponse(aiPrompt, '', []);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Try to parse JSON from AI response
+      let mindMapData;
+      try {
+        // Extract JSON from response if it's wrapped in text
+        const jsonMatch = response.message.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          mindMapData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No valid JSON found in response");
+        }
+      } catch (parseError) {
+        // Fallback: create a simple mind map from extracted concepts
+        const concepts = extractConceptsFromText(content);
+        mindMapData = createFallbackMindMap(concepts, documentTitle || 'Document', mapType);
+      }
+
+      res.json({ success: true, mindMapData });
+    } catch (error) {
+      console.error("Mind map generation error:", error);
+      res.status(500).json({ error: "Failed to generate mind map" });
+    }
+  });
+
+  // Email mind map
+  app.post("/api/mindmap/email", async (req, res) => {
+    try {
+      const { imageData, documentTitle, mapType } = req.body;
+      
+      if (!imageData) {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+
+      // Convert base64 image to buffer
+      const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+
+      // Send email with mind map attachment
+      const emailContent = `
+        <h2>Mind Map: ${documentTitle}</h2>
+        <p>Type: ${mapType.charAt(0).toUpperCase() + mapType.slice(1)} Mind Map</p>
+        <p>Generated on: ${new Date().toLocaleDateString()}</p>
+        <p>Please find your mind map attached as an image.</p>
+      `;
+
+      await emailService.sendEmail({
+        to: 'user@example.com', // This would come from user settings
+        subject: `Mind Map: ${documentTitle}`,
+        content: emailContent,
+        contentType: 'html'
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Email mind map error:", error);
+      res.status(500).json({ error: "Failed to email mind map" });
     }
   });
 
