@@ -11,7 +11,7 @@ import { Brain, Network, Merge, Download, Loader2, Map, Globe, FileText } from '
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import MindMapViewer from './MindMapViewer';
+import MindMapModal from './MindMapModal';
 
 interface TextSegment {
   id: string;
@@ -58,6 +58,7 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
   const [currentMetaMap, setCurrentMetaMap] = useState<MetaMindMap | null>(null);
   const [activeTab, setActiveTab] = useState('segments');
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -86,13 +87,13 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
     onSuccess: (data) => {
       console.log('Mind map generated:', data);
       setCurrentMindMap(data);
-      setActiveTab('local');
+      setIsMindMapModalOpen(true);
       queryClient.invalidateQueries({ 
         queryKey: document ? ['/api/documents/' + document.id + '/mindmaps'] : ['no-maps'] 
       });
       toast({
         title: "Mind Map Generated",
-        description: "Local mind map created successfully",
+        description: "Click to view the mind map visualization",
       });
     },
     onError: (error: any) => {
@@ -413,46 +414,47 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
             </TabsContent>
 
             <TabsContent value="local" className="h-full m-0">
-              {currentMindMap ? (
-                <div className="h-full flex flex-col">
-                  <div className="p-2 bg-gray-100 text-xs text-gray-600">
-                    Debug: Mind map has {currentMindMap.nodes?.length || 0} nodes and {currentMindMap.edges?.length || 0} edges
-                  </div>
-                  <div className="flex-1">
-                    <MindMapViewer
-                      mindMap={currentMindMap}
-                      onNodeClick={(node) => console.log('Node clicked:', node)}
-                      onAskAboutNode={onAskAboutNode}
-                      onJumpToSegment={handleJumpToSegment}
-                    />
-                  </div>
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                  </svg>
+                  <p className="text-gray-500 mb-2">Mind maps open in popup windows</p>
+                  <p className="text-sm text-gray-400">Generate a mind map from a segment to see it in a dedicated viewer</p>
+                  {currentMindMap && (
+                    <Button 
+                      className="mt-4"
+                      onClick={() => setIsMindMapModalOpen(true)}
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
+                      View Latest Mind Map
+                    </Button>
+                  )}
                 </div>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                    </svg>
-                    <p className="text-gray-500 mb-2">No mind map generated yet</p>
-                    <p className="text-sm text-gray-400">Select a segment and click "Map" to generate a mind map</p>
-                    {generateMindMapMutation.isPending && (
-                      <p className="text-sm text-blue-600 mt-2">Generating mind map...</p>
-                    )}
-                  </div>
-                </div>
-              )}
+              </div>
             </TabsContent>
 
             <TabsContent value="meta" className="h-full m-0">
-              <MindMapViewer
-                mindMap={currentMetaMap as any}
-                isMetaMap={true}
-                onNodeClick={(node) => console.log('Meta node clicked:', node)}
-                onJumpToSegment={handleJumpToSegment}
-              />
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                  </svg>
+                  <p className="text-gray-500 mb-2">Meta mind maps will open in popups</p>
+                  <p className="text-sm text-gray-400">Generate multiple mind maps first, then create a meta map</p>
+                </div>
+              </div>
             </TabsContent>
           </div>
         </Tabs>
+
+        {/* Mind Map Modal */}
+        <MindMapModal
+          isOpen={isMindMapModalOpen}
+          onClose={() => setIsMindMapModalOpen(false)}
+          mindMap={currentMindMap}
+          onAskAboutNode={onAskAboutNode}
+        />
       </div>
     </div>
   );
