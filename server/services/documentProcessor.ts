@@ -9,20 +9,30 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
     
-    // Enhanced paragraph handling for PDF
+    // Advanced PDF text formatting for proper paragraph structure
     let text = data.text;
     
-    // Normalize line breaks and preserve paragraph structure
+    // First, normalize all line breaks
     text = text
-      .replace(/\r\n/g, '\n')  // Normalize Windows line breaks
-      .replace(/\r/g, '\n')    // Normalize Mac line breaks
-      .replace(/\s+/g, ' ')    // Normalize multiple spaces to single space
-      .replace(/([.!?])\s+([A-Z])/g, '$1\n\n$2') // Add paragraph breaks after sentences followed by capitals
-      .replace(/([a-z])\s+([A-Z][a-z]+\s+[A-Z])/g, '$1\n\n$2') // Break before title case (likely headings)
-      .replace(/\.\s*\n\s*([A-Z])/g, '.\n\n$1') // Ensure sentence endings start new paragraphs
-      .replace(/([a-z])\s*\n\s*([A-Z])/g, '$1\n\n$2') // Add breaks between lowercase-to-uppercase transitions
-      .replace(/\n{3,}/g, '\n\n') // Reduce excessive line breaks to double
-      .replace(/^\s+|\s+$/gm, '') // Trim whitespace from each line
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    
+    // Handle chapter/section breaks (often marked with numbers or special formatting)
+    text = text
+      .replace(/(\n|^)\s*CHAPTER\s+[IVXLCDM\d]+[.:]\s*/gi, '\n\n**CHAPTER $1**\n\n')
+      .replace(/(\n|^)\s*(\d+)\.\s*([A-Z][^.]*)\s*$/gm, '\n\n**$2. $3**\n\n')
+      .replace(/(\n|^)\s*([IVXLCDM]+)\.\s*([A-Z][^.]*)\s*$/gm, '\n\n**$2. $3**\n\n');
+    
+    // Break into proper paragraphs
+    text = text
+      .replace(/([.!?])\s+([A-Z])/g, '$1\n\n$2')  // Sentence end + capital = new paragraph
+      .replace(/([a-z])\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*){1,3})\s+([A-Z])/g, '$1\n\n$2\n\n$3')  // Title case sequences
+      .replace(/(\w)\s*\n\s*([A-Z][a-z])/g, '$1\n\n$2')  // Force breaks before capitals
+      .replace(/([.!?])\s*\n+\s*([a-z])/g, '$1 $2')  // Join sentence fragments
+      .replace(/([a-z])\s*\n+\s*([a-z])/g, '$1 $2')  // Join word fragments within sentences
+      .replace(/\n{3,}/g, '\n\n')  // Normalize multiple breaks to double
+      .replace(/^\s+|\s+$/gm, '')  // Trim each line
+      .replace(/\s+/g, ' ')  // Normalize internal spaces
       .trim();
     
     return text;

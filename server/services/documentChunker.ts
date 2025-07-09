@@ -17,12 +17,13 @@ export interface ChunkedDocument {
 /**
  * Split document content into chunks of approximately maxWords
  */
-export function chunkDocument(content: string, maxWords: number = 1000): ChunkedDocument {
+export function chunkDocument(content: string, maxWords: number = 500): ChunkedDocument {
   const words = content.split(/\s+/).filter(word => word.length > 0);
   const totalWordCount = words.length;
   
-  if (totalWordCount <= maxWords) {
-    // Document is small enough, return as single chunk
+  // Force chunking for documents over 800 words to ensure proper segmentation
+  if (totalWordCount <= 800) {
+    // Small document, return as single chunk
     return {
       originalContent: content,
       chunks: [{
