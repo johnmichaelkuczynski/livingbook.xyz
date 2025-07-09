@@ -110,6 +110,15 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 09, 2025: MIND MAP FUNCTIONALITY IMPLEMENTED - PHILOSOPHICAL TEXT VISUALIZATION
+  - **ADDED**: Complete mind map system for visualizing complex philosophical texts
+  - **IMPLEMENTED**: Text segmentation layer that automatically identifies logical joints (chapters, themes, dialogue)
+  - **CREATED**: Local mind map generator that extracts central claims, arguments, objections, and examples
+  - **BUILT**: Meta-mind map generator showing global structure and conceptual relationships
+  - **ADDED**: Interactive vis.js network visualization with node editing and export capabilities
+  - **INTEGRATED**: Mind map interface with tabbed layout (Chat/Mind Map) in main application
+  - **FEATURES**: Segment merging, multiple AI provider support, PDF export, and text navigation
+  - Mind mapping scales across large texts without overwhelming users through segmented approach
 - July 07, 2025: MOBILE UPLOAD COMPATIBILITY FIXED - CROSS-DEVICE FUNCTIONALITY
   - **FIXED**: Mobile device file upload malfunctions - documents can now be uploaded on mobile
   - **ENHANCED**: Replaced problematic absolute-positioned hidden inputs with direct click handlers
