@@ -34,77 +34,14 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
   const visNetworkRef = useRef<any>(null);
   const { toast } = useToast();
 
-  // Initialize vis.js network when component mounts
+  // Clean up network when component unmounts or closes
   useEffect(() => {
-    if (isOpen && networkRef.current && !visNetworkRef.current) {
-      const initNetwork = async () => {
-        try {
-          console.log('Attempting to initialize vis.js network...');
-          
-          // Import vis-network
-          const visNetwork = await import('vis-network');
-          console.log('vis-network imported:', visNetwork);
-          
-          // Handle different import patterns
-          const Network = visNetwork.Network || visNetwork.default?.Network;
-          const DataSet = visNetwork.DataSet || visNetwork.default?.DataSet;
-          
-          if (!Network || !DataSet) {
-            throw new Error('Network or DataSet not found in vis-network import');
-          }
-          
-          console.log('Network and DataSet found, creating instance...');
-          
-          const data = { 
-            nodes: new DataSet([]), 
-            edges: new DataSet([]) 
-          };
-          
-          const options = {
-            physics: { 
-              enabled: true, 
-              stabilization: { iterations: 100 }
-            },
-            nodes: {
-              font: { size: 16, color: '#333' },
-              borderWidth: 2,
-              shadow: true,
-              chosen: true,
-              shape: 'dot',
-              size: 30
-            },
-            edges: {
-              font: { size: 14, align: 'middle' },
-              color: { color: '#666', highlight: '#333', hover: '#333' },
-              arrows: { to: { enabled: true, scaleFactor: 1 } },
-              smooth: { type: 'continuous' },
-              width: 2
-            },
-            interaction: { hover: true, selectConnectedEdges: true },
-            layout: { randomSeed: 42 }
-          };
-          
-          visNetworkRef.current = new Network(networkRef.current, data, options);
-          console.log('✓ Network initialized successfully');
-        } catch (error) {
-          console.error('✗ Error initializing network:', error);
-          
-          // Create a manual fallback visualization
-          if (networkRef.current) {
-            networkRef.current.innerHTML = `
-              <div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; color: #666; background: #f9f9f9; border: 2px dashed #ccc; border-radius: 8px;">
-                <div style="font-size: 16px; margin-bottom: 8px;">⚠️ Visualization Error</div>
-                <div style="font-size: 14px;">Mind map will display here once network initializes</div>
-                <div style="font-size: 12px; margin-top: 8px; color: #999;">Check console for details</div>
-              </div>
-            `;
-          }
-        }
-      };
-      
-      // Add a small delay to ensure DOM is ready
-      setTimeout(initNetwork, 100);
-    }
+    return () => {
+      if (visNetworkRef.current) {
+        visNetworkRef.current.destroy();
+        visNetworkRef.current = null;
+      }
+    };
   }, [isOpen]);
 
   // Parse document into chunks when document changes
@@ -179,123 +116,266 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
     }
   };
 
-  // Update visualization with new data
+  // Create proper graph visualization with layout algorithms
   const updateVisNetwork = async (data: NetworkData) => {
-    console.log('Render called', data);
-    console.log('Nodes:', data.nodes);
-    console.log('Edges:', data.edges);
+    console.log('Creating graph visualization with', data.nodes.length, 'nodes and', data.edges.length, 'edges');
     
     if (!networkRef.current) {
       console.error('Container ref not available');
       return;
     }
-    
-    // Create fallback visualization immediately
-    createFallbackVisualization(data);
-    
-    // Try vis.js network if available
-    if (visNetworkRef.current && data.nodes && data.edges) {
-      try {
-        const visNetwork = await import('vis-network');
-        const DataSet = visNetwork.DataSet || visNetwork.default?.DataSet;
-        
-        if (DataSet) {
-          console.log('Creating DataSets...');
-          const nodes = new DataSet(data.nodes);
-          const edges = new DataSet(data.edges);
-          
-          visNetworkRef.current.setData({ nodes, edges });
-          visNetworkRef.current.redraw();
-          visNetworkRef.current.fit();
-          console.log('✓ Network render complete');
-        }
-      } catch (error) {
-        console.error('Vis.js error, using fallback:', error);
-      }
-    }
+
+    await createGraphVisualization(data);
   };
 
-  // Create a simple fallback visualization
-  const createFallbackVisualization = (data: NetworkData) => {
-    if (!networkRef.current || !data.nodes.length || typeof document === 'undefined') return;
+  // Create dynamic graph layout based on map type
+  const createGraphVisualization = async (data: NetworkData) => {
+    if (!networkRef.current || !data.nodes.length) return;
     
     const container = networkRef.current;
     container.innerHTML = '';
     
     try {
-      // Create SVG container
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('width', '100%');
-      svg.setAttribute('height', '100%');
-      svg.setAttribute('viewBox', '0 0 800 600');
-      svg.style.background = '#ffffff';
-      svg.style.border = '1px solid #ddd';
+      // Import vis-network for proper graph rendering
+      const { Network, DataSet } = await import('vis-network');
       
-      const centerX = 400;
-      const centerY = 300;
-      const radius = 200;
+      // Prepare nodes with proper positioning based on layout type
+      const layoutNodes = calculateLayout(data.nodes, data.edges, mapType);
+      const nodes = new DataSet(layoutNodes);
+      const edges = new DataSet(data.edges);
       
-      // Draw edges first
-      data.edges.forEach(edge => {
-        const fromNode = data.nodes.find(n => n.id === edge.from);
-        const toNode = data.nodes.find(n => n.id === edge.to);
-        
-        if (fromNode && toNode) {
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', fromNode.x?.toString() || centerX.toString());
-          line.setAttribute('y1', fromNode.y?.toString() || centerY.toString());
-          line.setAttribute('x2', toNode.x?.toString() || centerX.toString());
-          line.setAttribute('y2', toNode.y?.toString() || centerY.toString());
-          line.setAttribute('stroke', '#666');
-          line.setAttribute('stroke-width', '2');
-          svg.appendChild(line);
+      // Configure layout options based on map type
+      const options = getLayoutOptions(mapType);
+      
+      // Create the network
+      const network = new Network(container, { nodes, edges }, options);
+      
+      // Add interactivity
+      network.on('click', (params) => {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const node = data.nodes.find(n => n.id === nodeId);
+          if (node) {
+            console.log('Node clicked:', node.label);
+          }
         }
       });
       
-      // Draw nodes
-      data.nodes.forEach((node, index) => {
-        const angle = (index * 2 * Math.PI) / data.nodes.length;
-        const x = node.x || (centerX + radius * Math.cos(angle));
-        const y = node.y || (centerY + radius * Math.sin(angle));
-        
-        // Create node circle
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x.toString());
-        circle.setAttribute('cy', y.toString());
-        circle.setAttribute('r', (node.size || 20).toString());
-        circle.setAttribute('fill', node.color || '#3b82f6');
-        circle.setAttribute('stroke', '#fff');
-        circle.setAttribute('stroke-width', '2');
-        svg.appendChild(circle);
-        
-        // Create label
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', x.toString());
-        text.setAttribute('y', (y + 5).toString());
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-family', 'Arial, sans-serif');
-        text.setAttribute('font-size', '12');
-        text.setAttribute('fill', '#333');
-        text.textContent = node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label;
-        svg.appendChild(text);
-      });
+      // Store reference
+      visNetworkRef.current = network;
       
-      container.appendChild(svg);
-      console.log('✓ Fallback visualization created');
+      // Fit the network after a short delay
+      setTimeout(() => {
+        network.fit();
+      }, 100);
+      
+      console.log('✓ Graph visualization created successfully');
     } catch (error) {
-      console.error('SVG creation failed:', error);
-      // Simple HTML fallback
-      container.innerHTML = `
-        <div style="padding: 20px; text-align: center; background: #f0f8ff; border: 2px solid #007acc; border-radius: 8px; margin: 20px;">
-          <h3 style="color: #007acc; margin-bottom: 15px;">Mind Map Generated ✓</h3>
-          <p style="margin-bottom: 10px;"><strong>${data.nodes.length} concepts found:</strong></p>
-          <div style="text-align: left; max-height: 300px; overflow-y: auto; background: white; padding: 15px; border-radius: 4px;">
-            ${data.nodes.map(node => `<div style="margin: 5px 0; padding: 5px; background: ${node.color || '#e3f2fd'}; border-radius: 3px; font-size: 14px;">• ${node.label}</div>`).join('')}
-          </div>
-          <p style="font-size: 12px; color: #666; margin-top: 10px;">Concepts extracted from your document content</p>
-        </div>
-      `;
+      console.error('Graph creation failed, using canvas fallback:', error);
+      createCanvasVisualization(data);
     }
+  };
+
+  // Calculate node positions based on layout type
+  const calculateLayout = (nodes: any[], edges: any[], layoutType: string) => {
+    const centerX = 0;
+    const centerY = 0;
+    
+    switch (layoutType) {
+      case 'radial':
+        return nodes.map((node, index) => {
+          if (node.id === 'central') {
+            return { ...node, x: centerX, y: centerY, fixed: true };
+          }
+          const angle = (index * 2 * Math.PI) / (nodes.length - 1);
+          const radius = 200;
+          return {
+            ...node,
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle)
+          };
+        });
+        
+      case 'tree':
+        return nodes.map((node, index) => {
+          if (node.id === 'central') {
+            return { ...node, x: centerX, y: -200, fixed: true };
+          }
+          const cols = Math.ceil(Math.sqrt(nodes.length - 1));
+          const row = Math.floor((index - 1) / cols);
+          const col = (index - 1) % cols;
+          return {
+            ...node,
+            x: centerX + (col - cols/2) * 150,
+            y: centerY + row * 100
+          };
+        });
+        
+      case 'flowchart':
+        return nodes.map((node, index) => {
+          if (node.id === 'central') {
+            return { ...node, x: centerX, y: centerY, fixed: true };
+          }
+          return {
+            ...node,
+            x: centerX + (index % 2 === 0 ? -1 : 1) * (100 + (index * 50)),
+            y: centerY + (index - 1) * 80
+          };
+        });
+        
+      default:
+        return nodes; // Let vis.js handle automatic layout
+    }
+  };
+
+  // Get layout options for different map types
+  const getLayoutOptions = (layoutType: string) => {
+    const baseOptions = {
+      nodes: {
+        shape: 'dot',
+        size: 25,
+        font: { size: 14, color: '#333' },
+        borderWidth: 2,
+        shadow: true,
+        chosen: true
+      },
+      edges: {
+        width: 2,
+        color: { color: '#666', highlight: '#333', hover: '#333' },
+        arrows: { to: { enabled: true, scaleFactor: 1 } },
+        font: { size: 12, align: 'middle' },
+        smooth: { type: 'continuous' }
+      },
+      interaction: {
+        hover: true,
+        selectConnectedEdges: true,
+        dragNodes: true,
+        dragView: true,
+        zoomView: true
+      }
+    };
+
+    switch (layoutType) {
+      case 'radial':
+        return {
+          ...baseOptions,
+          physics: { enabled: false },
+          layout: { randomSeed: 42 }
+        };
+        
+      case 'tree':
+        return {
+          ...baseOptions,
+          layout: {
+            hierarchical: {
+              direction: 'UD',
+              sortMethod: 'directed',
+              nodeSpacing: 150,
+              levelSeparation: 100
+            }
+          },
+          physics: { enabled: false }
+        };
+        
+      case 'flowchart':
+        return {
+          ...baseOptions,
+          layout: {
+            hierarchical: {
+              direction: 'LR',
+              sortMethod: 'directed'
+            }
+          },
+          physics: { enabled: false }
+        };
+        
+      default:
+        return {
+          ...baseOptions,
+          physics: {
+            stabilization: { iterations: 100 },
+            barnesHut: { gravitationalConstant: -2000, springConstant: 0.001 }
+          }
+        };
+    }
+  };
+
+  // Canvas fallback for when vis.js fails
+  const createCanvasVisualization = (data: NetworkData) => {
+    const container = networkRef.current!;
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.border = '1px solid #ddd';
+    
+    const ctx = canvas.getContext('2d')!;
+    const layoutNodes = calculateLayout(data.nodes, data.edges, mapType);
+    
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Transform coordinates to canvas space
+    const transform = (x: number, y: number) => ({
+      x: canvas.width / 2 + x,
+      y: canvas.height / 2 + y
+    });
+    
+    // Draw edges first
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 2;
+    data.edges.forEach(edge => {
+      const fromNode = layoutNodes.find(n => n.id === edge.from);
+      const toNode = layoutNodes.find(n => n.id === edge.to);
+      
+      if (fromNode && toNode) {
+        const from = transform(fromNode.x || 0, fromNode.y || 0);
+        const to = transform(toNode.x || 0, toNode.y || 0);
+        
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+        
+        // Draw arrow
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        const arrowLength = 15;
+        ctx.beginPath();
+        ctx.moveTo(to.x, to.y);
+        ctx.lineTo(to.x - arrowLength * Math.cos(angle - Math.PI/6), to.y - arrowLength * Math.sin(angle - Math.PI/6));
+        ctx.moveTo(to.x, to.y);
+        ctx.lineTo(to.x - arrowLength * Math.cos(angle + Math.PI/6), to.y - arrowLength * Math.sin(angle + Math.PI/6));
+        ctx.stroke();
+      }
+    });
+    
+    // Draw nodes
+    layoutNodes.forEach(node => {
+      const pos = transform(node.x || 0, node.y || 0);
+      const radius = node.size || 25;
+      
+      // Draw node circle
+      ctx.fillStyle = node.color || '#3b82f6';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Draw label
+      ctx.fillStyle = '#333';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const label = node.label.length > 12 ? node.label.substring(0, 12) + '...' : node.label;
+      ctx.fillText(label, pos.x, pos.y + radius + 15);
+    });
+    
+    container.appendChild(canvas);
+    console.log('✓ Canvas visualization created');
   };
 
   // Regenerate mind map with feedback
