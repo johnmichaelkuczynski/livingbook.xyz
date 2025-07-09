@@ -42,7 +42,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
     return (
       <KaTeXRenderer 
         content={content} 
-        className="text-gray-900 dark:text-gray-100 leading-relaxed"
+        className="text-gray-700 leading-relaxed text-lg"
       />
     );
   };
@@ -123,7 +123,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             ) : (
               <div className="w-full">
-                <div className="prose prose-lg max-w-none text-gray-900 dark:text-gray-100">
+                <div className="space-y-4 text-lg leading-relaxed">
                   {formatContent(document.content)}
                 </div>
               </div>

@@ -26,29 +26,8 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Convert paragraph breaks (double newlines) to proper paragraphs
-  // Split by double newlines to get paragraphs
-  const paragraphs = processedContent.split(/\n\s*\n/);
-  
-  // Process each paragraph separately
-  processedContent = paragraphs
-    .map(paragraph => {
-      // Convert single newlines within paragraphs to spaces (to maintain readability)
-      let processedParagraph = paragraph.replace(/\n/g, ' ').trim();
-      
-      // Only create paragraph if it has content
-      if (processedParagraph.length > 0) {
-        return `<p style="margin-bottom: 1em; line-height: 1.6;">${processedParagraph}</p>`;
-      }
-      return '';
-    })
-    .filter(p => p.length > 0)
-    .join('');
-  
-  // If no paragraphs were created (single line), wrap in a paragraph
-  if (!processedContent.includes('<p>')) {
-    processedContent = `<p style="margin-bottom: 1em; line-height: 1.6;">${processedContent}</p>`;
-  }
+  // Convert line breaks to HTML
+  processedContent = processedContent.replace(/\n/g, '<br>');
   
   // Enhanced math rendering with better fallbacks
   // Block math: $$...$$
@@ -132,12 +111,11 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   return (
     <div 
       ref={containerRef} 
-      className={`prose max-w-none ${className}`}
+      className={`prose prose-sm max-w-none ${className}`}
       style={{ 
-        lineHeight: '1.7',
+        lineHeight: '1.6',
         wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-        textAlign: 'justify'
+        overflowWrap: 'break-word'
       }}
     />
   );

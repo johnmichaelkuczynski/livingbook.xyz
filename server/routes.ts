@@ -6,8 +6,6 @@ import fs from "fs/promises";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
 import { chunkDocument } from "./services/documentChunker";
-import { segmentText, mergeSegments } from "./services/textSegmentation";
-import { generateLocalMindMap, generateMetaMindMap } from "./services/mindMapGenerator";
 import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
@@ -138,12 +136,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
       
-      // Automatically chunk document if it's large enough
-      const { chunkDocument } = await import('./services/documentChunker');
-      const chunkedDoc = chunkDocument(extractedText);
-      
-      console.log(`Document processed: ${documentData.totalWords} words -> ${chunkedDoc.chunkCount} chunks`);
-      
       // Create a chat session for this document
       await storage.createChatSession({ documentId: document.id });
       
@@ -156,10 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: document.fileType,
         fileSize: document.fileSize,
         content: document.content,
-        uploadedAt: document.uploadedAt,
-        totalWords: document.totalWords,
-        chunkCount: chunkedDoc.chunkCount,
-        chunkedDocument: chunkedDoc
+        uploadedAt: document.uploadedAt
       });
       
     } catch (error) {
@@ -180,7 +169,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload document (alias route for convenience)  
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
+      const { originalname, filename, mimetype, size, path: filePath } = req.file;
+      
+      // Extract text from the document
+      let extractedText = await extractTextFromDocument(filePath, mimetype);
+      
+      // Process math notation
+      extractedText = processMathNotation(extractedText);
+      
+      // Save document to storage
+      const documentData = {
+        filename,
+        originalName: originalname,
+        fileType: mimetype,
+        fileSize: size,
+        content: extractedText,
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
+      };
+      
+      const validatedData = insertDocumentSchema.parse(documentData);
+      const document = await storage.createDocument(validatedData);
+      
+      // Create a chat session for this document
+      await storage.createChatSession({ documentId: document.id });
+      
+      // Clean up uploaded file
+      await fs.unlink(filePath);
+      
+      res.json({
+        id: document.id,
+        originalName: document.originalName,
+        fileType: document.fileType,
+        fileSize: document.fileSize,
+        content: document.content,
+        uploadedAt: document.uploadedAt
+      });
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      
+      // Clean up file if it exists
+      if (req.file?.path) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error cleaning up file:", unlinkError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process document" 
+      });
+    }
+  });
 
   // Get document by ID
   app.get("/api/documents/:id", async (req, res) => {
@@ -689,7 +737,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
     }
   });
 
-  // Email route using SendGrid - Legacy endpoint
+  // Email route using SendGrid
   app.post("/api/email/send", async (req, res) => {
     try {
       const { subject, content, contentType = 'html' } = req.body;
@@ -698,7 +746,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         return res.status(400).json({ error: "Content is required" });
       }
 
-      await emailService.sendResponseEmail(content, 'user@example.com');
+      await emailService.sendResponseEmail(content);
       
       res.json({ success: true, message: "Email sent successfully" });
       
@@ -706,31 +754,6 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
       console.error("Email error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to send email" 
-      });
-    }
-  });
-
-  // Email API endpoint - Send AI response via email
-  app.post("/api/email/send-response", async (req, res) => {
-    try {
-      const { content, userEmail, timestamp } = req.body;
-      
-      if (!content) {
-        return res.status(400).json({ error: "Content is required" });
-      }
-      
-      if (!userEmail || !userEmail.includes('@')) {
-        return res.status(400).json({ error: "Valid email address is required" });
-      }
-
-      await emailService.sendResponseEmail(content, userEmail, timestamp);
-      
-      res.json({ success: true, message: "Email sent successfully" });
-    } catch (error) {
-      console.error('Email sending error:', error);
-      res.status(500).json({ 
-        error: "Failed to send email", 
-        details: error instanceof Error ? error.message : "Unknown error" 
       });
     }
   });
@@ -1042,177 +1065,6 @@ Instructions: ${instructions}
     } catch (error) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to get comparison messages" 
-      });
-    }
-  });
-
-  // Mind Map API endpoints
-  
-  // Get text segments for a document
-  app.get("/api/documents/:documentId/segments", async (req, res) => {
-    try {
-      const documentId = parseInt(req.params.documentId);
-      const { method = 'auto' } = req.query;
-      
-      const document = await storage.getDocument(documentId);
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-      
-      const segmentationResult = segmentText(document.content, method as any);
-      
-      res.json(segmentationResult.segments);
-      
-    } catch (error) {
-      console.error("Segmentation error:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to segment document" 
-      });
-    }
-  });
-
-  // Generate mind map for a segment
-  app.post("/api/mindmaps/generate", async (req, res) => {
-    try {
-      const { documentId, segmentId, provider = 'deepseek' } = req.body;
-      
-      if (!documentId || !segmentId) {
-        return res.status(400).json({ error: "Document ID and segment ID are required" });
-      }
-
-      const document = await storage.getDocument(documentId);
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-
-      // Get text segments
-      const segmentationResult = segmentText(document.content);
-      const segment = segmentationResult.segments.find(s => s.id === segmentId);
-      
-      if (!segment) {
-        return res.status(404).json({ error: "Segment not found" });
-      }
-
-      // Generate mind map
-      const mindMap = await generateLocalMindMap(
-        segmentId,
-        segment.content,
-        segment.title || `Segment ${segmentId}`,
-        provider
-      );
-      
-      res.json(mindMap);
-      
-    } catch (error) {
-      console.error("Mind map generation error:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to generate mind map" 
-      });
-    }
-  });
-
-  // Generate meta mind map from existing maps
-  app.post("/api/mindmaps/generate-meta", async (req, res) => {
-    try {
-      const { documentId, mapIds, provider = 'deepseek' } = req.body;
-      
-      if (!documentId || !mapIds || mapIds.length < 2) {
-        return res.status(400).json({ error: "Document ID and at least 2 map IDs are required" });
-      }
-
-      const document = await storage.getDocument(documentId);
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-
-      // For now, we'll regenerate the local maps since we don't have persistent storage
-      // In a real implementation, you'd fetch stored mind maps
-      const segmentationResult = segmentText(document.content);
-      
-      const localMaps = [];
-      for (const mapId of mapIds) {
-        const segmentId = mapId.replace('mindmap_', '');
-        const segment = segmentationResult.segments.find(s => s.id === segmentId);
-        
-        if (segment) {
-          const mindMap = await generateLocalMindMap(
-            segmentId,
-            segment.content,
-            segment.title || `Segment ${segmentId}`,
-            provider
-          );
-          localMaps.push(mindMap);
-        }
-      }
-
-      if (localMaps.length < 2) {
-        return res.status(400).json({ error: "Could not generate enough local maps" });
-      }
-
-      const metaMap = await generateMetaMindMap(
-        localMaps,
-        `Meta Map: ${document.originalName}`,
-        provider
-      );
-      
-      res.json(metaMap);
-      
-    } catch (error) {
-      console.error("Meta mind map generation error:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to generate meta mind map" 
-      });
-    }
-  });
-
-  // Merge segments and generate combined mind map
-  app.post("/api/mindmaps/merge-segments", async (req, res) => {
-    try {
-      const { documentId, segmentIds, provider = 'deepseek' } = req.body;
-      
-      if (!documentId || !segmentIds || segmentIds.length < 2) {
-        return res.status(400).json({ error: "Document ID and at least 2 segment IDs are required" });
-      }
-
-      const document = await storage.getDocument(documentId);
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-
-      // Get text segments
-      const segmentationResult = segmentText(document.content);
-      
-      // Merge selected segments
-      const mergedSegment = mergeSegments(segmentationResult.segments, segmentIds);
-      
-      // Generate mind map for merged content
-      const mindMap = await generateLocalMindMap(
-        mergedSegment.id,
-        mergedSegment.content,
-        mergedSegment.title || 'Merged Segments',
-        provider
-      );
-      
-      res.json(mindMap);
-      
-    } catch (error) {
-      console.error("Segment merge error:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to merge segments" 
-      });
-    }
-  });
-
-  // Get existing mind maps for a document (stub for now)
-  app.get("/api/documents/:documentId/mindmaps", async (req, res) => {
-    try {
-      // For now, return empty array since we don't have persistent mind map storage
-      // In a real implementation, you'd fetch stored mind maps from database
-      res.json([]);
-      
-    } catch (error) {
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to get mind maps" 
       });
     }
   });
