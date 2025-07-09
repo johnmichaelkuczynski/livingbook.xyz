@@ -182,8 +182,21 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
     }
   };
 
-  // Toggle node expansion
-  const toggleExpansion = (nodeId: string) => {
+  // Toggle node content expansion (separate from child expansion)
+  const [expandedContent, setExpandedContent] = useState<Set<string>>(new Set());
+  
+  const toggleContentExpansion = (nodeId: string) => {
+    const newExpanded = new Set(expandedContent);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedContent(newExpanded);
+  };
+
+  // Toggle node hierarchy expansion (for children)
+  const toggleHierarchyExpansion = (nodeId: string) => {
     if (!latticeData) return;
     
     const updatedNodes = latticeData.nodes.map(node => 
@@ -318,7 +331,8 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
   // Render node with proper styling and interactions
   const renderNode = (node: ConceptNode, depth = 0) => {
     const hasChildren = getChildNodes(node.id).length > 0;
-    const isExpanded = node.isExpanded ?? false; // Start collapsed by default
+    const isHierarchyExpanded = node.isExpanded ?? true; // Children expanded by default
+    const isContentExpanded = expandedContent.has(node.id);
     const childNodes = getChildNodes(node.id);
 
     const getNodeStyle = () => {
@@ -353,10 +367,10 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => toggleExpansion(node.id)}
+                  onClick={() => toggleHierarchyExpansion(node.id)}
                   className="p-1 h-6 w-6 mt-1"
                 >
-                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {isHierarchyExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               )}
               <div className="flex-1">
@@ -365,7 +379,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
                     {TYPE_LABELS[node.type]}
                   </Badge>
                 </div>
-                <div className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+                <div className={`${isContentExpanded ? '' : 'line-clamp-2'}`}>
                   {node.type === 'supporting_quote' && '"'}
                   {node.content}
                   {node.type === 'supporting_quote' && '"'}
@@ -374,10 +388,10 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => toggleExpansion(node.id)}
+                    onClick={() => toggleContentExpansion(node.id)}
                     className="mt-1 p-1 h-6 text-xs text-blue-600 hover:text-blue-800"
                   >
-                    {isExpanded ? 'Show less' : 'Show more'}
+                    {isContentExpanded ? 'Collapse' : 'Expand'}
                   </Button>
                 )}
               </div>
@@ -439,7 +453,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
           </div>
         </div>
         
-        {hasChildren && isExpanded && (
+        {hasChildren && isHierarchyExpanded && (
           <div className="ml-4 mt-2 space-y-2">
             {childNodes.map(child => renderNode(child, depth + 1))}
           </div>
@@ -479,7 +493,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
           </div>
         </CardHeader>
         
-        <CardContent className="p-6">
+        <CardContent className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {isGenerating ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
