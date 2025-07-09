@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +13,7 @@ import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
+import MindMapViewer from '@/components/MindMapViewer';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -22,6 +23,7 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('deepseek');
   const [isRewritePanelOpen, setIsRewritePanelOpen] = useState(false);
+  const [isMindMapOpen, setIsMindMapOpen] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -341,6 +343,16 @@ export default function Home() {
               </Button>
               {currentDocument && (
                 <Button 
+                  variant="outline"
+                  onClick={() => setIsMindMapOpen(true)}
+                  className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  <Brain className="w-4 h-4 mr-2" />
+                  Mind Map
+                </Button>
+              )}
+              {currentDocument && (
+                <Button 
                   variant="outline" 
                   onClick={handleStartFresh}
                   className="text-red-600 border-red-600 hover:bg-red-50"
@@ -615,6 +627,13 @@ export default function Home() {
             }
           }
         }}
+      />
+
+      {/* Mind Map Viewer */}
+      <MindMapViewer
+        document={currentDocument}
+        isOpen={isMindMapOpen}
+        onClose={() => setIsMindMapOpen(false)}
       />
 
     </div>
