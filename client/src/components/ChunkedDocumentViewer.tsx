@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Edit3, Save, X, RotateCcw, Download, Network } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileText, Edit3, Save, X, RotateCcw, Download, Network, CheckSquare, Square } from "lucide-react";
 import KaTeXRenderer from "./KaTeXRenderer";
 import ConceptLattice from "./ConceptLattice";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,7 @@ export default function ChunkedDocumentViewer({
   const [rewriteInstructions, setRewriteInstructions] = useState<string>("");
   const [showRewriteDialog, setShowRewriteDialog] = useState<number | null>(null);
   const [selectedText, setSelectedText] = useState('');
+  const [selectedChunks, setSelectedChunks] = useState<Set<number>>(new Set());
   const [showConceptLattice, setShowConceptLattice] = useState(false);
   const { toast } = useToast();
 
@@ -90,11 +92,50 @@ export default function ChunkedDocumentViewer({
     const selection = window.getSelection();
     if (selection && selection.toString().trim()) {
       setSelectedText(selection.toString().trim());
+      // Clear chunk selection when text is selected
+      if (selectedChunks.size > 0) {
+        setSelectedChunks(new Set());
+      }
     }
+  };
+
+  const handleChunkSelect = (chunkIndex: number) => {
+    const newSelectedChunks = new Set(selectedChunks);
+    if (newSelectedChunks.has(chunkIndex)) {
+      newSelectedChunks.delete(chunkIndex);
+    } else {
+      newSelectedChunks.add(chunkIndex);
+      // Clear text selection when chunks are selected
+      if (selectedText) {
+        setSelectedText('');
+      }
+    }
+    setSelectedChunks(newSelectedChunks);
+  };
+
+  const selectAllChunks = () => {
+    const allChunks = new Set(chunks.map((_, index) => index));
+    setSelectedChunks(allChunks);
+  };
+
+  const clearChunkSelection = () => {
+    setSelectedChunks(new Set());
+  };
+
+  const getSelectedChunksText = () => {
+    return Array.from(selectedChunks)
+      .sort((a, b) => a - b)
+      .map(index => chunks[index]?.content || '')
+      .join('\n\n');
   };
 
   const handleVisualize = () => {
     if (selectedText) {
+      setShowConceptLattice(true);
+    } else if (selectedChunks.size > 0) {
+      // Use selected chunks text
+      const chunksText = getSelectedChunksText();
+      setSelectedText(chunksText);
       setShowConceptLattice(true);
     }
   };
@@ -119,21 +160,48 @@ export default function ChunkedDocumentViewer({
                 <FileText className="w-5 h-5" />
                 {document.title}
               </div>
-              {!selectedText && (
+              {!selectedText && selectedChunks.size === 0 && (
                 <p className="text-sm text-gray-500 font-normal">
-                  💡 Select text in any chunk to create a concept lattice visualization
+                  💡 Select text in chunks OR use checkboxes to select entire chunks for visualization
                 </p>
               )}
               {selectedText && (
                 <p className="text-sm text-purple-600 font-normal">
-                  ✓ Text selected: "{selectedText.substring(0, 40)}..." - Look for the purple Visualize button!
+                  ✓ Text selected: "{selectedText.substring(0, 40)}..." - Click Visualize!
                 </p>
+              )}
+              {selectedChunks.size > 0 && !selectedText && (
+                <p className="text-sm text-blue-600 font-normal">
+                  ✓ {selectedChunks.size} chunk{selectedChunks.size > 1 ? 's' : ''} selected - Click Visualize!
+                </p>
+              )}
+              {selectedChunks.size > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllChunks}
+                    className="text-xs h-7"
+                  >
+                    <CheckSquare className="w-3 h-3 mr-1" />
+                    Select All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearChunkSelection}
+                    className="text-xs h-7"
+                  >
+                    <Square className="w-3 h-3 mr-1" />
+                    Clear Selection
+                  </Button>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{chunks.length} chunks</Badge>
               <Badge variant="secondary">{document.fileType.toUpperCase()}</Badge>
-              {selectedText ? (
+              {(selectedText || selectedChunks.size > 0) ? (
                 <Button 
                   variant="default" 
                   size="sm"
@@ -141,7 +209,7 @@ export default function ChunkedDocumentViewer({
                   className="bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
                 >
                   <Network className="w-4 h-4 mr-1" />
-                  Visualize Selected Text
+                  {selectedText ? 'Visualize Selected Text' : `Visualize ${selectedChunks.size} Chunk${selectedChunks.size > 1 ? 's' : ''}`}
                 </Button>
               ) : (
                 <Button 
@@ -151,7 +219,7 @@ export default function ChunkedDocumentViewer({
                   className="opacity-50"
                 >
                   <Network className="w-4 h-4 mr-1" />
-                  Select Text First
+                  Select Text or Chunks
                 </Button>
               )}
               <Button 
@@ -181,10 +249,26 @@ export default function ChunkedDocumentViewer({
       <ScrollArea className="h-[600px]">
         <div className="space-y-4">
           {chunks.map((chunk) => (
-            <Card key={chunk.id} className="relative">
+            <Card key={chunk.id} className={`relative transition-all duration-200 ${
+              selectedChunks.has(chunk.chunkIndex) 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : ''
+            }`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`chunk-${chunk.chunkIndex}`}
+                      checked={selectedChunks.has(chunk.chunkIndex)}
+                      onCheckedChange={() => handleChunkSelect(chunk.chunkIndex)}
+                      className="border-2"
+                    />
+                    <label 
+                      htmlFor={`chunk-${chunk.chunkIndex}`}
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Select Chunk
+                    </label>
                     <Badge variant="outline">Chunk {chunk.chunkIndex + 1}</Badge>
                     <Badge variant="secondary">{chunk.wordCount} words</Badge>
                     {chunk.isModified && (
