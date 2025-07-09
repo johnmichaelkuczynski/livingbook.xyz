@@ -9,30 +9,54 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
     
-    // Advanced PDF text formatting for proper paragraph structure
+    // Aggressive PDF text formatting for proper paragraph structure
     let text = data.text;
     
-    // First, normalize all line breaks
+    // First, normalize all line breaks and preserve existing structure
     text = text
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n');
     
-    // Handle chapter/section breaks (often marked with numbers or special formatting)
-    text = text
-      .replace(/(\n|^)\s*CHAPTER\s+[IVXLCDM\d]+[.:]\s*/gi, '\n\n**CHAPTER $1**\n\n')
-      .replace(/(\n|^)\s*(\d+)\.\s*([A-Z][^.]*)\s*$/gm, '\n\n**$2. $3**\n\n')
-      .replace(/(\n|^)\s*([IVXLCDM]+)\.\s*([A-Z][^.]*)\s*$/gm, '\n\n**$2. $3**\n\n');
+    // Split into lines and process each line
+    const lines = text.split('\n');
+    const processedLines = [];
     
-    // Break into proper paragraphs
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (!line) {
+        // Empty line - preserve as paragraph break
+        processedLines.push('');
+        continue;
+      }
+      
+      // Check if this is a heading (short line, title case, or numbered)
+      const isHeading = line.length < 100 && 
+        (line.match(/^\d+\.?\s+[A-Z]/) || // Numbered heading
+         line.match(/^[A-Z][a-z]+(?:\s+[A-Z][a-z]*){1,4}$/) || // Title case
+         line.match(/^CHAPTER|^SECTION|^PART/i)); // Chapter markers
+      
+      if (isHeading) {
+        processedLines.push('');
+        processedLines.push(line);
+        processedLines.push('');
+        continue;
+      }
+      
+      // Regular content line
+      processedLines.push(line);
+    }
+    
+    // Join back and create proper paragraphs
+    text = processedLines.join('\n');
+    
+    // Additional paragraph detection based on sentence patterns
     text = text
       .replace(/([.!?])\s+([A-Z])/g, '$1\n\n$2')  // Sentence end + capital = new paragraph
-      .replace(/([a-z])\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*){1,3})\s+([A-Z])/g, '$1\n\n$2\n\n$3')  // Title case sequences
-      .replace(/(\w)\s*\n\s*([A-Z][a-z])/g, '$1\n\n$2')  // Force breaks before capitals
-      .replace(/([.!?])\s*\n+\s*([a-z])/g, '$1 $2')  // Join sentence fragments
-      .replace(/([a-z])\s*\n+\s*([a-z])/g, '$1 $2')  // Join word fragments within sentences
+      .replace(/([a-z])\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*){2,})\s+([A-Z])/g, '$1\n\n$2\n\n$3')  // Title case sequences
       .replace(/\n{3,}/g, '\n\n')  // Normalize multiple breaks to double
       .replace(/^\s+|\s+$/gm, '')  // Trim each line
-      .replace(/\s+/g, ' ')  // Normalize internal spaces
+      .replace(/([a-z])\s*\n\s*([a-z])/g, '$1 $2')  // Join word fragments within sentences
       .trim();
     
     return text;
