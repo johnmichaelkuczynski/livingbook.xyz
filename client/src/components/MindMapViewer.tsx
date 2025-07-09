@@ -38,28 +38,48 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
   useEffect(() => {
     if (isOpen && networkRef.current && !visNetworkRef.current) {
       const initNetwork = async () => {
-        const vis = await import('vis-network');
-        const data = { nodes: new vis.DataSet([]), edges: new vis.DataSet([]) };
-        const options = {
-          physics: { enabled: true, stabilization: { iterations: 100 } },
-          nodes: {
-            font: { size: 14, color: '#333' },
-            borderWidth: 2,
-            shadow: true,
-            chosen: true,
-            shape: 'dot',
-            size: 25
-          },
-          edges: {
-            font: { size: 12, align: 'middle' },
-            color: { color: '#666', highlight: '#333', hover: '#333' },
-            arrows: { to: { enabled: true, scaleFactor: 1 } },
-            smooth: { type: 'continuous' }
-          },
-          interaction: { hover: true, selectConnectedEdges: true },
-          layout: { randomSeed: 42 }
-        };
-        visNetworkRef.current = new vis.Network(networkRef.current, data, options);
+        try {
+          // Try direct import first
+          const { Network, DataSet } = await import('vis-network');
+          
+          const data = { 
+            nodes: new DataSet([]), 
+            edges: new DataSet([]) 
+          };
+          
+          const options = {
+            physics: { 
+              enabled: true, 
+              stabilization: { iterations: 100 }
+            },
+            nodes: {
+              font: { size: 16, color: '#333' },
+              borderWidth: 2,
+              shadow: true,
+              chosen: true,
+              shape: 'dot',
+              size: 30
+            },
+            edges: {
+              font: { size: 14, align: 'middle' },
+              color: { color: '#666', highlight: '#333', hover: '#333' },
+              arrows: { to: { enabled: true, scaleFactor: 1 } },
+              smooth: { type: 'continuous' },
+              width: 2
+            },
+            interaction: { hover: true, selectConnectedEdges: true },
+            layout: { randomSeed: 42 }
+          };
+          
+          visNetworkRef.current = new Network(networkRef.current, data, options);
+          console.log('Network initialized successfully');
+        } catch (error) {
+          console.error('Error initializing network:', error);
+          // Fallback: create simple canvas visualization
+          if (networkRef.current) {
+            networkRef.current.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">Mind map will appear here once generated</div>';
+          }
+        }
       };
       initNetwork();
     }
@@ -110,8 +130,14 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
       const result = await response.json();
       
       if (result.success) {
+        console.log('Mind map generation successful:', result.mindMapData);
         setNetworkData(result.mindMapData);
-        updateVisNetwork(result.mindMapData);
+        
+        // Wait a moment for state to update, then update the visualization
+        setTimeout(() => {
+          updateVisNetwork(result.mindMapData);
+        }, 100);
+        
         toast({
           title: "Mind Map Generated",
           description: `Created ${mapType} mind map with ${result.mindMapData.nodes.length} concepts.`
@@ -132,13 +158,29 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
   };
 
   // Update vis.js network with new data
-  const updateVisNetwork = (data: NetworkData) => {
-    if (visNetworkRef.current) {
-      const vis = require('vis-network');
-      const nodes = new vis.DataSet(data.nodes);
-      const edges = new vis.DataSet(data.edges);
-      visNetworkRef.current.setData({ nodes, edges });
-      visNetworkRef.current.fit();
+  const updateVisNetwork = async (data: NetworkData) => {
+    if (visNetworkRef.current && data.nodes && data.edges) {
+      try {
+        const { DataSet } = await import('vis-network');
+        console.log('Updating network with data:', data);
+        const nodes = new DataSet(data.nodes);
+        const edges = new DataSet(data.edges);
+        visNetworkRef.current.setData({ nodes, edges });
+        
+        // Force redraw and fit
+        setTimeout(() => {
+          if (visNetworkRef.current) {
+            visNetworkRef.current.redraw();
+            visNetworkRef.current.fit();
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Error updating network:', error);
+        // Fallback to simple text display
+        if (networkRef.current) {
+          networkRef.current.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">Mind map generated with ${data.nodes.length} nodes and ${data.edges.length} connections</div>`;
+        }
+      }
     }
   };
 
@@ -269,7 +311,7 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
             <div>
               <CardTitle className="text-lg">Mind Map: {document?.title || 'Document'}</CardTitle>
               <p className="text-sm text-gray-500 mt-1">
-                {isGenerating ? 'Generating mind map...' : `${networkData.nodes.length} concepts mapped`}
+                {isGenerating ? 'Generating mind map...' : networkData.nodes.length > 0 ? `${networkData.nodes.length} concepts mapped` : 'No mind map generated yet'}
               </p>
             </div>
           </div>
@@ -437,11 +479,29 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
                     </div>
                   </div>
                 ) : (
-                  <div
-                    ref={networkRef}
-                    className="w-full h-full"
-                    style={{ minHeight: '500px' }}
-                  />
+                  <div className="w-full h-full p-4">
+                    <div
+                      ref={networkRef}
+                      className="w-full h-full"
+                      style={{ minHeight: '500px' }}
+                    />
+                    {/* Fallback display for debugging */}
+                    {networkData.nodes.length > 0 && !visNetworkRef.current && (
+                      <div className="absolute top-4 left-4 bg-white p-4 rounded shadow-lg max-w-md">
+                        <h3 className="font-bold mb-2">Mind Map Data (Debug)</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {networkData.nodes.length} nodes, {networkData.edges.length} edges
+                        </p>
+                        <div className="text-xs text-gray-500 max-h-32 overflow-y-auto">
+                          <strong>Nodes:</strong>
+                          {networkData.nodes.slice(0, 5).map((node, i) => (
+                            <div key={i}>• {node.label}</div>
+                          ))}
+                          {networkData.nodes.length > 5 && <div>... and {networkData.nodes.length - 5} more</div>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
