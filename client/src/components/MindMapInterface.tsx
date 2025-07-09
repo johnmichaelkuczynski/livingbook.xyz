@@ -86,13 +86,20 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
     },
     onSuccess: (data) => {
       console.log('Mind map generated:', data);
+      console.log('Mind map data structure:', { 
+        hasNodes: !!data.nodes, 
+        hasEdges: !!data.edges, 
+        nodesLength: data.nodes?.length, 
+        edgesLength: data.edges?.length,
+        dataKeys: Object.keys(data)
+      });
       setCurrentMindMap(data);
       setIsMindMapModalOpen(true);
       queryClient.invalidateQueries({ 
         queryKey: document ? ['/api/documents/' + document.id + '/mindmaps'] : ['no-maps'] 
       });
       toast({
-        title: "Mind Map Generated",
+        title: "Mind Map Generated", 
         description: "Click to view the mind map visualization",
       });
     },
