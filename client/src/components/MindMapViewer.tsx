@@ -39,8 +39,21 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
     if (isOpen && networkRef.current && !visNetworkRef.current) {
       const initNetwork = async () => {
         try {
-          // Try direct import first
-          const { Network, DataSet } = await import('vis-network');
+          console.log('Attempting to initialize vis.js network...');
+          
+          // Import vis-network
+          const visNetwork = await import('vis-network');
+          console.log('vis-network imported:', visNetwork);
+          
+          // Handle different import patterns
+          const Network = visNetwork.Network || visNetwork.default?.Network;
+          const DataSet = visNetwork.DataSet || visNetwork.default?.DataSet;
+          
+          if (!Network || !DataSet) {
+            throw new Error('Network or DataSet not found in vis-network import');
+          }
+          
+          console.log('Network and DataSet found, creating instance...');
           
           const data = { 
             nodes: new DataSet([]), 
@@ -72,16 +85,25 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
           };
           
           visNetworkRef.current = new Network(networkRef.current, data, options);
-          console.log('Network initialized successfully');
+          console.log('✓ Network initialized successfully');
         } catch (error) {
-          console.error('Error initializing network:', error);
-          // Fallback: create simple canvas visualization
+          console.error('✗ Error initializing network:', error);
+          
+          // Create a manual fallback visualization
           if (networkRef.current) {
-            networkRef.current.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">Mind map will appear here once generated</div>';
+            networkRef.current.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; color: #666; background: #f9f9f9; border: 2px dashed #ccc; border-radius: 8px;">
+                <div style="font-size: 16px; margin-bottom: 8px;">⚠️ Visualization Error</div>
+                <div style="font-size: 14px;">Mind map will display here once network initializes</div>
+                <div style="font-size: 12px; margin-top: 8px; color: #999;">Check console for details</div>
+              </div>
+            `;
           }
         }
       };
-      initNetwork();
+      
+      // Add a small delay to ensure DOM is ready
+      setTimeout(initNetwork, 100);
     }
   }, [isOpen]);
 
@@ -157,31 +179,108 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
     }
   };
 
-  // Update vis.js network with new data
+  // Update visualization with new data
   const updateVisNetwork = async (data: NetworkData) => {
+    console.log('Render called', data);
+    console.log('Nodes:', data.nodes);
+    console.log('Edges:', data.edges);
+    
+    if (!networkRef.current) {
+      console.error('Container ref not available');
+      return;
+    }
+    
+    // Create fallback visualization immediately
+    createFallbackVisualization(data);
+    
+    // Try vis.js network if available
     if (visNetworkRef.current && data.nodes && data.edges) {
       try {
-        const { DataSet } = await import('vis-network');
-        console.log('Updating network with data:', data);
-        const nodes = new DataSet(data.nodes);
-        const edges = new DataSet(data.edges);
-        visNetworkRef.current.setData({ nodes, edges });
+        const visNetwork = await import('vis-network');
+        const DataSet = visNetwork.DataSet || visNetwork.default?.DataSet;
         
-        // Force redraw and fit
-        setTimeout(() => {
-          if (visNetworkRef.current) {
-            visNetworkRef.current.redraw();
-            visNetworkRef.current.fit();
-          }
-        }, 100);
-      } catch (error) {
-        console.error('Error updating network:', error);
-        // Fallback to simple text display
-        if (networkRef.current) {
-          networkRef.current.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">Mind map generated with ${data.nodes.length} nodes and ${data.edges.length} connections</div>`;
+        if (DataSet) {
+          console.log('Creating DataSets...');
+          const nodes = new DataSet(data.nodes);
+          const edges = new DataSet(data.edges);
+          
+          visNetworkRef.current.setData({ nodes, edges });
+          visNetworkRef.current.redraw();
+          visNetworkRef.current.fit();
+          console.log('✓ Network render complete');
         }
+      } catch (error) {
+        console.error('Vis.js error, using fallback:', error);
       }
     }
+  };
+
+  // Create a simple fallback visualization
+  const createFallbackVisualization = (data: NetworkData) => {
+    if (!networkRef.current || !data.nodes.length) return;
+    
+    const container = networkRef.current;
+    container.innerHTML = '';
+    
+    // Create SVG container
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 800 600');
+    svg.style.background = '#ffffff';
+    svg.style.border = '1px solid #ddd';
+    
+    const centerX = 400;
+    const centerY = 300;
+    const radius = 200;
+    
+    // Draw edges first
+    data.edges.forEach(edge => {
+      const fromNode = data.nodes.find(n => n.id === edge.from);
+      const toNode = data.nodes.find(n => n.id === edge.to);
+      
+      if (fromNode && toNode) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', fromNode.x?.toString() || centerX.toString());
+        line.setAttribute('y1', fromNode.y?.toString() || centerY.toString());
+        line.setAttribute('x2', toNode.x?.toString() || centerX.toString());
+        line.setAttribute('y2', toNode.y?.toString() || centerY.toString());
+        line.setAttribute('stroke', '#666');
+        line.setAttribute('stroke-width', '2');
+        svg.appendChild(line);
+      }
+    });
+    
+    // Draw nodes
+    data.nodes.forEach((node, index) => {
+      const angle = (index * 2 * Math.PI) / data.nodes.length;
+      const x = node.x || (centerX + radius * Math.cos(angle));
+      const y = node.y || (centerY + radius * Math.sin(angle));
+      
+      // Create node circle
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', x.toString());
+      circle.setAttribute('cy', y.toString());
+      circle.setAttribute('r', (node.size || 20).toString());
+      circle.setAttribute('fill', node.color || '#3b82f6');
+      circle.setAttribute('stroke', '#fff');
+      circle.setAttribute('stroke-width', '2');
+      svg.appendChild(circle);
+      
+      // Create label
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', x.toString());
+      text.setAttribute('y', (y + 5).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-family', 'Arial, sans-serif');
+      text.setAttribute('font-size', '12');
+      text.setAttribute('fill', '#333');
+      text.textContent = node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label;
+      svg.appendChild(text);
+    });
+    
+    container.appendChild(svg);
+    console.log('✓ Fallback visualization created');
   };
 
   // Regenerate mind map with feedback
@@ -479,25 +578,50 @@ export default function MindMapViewer({ document, isOpen, onClose }: MindMapProp
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full p-4">
+                  <div className="relative w-full h-full p-4" style={{ minHeight: '600px', backgroundColor: '#f8f9fa' }}>
+                    {/* Debug info */}
+                    <div className="absolute top-2 left-2 bg-yellow-100 p-2 rounded text-xs z-10">
+                      Container visible: {networkData.nodes.length} nodes, {networkData.edges.length} edges
+                    </div>
+                    
+                    {/* Mind Map Visualization Container */}
                     <div
                       ref={networkRef}
-                      className="w-full h-full"
-                      style={{ minHeight: '500px' }}
-                    />
-                    {/* Fallback display for debugging */}
-                    {networkData.nodes.length > 0 && !visNetworkRef.current && (
-                      <div className="absolute top-4 left-4 bg-white p-4 rounded shadow-lg max-w-md">
-                        <h3 className="font-bold mb-2">Mind Map Data (Debug)</h3>
+                      className="w-full h-full border-2 border-blue-200 rounded-lg overflow-hidden"
+                      style={{ 
+                        minHeight: '500px',
+                        height: '100%',
+                        backgroundColor: '#ffffff'
+                      }}
+                    >
+                      {/* Default content before generation */}
+                      {networkData.nodes.length === 0 && (
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                          <div className="text-center">
+                            <div>Mind Map Canvas Ready</div>
+                            <div className="text-xs mt-1">
+                              {visNetworkRef.current ? 'Network initialized ✓' : 'Using SVG fallback'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Enhanced Debug display */}
+                    {networkData.nodes.length > 0 && (
+                      <div className="absolute top-4 right-4 bg-white p-4 rounded shadow-lg max-w-md border">
+                        <h3 className="font-bold mb-2 text-green-600">Mind Map Data Ready</h3>
                         <p className="text-sm text-gray-600 mb-2">
-                          {networkData.nodes.length} nodes, {networkData.edges.length} edges
+                          ✓ {networkData.nodes.length} nodes, {networkData.edges.length} edges loaded
                         </p>
                         <div className="text-xs text-gray-500 max-h-32 overflow-y-auto">
-                          <strong>Nodes:</strong>
-                          {networkData.nodes.slice(0, 5).map((node, i) => (
+                          <strong>Sample Nodes:</strong>
+                          {networkData.nodes.slice(0, 3).map((node, i) => (
                             <div key={i}>• {node.label}</div>
                           ))}
-                          {networkData.nodes.length > 5 && <div>... and {networkData.nodes.length - 5} more</div>}
+                        </div>
+                        <div className="mt-2 text-xs">
+                          Network Status: {visNetworkRef.current ? '✓ Initialized' : '✗ Not Ready'}
                         </div>
                       </div>
                     )}
