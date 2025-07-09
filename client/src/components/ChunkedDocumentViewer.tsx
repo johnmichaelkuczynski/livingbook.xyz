@@ -114,13 +114,46 @@ export default function ChunkedDocumentViewer({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              {document.title}
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                {document.title}
+              </div>
+              {!selectedText && (
+                <p className="text-sm text-gray-500 font-normal">
+                  💡 Select text in any chunk to create a concept lattice visualization
+                </p>
+              )}
+              {selectedText && (
+                <p className="text-sm text-purple-600 font-normal">
+                  ✓ Text selected: "{selectedText.substring(0, 40)}..." - Look for the purple Visualize button!
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{chunks.length} chunks</Badge>
               <Badge variant="secondary">{document.fileType.toUpperCase()}</Badge>
+              {selectedText ? (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={handleVisualize}
+                  className="bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
+                >
+                  <Network className="w-4 h-4 mr-1" />
+                  Visualize Selected Text
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled
+                  className="opacity-50"
+                >
+                  <Network className="w-4 h-4 mr-1" />
+                  Select Text First
+                </Button>
+              )}
               <Button 
                 variant="default" 
                 size="sm"
@@ -135,7 +168,7 @@ export default function ChunkedDocumentViewer({
                     });
                   }
                 }}
-                className="bg-green-600 hover:bg-green-700 text-white ml-2"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <Edit3 className="w-4 h-4 mr-1" />
                 Rewrite Document
@@ -181,16 +214,6 @@ export default function ChunkedDocumentViewer({
                     >
                       <Download className="w-4 h-4" />
                     </Button>
-                    {selectedText && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleVisualize}
-                        className="text-purple-600 hover:text-purple-700"
-                      >
-                        <Network className="w-4 h-4" />
-                      </Button>
-                    )}
                   </div>
                 </div>
               </CardHeader>
