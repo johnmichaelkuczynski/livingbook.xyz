@@ -76,13 +76,15 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
   // Generate mind map mutation
   const generateMindMapMutation = useMutation({
     mutationFn: async ({ segmentId, provider }: { segmentId: string; provider: string }) => {
-      return apiRequest('POST', '/api/mindmaps/generate', {
+      const response = await apiRequest('POST', '/api/mindmaps/generate', {
         documentId: document?.id,
         segmentId,
         provider
       });
+      return response;
     },
     onSuccess: (data) => {
+      console.log('Mind map generated:', data);
       setCurrentMindMap(data);
       setActiveTab('local');
       queryClient.invalidateQueries({ 
@@ -411,12 +413,34 @@ export default function MindMapInterface({ document, onAskAboutNode, onJumpToTex
             </TabsContent>
 
             <TabsContent value="local" className="h-full m-0">
-              <MindMapViewer
-                mindMap={currentMindMap}
-                onNodeClick={(node) => console.log('Node clicked:', node)}
-                onAskAboutNode={onAskAboutNode}
-                onJumpToSegment={handleJumpToSegment}
-              />
+              {currentMindMap ? (
+                <div className="h-full flex flex-col">
+                  <div className="p-2 bg-gray-100 text-xs text-gray-600">
+                    Debug: Mind map has {currentMindMap.nodes?.length || 0} nodes and {currentMindMap.edges?.length || 0} edges
+                  </div>
+                  <div className="flex-1">
+                    <MindMapViewer
+                      mindMap={currentMindMap}
+                      onNodeClick={(node) => console.log('Node clicked:', node)}
+                      onAskAboutNode={onAskAboutNode}
+                      onJumpToSegment={handleJumpToSegment}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <p className="text-gray-500 mb-2">No mind map generated yet</p>
+                    <p className="text-sm text-gray-400">Select a segment and click "Map" to generate a mind map</p>
+                    {generateMindMapMutation.isPending && (
+                      <p className="text-sm text-blue-600 mt-2">Generating mind map...</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="meta" className="h-full m-0">
