@@ -78,23 +78,22 @@ export default function Home() {
     };
   };
 
-  const handleFileUploaded = (document: any) => {
-    setCurrentDocument(document);
+  const handleFileUploaded = (uploadResult: any) => {
+    setCurrentDocument(uploadResult);
     
-    // Check if document is large and needs chunking
-    if (document && document.content) {
-      const wordCount = document.content.split(/\s+/).filter((word: string) => word.length > 0).length;
-      if (wordCount > 1000) {
-        // Chunk the document for better performance
-        const chunkedDoc = chunkDocumentClient(document.content, 1000);
-        setDocumentChunks(chunkedDoc);
-        toast({
-          title: "Large Document Detected",
-          description: `Document split into ${chunkedDoc.chunkCount} chunks for better performance (${wordCount} words total).`,
-        });
-      } else {
-        setDocumentChunks(null);
-      }
+    // Use chunked document data from server if available
+    if (uploadResult.chunkedDocument && uploadResult.chunkCount > 1) {
+      setDocumentChunks(uploadResult.chunkedDocument);
+      toast({
+        title: "Document uploaded and chunked",
+        description: `Your document has been split into ${uploadResult.chunkCount} chunks for better processing.`,
+      });
+    } else {
+      setDocumentChunks(null);
+      toast({
+        title: "Document uploaded",
+        description: "Your document is ready for analysis.",
+      });
     }
   };
 

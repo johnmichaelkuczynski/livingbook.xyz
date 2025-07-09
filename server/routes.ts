@@ -138,6 +138,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
       
+      // Automatically chunk document if it's large enough
+      const { chunkDocument } = await import('./services/documentChunker');
+      const chunkedDoc = chunkDocument(extractedText);
+      
+      console.log(`Document processed: ${totalWords} words -> ${chunkedDoc.chunkCount} chunks`);
+      
       // Create a chat session for this document
       await storage.createChatSession({ documentId: document.id });
       
@@ -150,7 +156,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: document.fileType,
         fileSize: document.fileSize,
         content: document.content,
-        uploadedAt: document.uploadedAt
+        uploadedAt: document.uploadedAt,
+        totalWords: document.totalWords,
+        chunkCount: chunkedDoc.chunkCount,
+        chunkedDocument: chunkedDoc
       });
       
     } catch (error) {
@@ -187,17 +196,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       extractedText = processMathNotation(extractedText);
       
       // Save document to storage
+      const totalWords = extractedText.split(/\s+/).filter(word => word.length > 0).length;
       const documentData = {
         filename,
         originalName: originalname,
         fileType: mimetype,
         fileSize: size,
         content: extractedText,
-        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
+        totalWords
       };
       
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
+      
+      // Automatically chunk document if it's large enough
+      const { chunkDocument } = await import('./services/documentChunker');
+      const chunkedDoc = chunkDocument(extractedText);
+      
+      console.log(`Document processed: ${totalWords} words -> ${chunkedDoc.chunkCount} chunks`);
       
       // Create a chat session for this document
       await storage.createChatSession({ documentId: document.id });
