@@ -318,7 +318,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
   // Render node with proper styling and interactions
   const renderNode = (node: ConceptNode, depth = 0) => {
     const hasChildren = getChildNodes(node.id).length > 0;
-    const isExpanded = node.isExpanded ?? true;
+    const isExpanded = node.isExpanded ?? false; // Start collapsed by default
     const childNodes = getChildNodes(node.id);
 
     const getNodeStyle = () => {
@@ -347,25 +347,39 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
           className={getNodeStyle()}
           style={{ marginLeft: `${depth * 20}px` }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-2 flex-1">
               {hasChildren && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleExpansion(node.id)}
-                  className="p-1 h-6 w-6"
+                  className="p-1 h-6 w-6 mt-1"
                 >
                   {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               )}
-              <Badge variant="secondary" className="text-xs">
-                {TYPE_LABELS[node.type]}
-              </Badge>
               <div className="flex-1">
-                {node.type === 'supporting_quote' && '"'}
-                {node.content}
-                {node.type === 'supporting_quote' && '"'}
+                <div className="flex items-center space-x-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {TYPE_LABELS[node.type]}
+                  </Badge>
+                </div>
+                <div className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+                  {node.type === 'supporting_quote' && '"'}
+                  {node.content}
+                  {node.type === 'supporting_quote' && '"'}
+                </div>
+                {node.content.length > 100 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleExpansion(node.id)}
+                    className="mt-1 p-1 h-6 text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    {isExpanded ? 'Show less' : 'Show more'}
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -375,7 +389,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-1 h-6 w-6"
+                    className="p-1 h-6 w-6 mt-1"
                     onClick={() => setActiveChat(node.id)}
                   >
                     <MessageCircle className="h-4 w-4" />
