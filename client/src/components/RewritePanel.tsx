@@ -73,6 +73,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
   const [isRewriting, setIsRewriting] = useState(false);
   const [expandedChunks, setExpandedChunks] = useState<Set<number>>(new Set());
   const [expandedPreviews, setExpandedPreviews] = useState<Set<string>>(new Set());
+  const [showCompleteView, setShowCompleteView] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -237,7 +238,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
 
   const downloadChunk = (chunk: TextChunk, format: 'txt' | 'word' | 'pdf') => {
     const content = chunk.rewrittenText || chunk.text;
-    const filename = `chunk_${chunk.id}_rewritten`;
+    const filename = `${document?.title || 'document'}_chunk_${chunk.id}_rewritten`;
     
     if (format === 'txt') {
       downloadAsText(content, filename + '.txt');
@@ -245,7 +246,6 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
       downloadAsWord(content, filename);
     } else if (format === 'pdf') {
       // For PDF, create a clean version without complex math notation
-      // Replace LaTeX with simplified text equivalents
       const cleanContent = content
         .replace(/\\\(/g, '(')  // Remove LaTeX inline delimiters
         .replace(/\\\)/g, ')')
@@ -264,19 +264,34 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
         printWindow.document.write(`
           <html>
           <head>
-            <title>Chunk ${chunk.id} - Rewritten</title>
+            <title>${document?.title || 'Document'} - Chunk ${chunk.id} Rewritten</title>
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
-              h1 { color: #333; }
+              body { 
+                font-family: 'Times New Roman', serif; 
+                line-height: 1.8; 
+                margin: 60px; 
+                font-size: 14px;
+                color: #333;
+              }
+              p { 
+                margin: 20px 0; 
+                text-align: justify; 
+                text-indent: 30px;
+              }
               @media print { 
-                body { margin: 20px; } 
-                h1 { page-break-after: avoid; }
+                body { margin: 40px; } 
+                p { margin: 15px 0; }
               }
             </style>
           </head>
           <body>
-            <h1>Chunk ${chunk.id} - Rewritten</h1>
-            <div>${cleanContent.replace(/\n/g, '<br>')}</div>
+            <div>${cleanContent
+              .replace(/\n\n/g, '</p><p>')
+              .replace(/\n/g, '<br>')
+              .replace(/^/, '<p>')
+              .replace(/$/, '</p>')
+              .replace(/<p><\/p>/g, '')
+            }</div>
             <script>
               window.onload = function() {
                 setTimeout(() => window.print(), 500);
@@ -291,7 +306,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
 
     toast({
       title: "Download started",
-      description: `Chunk ${chunk.id} is being downloaded as ${format.toUpperCase()}.`,
+      description: `Chunk ${chunk.id} content is being downloaded as ${format.toUpperCase()}.`,
     });
   };
 
@@ -306,11 +321,10 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
       return;
     }
 
-    const allContent = rewrittenChunks.map((chunk, index) => 
-      `--- Chunk ${chunk.id} ---\n\n${chunk.rewrittenText}\n\n`
-    ).join('');
+    // Create clean continuous text without chunk metadata
+    const allContent = rewrittenChunks.map(chunk => chunk.rewrittenText).join('\n\n');
     
-    const filename = `all_rewritten_chunks`;
+    const filename = `${document?.title || 'document'}_rewritten`;
     
     if (format === 'txt') {
       downloadAsText(allContent, filename + '.txt');
@@ -336,33 +350,45 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
         printWindow.document.write(`
           <html>
           <head>
-            <title>All Rewritten Chunks</title>
+            <title>${document?.title || 'Document'} - Rewritten</title>
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
-              h1 { color: #333; margin-bottom: 30px; }
-              h2 { color: #666; margin-top: 30px; margin-bottom: 15px; }
-              p { margin: 15px 0; text-align: justify; }
-              .chunk-separator { border-top: 2px solid #eee; margin: 30px 0; padding-top: 20px; }
+              body { 
+                font-family: 'Times New Roman', serif; 
+                line-height: 1.8; 
+                margin: 60px; 
+                font-size: 14px;
+                color: #333;
+              }
+              h1 { 
+                color: #2c3e50; 
+                margin-bottom: 30px; 
+                font-size: 24px;
+                text-align: center;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 15px;
+              }
+              p { 
+                margin: 20px 0; 
+                text-align: justify; 
+                text-indent: 30px;
+                orphans: 3;
+                widows: 3;
+              }
               @media print { 
-                body { margin: 20px; } 
+                body { margin: 40px; } 
                 h1 { page-break-after: avoid; }
-                h2 { page-break-after: avoid; }
-                .chunk-separator { page-break-inside: avoid; }
-                p { margin: 10px 0; }
+                p { margin: 15px 0; }
               }
             </style>
           </head>
           <body>
-            <h1>All Rewritten Chunks</h1>
+            <h1>${document?.title || 'Document'} - Rewritten</h1>
             <div>${cleanAllContent
-              .replace(/--- Chunk (\d+) ---/g, '<div class="chunk-separator"><h2>Chunk $1</h2></div>')
               .replace(/\n\n/g, '</p><p>')
               .replace(/\n/g, '<br>')
               .replace(/^/, '<p>')
               .replace(/$/, '</p>')
               .replace(/<p><\/p>/g, '')
-              .replace(/<p><div/g, '<div')
-              .replace(/<\/div><\/p>/g, '</div>')
             }</div>
             <script>
               window.onload = function() {
@@ -478,6 +504,12 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                     <Square className="w-4 h-4 mr-1" />
                     Deselect All
                   </Button>
+                  {rewrittenCount > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setShowCompleteView(true)}>
+                      <ZoomIn className="w-4 h-4 mr-1" />
+                      View Complete Rewrite
+                    </Button>
+                  )}
                 </div>
               </div>
               
@@ -666,6 +698,62 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
           </ScrollArea>
         </div>
       </div>
+
+      {/* Complete Rewrite View Modal */}
+      {showCompleteView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-4xl h-5/6 flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Complete Rewritten Document</h2>
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={() => downloadAllRewritten('txt')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download TXT
+                </Button>
+                <Button
+                  onClick={() => downloadAllRewritten('word')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Word
+                </Button>
+                <Button
+                  onClick={() => downloadAllRewritten('pdf')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button
+                  onClick={() => setShowCompleteView(false)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <ScrollArea className="flex-1 p-6">
+              <div className="prose prose-sm max-w-none">
+                <KaTeXRenderer 
+                  content={chunks
+                    .filter(chunk => chunk.rewritten)
+                    .map(chunk => chunk.rewrittenText)
+                    .join('\n\n')
+                  }
+                  className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed"
+                />
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
