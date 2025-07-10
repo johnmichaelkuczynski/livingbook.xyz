@@ -26,8 +26,17 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Convert line breaks to HTML
-  processedContent = processedContent.replace(/\n/g, '<br>');
+  // Preserve paragraph structure by converting double line breaks to paragraph tags
+  processedContent = processedContent
+    .replace(/\n\n+/g, '</p><p>') // Convert paragraph breaks
+    .replace(/\n/g, '<br>'); // Convert remaining line breaks
+  
+  // Wrap in paragraph tags
+  if (processedContent.length > 0) {
+    processedContent = '<p>' + processedContent + '</p>';
+    // Clean up empty paragraphs
+    processedContent = processedContent.replace(/<p><\/p>/g, '');
+  }
   
   // Enhanced math rendering with better fallbacks
   // Block math: $$...$$
@@ -111,11 +120,12 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   return (
     <div 
       ref={containerRef} 
-      className={`prose prose-sm max-w-none ${className}`}
+      className={`prose prose-lg max-w-none ${className}`}
       style={{ 
-        lineHeight: '1.6',
+        lineHeight: '1.8',
         wordWrap: 'break-word',
-        overflowWrap: 'break-word'
+        overflowWrap: 'break-word',
+        fontFamily: 'Georgia, "Times New Roman", serif'
       }}
     />
   );
