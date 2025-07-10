@@ -564,7 +564,7 @@ export default function ComparePage() {
     
     return (
     <div className="flex-1">
-      <Card className="h-full min-h-[800px] flex flex-col">
+      <Card className="h-[800px] flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -685,11 +685,11 @@ export default function ComparePage() {
                 </div>
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
-              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-6 min-h-[700px] max-h-[900px]">
-                <div className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed">
+              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
+                <div className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-tight">
                   <KaTeXRenderer 
                     content={doc.content} 
-                    className="text-sm leading-6 text-gray-900 dark:text-gray-100" 
+                    className="text-xs leading-5 text-gray-900 dark:text-gray-100" 
                   />
                 </div>
               </div>
@@ -811,10 +811,10 @@ export default function ComparePage() {
           
           {/* AI Chat Column - Takes 2/6 (much wider) */}
           <div className="lg:col-span-2">
-            <Card className="h-full min-h-[800px] flex flex-col">
+            <Card className="h-[800px] flex flex-col">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <MessageSquare className="w-4 h-4" />
                   AI Comparison Chat
                   {(documentA || documentB) && (
                     <div className="flex gap-1 ml-auto">
@@ -832,7 +832,7 @@ export default function ComparePage() {
                 )}
                 
                 {(documentA || documentB) && (
-                  <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[600px] mb-4">
+                  <div className="flex-1 overflow-y-auto space-y-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800 h-[600px] mb-4">
                     {messages.length === 0 ? (
                       <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400 text-sm">
