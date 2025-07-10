@@ -788,9 +788,9 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[900px] pb-32">
-          {/* Document A - Takes 1/3 */}
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 min-h-[900px] pb-32">
+          {/* Document A - Takes 3/7 */}
+          <div className="lg:col-span-3">
             <DocumentColumn
               title="Document A"
               document={documentA}
@@ -799,8 +799,8 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* Document B - Takes 1/3 */}
-          <div className="lg:col-span-1">
+          {/* Document B - Takes 3/7 */}
+          <div className="lg:col-span-3">
             <DocumentColumn
               title="Document B"
               document={documentB}
@@ -809,7 +809,7 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* AI Chat Column - Takes 1/3 */}
+          {/* AI Chat Column - Takes 1/7 (smaller) */}
           <div className="lg:col-span-1">
             <Card className="h-full min-h-[800px] flex flex-col">
               <CardHeader>
