@@ -190,43 +190,22 @@ export default function TextSelectionPopup({
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-sm font-medium text-gray-600">AI</div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const cleanContent = message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-                                const element = document.createElement('a');
-                                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(cleanContent));
-                                element.setAttribute('download', `ai-response-${message.id}.txt`);
-                                element.style.display = 'none';
-                                document.body.appendChild(element);
-                                element.click();
-                                document.body.removeChild(element);
-                              }}
-                              className="h-6 px-2 text-xs"
+                            <a
+                              href={`data:text/plain;charset=utf-8,${encodeURIComponent(message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'))}`}
+                              download={`ai-response-${message.id}.txt`}
+                              className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
                             >
                               <Download className="w-3 h-3 mr-1" />
                               TXT
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const cleanContent = message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-                                const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${cleanContent.replace(/\n/g, '<br>')}</div></body></html>`;
-                                const element = document.createElement('a');
-                                element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
-                                element.setAttribute('download', `ai-response-${message.id}.html`);
-                                element.style.display = 'none';
-                                document.body.appendChild(element);
-                                element.click();
-                                document.body.removeChild(element);
-                              }}
-                              className="h-6 px-2 text-xs"
+                            </a>
+                            <a
+                              href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/\n/g, '<br>')}</div></body></html>`)}`}
+                              download={`ai-response-${message.id}.html`}
+                              className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
                             >
                               <Download className="w-3 h-3 mr-1" />
                               HTML
-                            </Button>
+                            </a>
                           </div>
                           <div className="text-gray-800 leading-relaxed">
                             <KaTeXRenderer content={message.content} className="prose" />

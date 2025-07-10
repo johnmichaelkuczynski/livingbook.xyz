@@ -380,43 +380,22 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                           <Upload className="w-3 h-3 mr-1" />
                           Use as Doc
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const cleanContent = removeMarkupSymbols(msg.content);
-                            const element = document.createElement('a');
-                            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(cleanContent));
-                            element.setAttribute('download', `ai-response-${msg.id}.txt`);
-                            element.style.display = 'none';
-                            document.body.appendChild(element);
-                            element.click();
-                            document.body.removeChild(element);
-                          }}
-                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        <a
+                          href={`data:text/plain;charset=utf-8,${encodeURIComponent(removeMarkupSymbols(msg.content))}`}
+                          download={`ai-response-${msg.id}.txt`}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2 inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
                         >
                           <Download className="w-3 h-3 mr-1" />
                           TXT
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const cleanContent = removeMarkupSymbols(msg.content);
-                            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${cleanContent.replace(/\n/g, '<br>')}</div></body></html>`;
-                            const element = document.createElement('a');
-                            element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
-                            element.setAttribute('download', `ai-response-${msg.id}.html`);
-                            element.style.display = 'none';
-                            document.body.appendChild(element);
-                            element.click();
-                            document.body.removeChild(element);
-                          }}
-                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
+                        </a>
+                        <a
+                          href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${removeMarkupSymbols(msg.content).replace(/\n/g, '<br>')}</div></body></html>`)}`}
+                          download={`ai-response-${msg.id}.html`}
+                          className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2 inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
                         >
                           <Download className="w-3 h-3 mr-1" />
                           HTML
-                        </Button>
+                        </a>
                         <Button
                           variant="ghost"
                           size="sm"

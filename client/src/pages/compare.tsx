@@ -883,43 +883,22 @@ export default function ComparePage() {
                             <KaTeXRenderer content={msg.content} className="prose" />
                             {msg.role === 'assistant' && (
                               <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    const cleanContent = msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-                                    const element = document.createElement('a');
-                                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(cleanContent));
-                                    element.setAttribute('download', `comparison-ai-response-${msg.id}.txt`);
-                                    element.style.display = 'none';
-                                    document.body.appendChild(element);
-                                    element.click();
-                                    document.body.removeChild(element);
-                                  }}
-                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600"
+                                <a
+                                  href={`data:text/plain;charset=utf-8,${encodeURIComponent(msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'))}`}
+                                  download={`comparison-ai-response-${msg.id}.txt`}
+                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 inline-flex items-center justify-center rounded-md"
                                   title="Download as TXT"
                                 >
                                   <Download className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    const cleanContent = msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-                                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>Comparison AI Response - DocMath AI</h1><div>${cleanContent.replace(/\n/g, '<br>')}</div></body></html>`;
-                                    const element = document.createElement('a');
-                                    element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
-                                    element.setAttribute('download', `comparison-ai-response-${msg.id}.html`);
-                                    element.style.display = 'none';
-                                    document.body.appendChild(element);
-                                    element.click();
-                                    document.body.removeChild(element);
-                                  }}
-                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600"
+                                </a>
+                                <a
+                                  href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>Comparison AI Response - DocMath AI</h1><div>${msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/\n/g, '<br>')}</div></body></html>`)}`}
+                                  download={`comparison-ai-response-${msg.id}.html`}
+                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 inline-flex items-center justify-center rounded-md"
                                   title="Download as HTML"
                                 >
                                   <Download className="w-3 h-3" />
-                                </Button>
+                                </a>
                               </div>
                             )}
                           </div>
