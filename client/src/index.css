@@ -80,6 +80,47 @@
   }
 }
 
+/* Document formatting preservation */
+.prose {
+  max-width: none !important;
+}
+
+.prose p {
+  margin-top: 1.25em !important;
+  margin-bottom: 1.25em !important;
+  text-align: justify;
+  text-indent: 1.5em;
+  line-height: 1.8 !important;
+}
+
+.prose p:first-child {
+  margin-top: 0 !important;
+}
+
+.prose p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  margin-top: 2em !important;
+  margin-bottom: 1em !important;
+  text-align: left;
+  text-indent: 0;
+  font-weight: bold;
+}
+
+.prose ul, .prose ol {
+  margin-top: 1.25em !important;
+  margin-bottom: 1.25em !important;
+  padding-left: 2em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  text-align: justify;
+}
+
 /* Math notation styling */
 .math-inline {
   font-family: 'JetBrains Mono', monospace;
