@@ -690,49 +690,12 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
-                {(() => {
-                  const docChunks = column === 'A' ? documentChunksA : documentChunksB;
-                  
-                  if (docChunks && docChunks.chunkCount > 1) {
-                    // Display chunked document viewer for large documents
-                    return (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Badge variant="outline">{docChunks.chunkCount} chunks</Badge>
-                          <Badge variant="secondary">{docChunks.totalWordCount} words</Badge>
-                        </div>
-                        <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                          {docChunks.chunks.map((chunk: any) => (
-                            <div key={chunk.id} className="bg-white dark:bg-gray-700 rounded-lg p-3 border">
-                              <div className="flex items-center justify-between mb-2">
-                                <Badge variant="outline" className="text-xs">
-                                  Chunk {chunk.chunkIndex + 1}
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {chunk.wordCount} words
-                                </Badge>
-                              </div>
-                              <div className="text-sm">
-                                <KaTeXRenderer 
-                                  content={chunk.content} 
-                                  className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    // Display regular content for smaller documents
-                    return (
-                      <KaTeXRenderer 
-                        content={doc.content} 
-                        className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" 
-                      />
-                    );
-                  }
-                })()}
+                <div className="max-h-[600px] overflow-y-auto">
+                  <KaTeXRenderer 
+                    content={doc.content} 
+                    className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300" 
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <div className="relative">
