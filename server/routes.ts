@@ -578,57 +578,60 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      const prompt = `Analyze this text for its intellectual content: "${text}"
+      const prompt = `CONCEPT LATTICE 1.0 ANALYSIS TASK
 
-Create a concept lattice with:
+You are creating a sophisticated intellectual analysis of the following text. This requires scholarly thinking, NOT text extraction.
 
-MAIN IDEAS: Complete intellectual statements (not text fragments)
-BASIC ARGUMENTS: Logical reasoning supporting main ideas  
-EXAMPLES: Specific instances from the text (format: 🎯 description)
-QUOTES: Direct quotations (format: "exact quote")
-FINE ARGUMENTS: Detailed sub-points (format: • elaboration)
+Text: "${text}"
 
-DO NOT extract random sentence fragments. Think like a scholar.
+CRITICAL RULES:
+1. Perform actual intellectual analysis - identify real arguments, evidence, and logical structures
+2. Do NOT extract random sentence fragments or phrases
+3. Each node must represent a complete intellectual thought
+4. Create meaningful hierarchical relationships between ideas
 
-Return JSON:
+REQUIRED NODE TYPES (generate 8-15 total nodes):
+
+MAIN IDEAS (1-2 nodes):
+- Central thesis or proposition that could be debated
+- Complete intellectual statements
+- Example: "Strategic planning requires both analysis and adaptability"
+
+BASIC ARGUMENTS (2-4 nodes):  
+- Logical reasoning supporting main ideas
+- Clear premise-conclusion relationships
+- Example: "Market analysis provides essential data for strategic decisions"
+
+EXAMPLES (2-3 nodes):
+- Concrete illustrations from the text
+- Use 🎯 prefix
+- Example: "🎯 Customer segmentation helps identify target markets"
+
+SUPPORTING QUOTES (2-4 nodes):
+- Direct quotations from the source text
+- Must be actual quotes in quotation marks
+- Example: "The first step involves comprehensive market research"
+
+FINE ARGUMENTS (2-4 nodes):
+- Detailed sub-arguments or nuanced points
+- Use • prefix
+- Example: "• Financial resources must be allocated efficiently across departments"
+
+RETURN ONLY VALID JSON (no markdown, no explanations):
 {
   "nodes": [
     {
       "id": "main_1",
       "type": "main_idea",
-      "content": "Complete intellectual statement",
+      "content": "[Complete intellectual proposition]",
       "parentId": null,
       "isExpanded": true,
-      "connections": ["basic_1"]
-    },
-    {
-      "id": "basic_1",
-      "type": "basic_argument",
-      "content": "Logical argument supporting main idea",
-      "parentId": "main_1",
-      "isExpanded": true,
-      "connections": ["example_1", "quote_1"]
-    },
-    {
-      "id": "example_1",
-      "type": "example",
-      "content": "🎯 Specific example",
-      "parentId": "basic_1",
-      "isExpanded": true,
-      "connections": []
-    },
-    {
-      "id": "quote_1",
-      "type": "supporting_quote",
-      "content": "Direct quote from text",
-      "parentId": "basic_1",
-      "isExpanded": true,
-      "connections": []
+      "connections": ["basic_1", "basic_2"]
     }
   ],
   "metadata": {
-    "sourceText": "${text.substring(0, 200)}...",
-    "title": "${title || 'Analysis'}",
+    "sourceText": "${text.substring(0, 150)}...",
+    "title": "${title || 'Concept Analysis'}",
     "generatedAt": "${new Date().toISOString()}"
   }
 }`;
@@ -653,21 +656,58 @@ Return JSON:
         cleanedResponse = cleanedResponse.slice(0, -3);
       }
       
-      // Try to find JSON in the response if it's embedded in text
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanedResponse = jsonMatch[0];
+      // More robust JSON extraction and validation
+      let jsonStart = cleanedResponse.indexOf('{');
+      let jsonEnd = cleanedResponse.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
       }
+      
+      // Fix common JSON issues
+      cleanedResponse = cleanedResponse
+        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+        .replace(/:\s*'([^']*)'/g, ': "$1"') // Convert single quotes to double
+        .replace(/\n/g, '\\n') // Escape newlines in strings
+        .replace(/\t/g, '\\t') // Escape tabs in strings
+        .replace(/\r/g, '\\r'); // Escape carriage returns
       
       try {
         const latticeData = JSON.parse(cleanedResponse);
+        
+        // Validate structure
+        if (!latticeData.nodes || !Array.isArray(latticeData.nodes)) {
+          throw new Error('Invalid lattice structure: missing nodes array');
+        }
+        
         res.json(latticeData);
       } catch (parseError) {
         console.error('AI response parsing failed:', parseError);
+        console.error('Cleaned response:', cleanedResponse);
         console.error('Raw AI response:', response.message);
-        res.status(500).json({ 
-          error: 'AI failed to generate valid concept lattice. Please try again or select different text.' 
-        });
+        
+        // Return a fallback lattice structure
+        const fallbackLattice = {
+          "nodes": [
+            {
+              "id": "main_1",
+              "type": "main_idea",
+              "content": "Unable to analyze selected text. Please try selecting a smaller portion or different text.",
+              "parentId": null,
+              "isExpanded": true,
+              "connections": []
+            }
+          ],
+          "metadata": {
+            "sourceText": text.substring(0, 100) + "...",
+            "title": title || "Analysis",
+            "generatedAt": new Date().toISOString(),
+            "error": "AI parsing failed - fallback structure"
+          }
+        };
+        
+        res.json(fallbackLattice);
       }
     } catch (error) {
       console.error('Concept lattice generation error:', error);

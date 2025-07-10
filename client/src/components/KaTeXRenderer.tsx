@@ -119,7 +119,7 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   return (
     <div 
       ref={containerRef} 
-      className={`prose prose-sm max-w-none katex-content ${className}`}
+      className={`katex-content ${className}`}
       style={{ 
         lineHeight: '1.6',
         wordWrap: 'break-word',
