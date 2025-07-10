@@ -198,42 +198,14 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
   const selectedCount = chunks.filter(chunk => chunk.selected).length;
   const rewrittenCount = chunks.filter(chunk => chunk.rewritten).length;
 
-  // Download functionality
-  const downloadAsText = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  // Download functionality - safe versions without DOM manipulation
+  const getTextDownloadUrl = (content: string) => {
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(content)}`;
   };
 
-  const downloadAsWord = (content: string, filename: string) => {
-    // Simple HTML format that Word can open
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${filename}</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 40px;">
-        ${content.replace(/\n/g, '<br>')}
-      </body>
-      </html>
-    `;
-    const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename + '.doc';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const getWordDownloadUrl = (content: string, filename: string) => {
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${filename}</title></head><body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 40px;">${content.replace(/\n/g, '<br>')}</body></html>`;
+    return `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
   };
 
   const downloadChunk = (chunk: TextChunk, format: 'txt' | 'word' | 'pdf') => {
@@ -241,9 +213,25 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
     const filename = `${document?.title || 'document'}_chunk_${chunk.id}_rewritten`;
     
     if (format === 'txt') {
-      downloadAsText(content, filename + '.txt');
+      // Safe download without DOM manipulation
+      const a = Object.assign(document.createElement('a'), {
+        href: getTextDownloadUrl(content),
+        download: filename + '.txt',
+        style: 'display:none'
+      });
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else if (format === 'word') {
-      downloadAsWord(content, filename);
+      // Safe download without DOM manipulation
+      const a = Object.assign(document.createElement('a'), {
+        href: getWordDownloadUrl(content, filename),
+        download: filename + '.html',
+        style: 'display:none'
+      });
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else if (format === 'pdf') {
       // For PDF, create a clean version without complex math notation
       const cleanContent = content
@@ -327,9 +315,25 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
     const filename = `${document?.title || 'document'}_rewritten`;
     
     if (format === 'txt') {
-      downloadAsText(allContent, filename + '.txt');
+      // Safe download without DOM manipulation
+      const a = Object.assign(document.createElement('a'), {
+        href: getTextDownloadUrl(allContent),
+        download: filename + '.txt',
+        style: 'display:none'
+      });
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else if (format === 'word') {
-      downloadAsWord(allContent, filename);
+      // Safe download without DOM manipulation
+      const a = Object.assign(document.createElement('a'), {
+        href: getWordDownloadUrl(allContent, filename),
+        download: filename + '.html',
+        style: 'display:none'
+      });
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else if (format === 'pdf') {
       // Clean math notation for PDF
       const cleanAllContent = allContent
