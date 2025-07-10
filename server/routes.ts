@@ -410,10 +410,11 @@ Please rewrite the text according to the instructions. Return only the rewritten
                 padding-bottom: 15px;
               }
               .content { 
-                white-space: pre-wrap; 
                 text-align: justify; 
                 line-height: 1.8;
                 font-size: 11pt;
+                word-wrap: break-word;
+                hyphens: auto;
               }
               .math { 
                 margin: 10px 0; 
@@ -427,8 +428,10 @@ Please rewrite the text according to the instructions. Return only the rewritten
                 margin-bottom: 10px;
               }
               p { 
-                margin-bottom: 12px; 
-                text-indent: 0;
+                margin-bottom: 15px; 
+                text-indent: 1.5em;
+                text-align: justify;
+                line-height: 1.8;
               }
               ul, ol { 
                 margin: 10px 0; 
@@ -446,7 +449,11 @@ Please rewrite the text according to the instructions. Return only the rewritten
           </head>
           <body>
             <div class="header">${title || 'AI Response'}</div>
-            <div class="content">${content}</div>
+            <div class="content">
+              ${content.split('\n\n').map(paragraph => 
+                paragraph.trim() ? `<p>${paragraph.trim().replace(/\n/g, ' ')}</p>` : ''
+              ).filter(p => p).join('')}
+            </div>
             <script>
               document.addEventListener("DOMContentLoaded", function() {
                 renderMathInElement(document.body, {
