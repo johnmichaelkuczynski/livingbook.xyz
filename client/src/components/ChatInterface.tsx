@@ -95,73 +95,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
     },
   });
 
-  const downloadAsTxt = (content: string, messageId: number) => {
-    if (typeof window === 'undefined') return; // Server-side safety
-    
-    const cleanContent = removeMarkupSymbols(content);
-    const blob = new Blob([cleanContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ai-response-${messageId}.txt`;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Download Complete",
-      description: "AI response saved as TXT file"
-    });
-  };
 
-  const downloadAsWord = (content: string, messageId: number) => {
-    if (typeof window === 'undefined') return; // Server-side safety
-    
-    const cleanContent = removeMarkupSymbols(content);
-    const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AI Response ${messageId}</title>
-  <style>
-    body { 
-      font-family: 'Times New Roman', serif; 
-      font-size: 12pt; 
-      line-height: 1.6; 
-      margin: 1in; 
-      color: #000;
-    }
-    h1 { 
-      font-size: 16pt; 
-      margin-bottom: 1em; 
-      color: #333;
-    }
-  </style>
-</head>
-<body>
-  <h1>AI Response - DocMath AI</h1>
-  <div>${cleanContent.replace(/\n/g, '<br>')}</div>
-</body>
-</html>`;
-    
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ai-response-${messageId}.html`;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Download Complete",
-      description: "AI response saved as HTML file"
-    });
-  };
 
   const handleSendMessage = () => {
     if (!message.trim() || sendMessageMutation.isPending) return;

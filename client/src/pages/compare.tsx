@@ -546,58 +546,7 @@ export default function ComparePage() {
     URL.revokeObjectURL(url);
   };
 
-  const downloadComparisonAsTxt = (content: string, messageId: number) => {
-    if (typeof window === 'undefined') return;
-    
-    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-    const blob = new Blob([cleanContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `comparison-ai-response-${messageId}.txt`;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
-  const downloadComparisonAsWord = (content: string, messageId: number) => {
-    if (typeof window === 'undefined') return;
-    
-    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-    const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Comparison AI Response ${messageId}</title>
-  <style>
-    body { 
-      font-family: 'Times New Roman', serif; 
-      font-size: 12pt; 
-      line-height: 1.6; 
-      margin: 1in; 
-      color: #000;
-    }
-  </style>
-</head>
-<body>
-  <h1>Comparison AI Response - DocMath AI</h1>
-  <div>${cleanContent.replace(/\n/g, '<br>')}</div>
-</body>
-</html>`;
-    
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `comparison-ai-response-${messageId}.html`;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const injectSynthesis = (target: 'A' | 'B') => {
     if (!synthesizedContent) return;
