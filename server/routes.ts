@@ -628,41 +628,69 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      const prompt = `You are analyzing real document content to create a concept lattice. NEVER use generic placeholders or examples about JSON, data structures, or technical concepts unless the actual text is about those topics.
+      const prompt = `You are creating a CONCEPT LATTICE 1.0 for the following text. Follow these exact specifications:
 
-ANALYZE THIS SPECIFIC TEXT CONTENT:
+TEXT TO ANALYZE:
 "${text}"
 
-Create a structured concept lattice that reflects the ACTUAL content and ideas from this text. Return ONLY valid JSON with this exact structure:
+CONCEPT LATTICE 1.0 SPECIFICATIONS:
+1. **Main Ideas**: Large, centerpiece concepts - complete sentences that capture the core ideas from the text
+2. **Basic Arguments**: Medium font arguments that support the main ideas - complete sentences from the text
+3. **Examples**: Specific examples from the text that illustrate the arguments
+4. **Supporting Quotes**: Actual quotes extracted from the text - always complete sentences in quotes
+5. **Fine-Grained Arguments**: Detailed sub-arguments that support the basic arguments
 
+CRITICAL REQUIREMENTS:
+- Every node must contain COMPLETE SENTENCES, never truncated text
+- All content must be extracted directly from the provided text
+- Each node header must show the full content (no truncation in headers)
+- Create proper hierarchical relationships showing subordination and superordination
+- All nodes except Main Ideas must be expandable and interactive
+
+Return ONLY valid JSON in this exact format:
 {
   "nodes": [
     {
-      "id": "unique_id",
-      "type": "main_idea" | "basic_argument" | "example" | "supporting_quote" | "fine_argument",
-      "content": "actual content from the text being analyzed",
-      "parentId": "parent_id_if_applicable",
+      "id": "main_1",
+      "type": "main_idea",
+      "content": "Complete sentence stating main idea from text",
+      "parentId": null,
       "isExpanded": true,
-      "connections": ["connected_node_ids"]
+      "connections": ["basic_1", "basic_2"]
+    },
+    {
+      "id": "basic_1", 
+      "type": "basic_argument",
+      "content": "Complete sentence stating argument from text",
+      "parentId": "main_1",
+      "isExpanded": true,
+      "connections": ["example_1", "quote_1"]
+    },
+    {
+      "id": "example_1",
+      "type": "example", 
+      "content": "Complete example from the text",
+      "parentId": "basic_1",
+      "isExpanded": true,
+      "connections": []
+    },
+    {
+      "id": "quote_1",
+      "type": "supporting_quote",
+      "content": "Complete quote from the text",
+      "parentId": "basic_1", 
+      "isExpanded": true,
+      "connections": []
     }
   ],
   "metadata": {
     "sourceText": "${text.substring(0, 200)}...",
-    "title": "Analysis of actual document content",
+    "title": "${title}",
     "generatedAt": "${new Date().toISOString()}"
   }
 }
 
-CRITICAL RULES:
-1. Extract 2-4 main ideas that are ACTUALLY present in the provided text
-2. Create basic arguments that directly support these main ideas from the text
-3. Find real examples and quotes from the provided text content
-4. DO NOT create generic examples about JSON, data structures, APIs, or other technical topics unless the text is specifically about those subjects
-5. If this is from "The Art of War", focus on military strategy, leadership, tactics, and warfare concepts
-6. Use the actual language, concepts, and terminology from the source text
-7. Every node must contain content that comes directly from or is directly derived from the provided text
-
-Remember: You are analyzing the specific content provided, not creating general examples about data processing or technical concepts.`;
+EXTRACT AND ANALYZE THE ACTUAL CONTENT FROM THE PROVIDED TEXT. Do not create generic examples.`;
 
       const response = await generateChatResponse(prompt, "", []);
       
@@ -693,7 +721,25 @@ Remember: You are analyzing the specific content provided, not creating general 
         
         console.log('Attempting to parse lattice response:', cleanedResponse.substring(0, 500));
         
-        const latticeData = JSON.parse(cleanedResponse);
+        // Try to fix malformed JSON by finding the last complete object
+        let latticeData;
+        try {
+          latticeData = JSON.parse(cleanedResponse);
+        } catch (firstError) {
+          // Try to find where the JSON is cut off and reconstruct
+          const lastCompleteObject = cleanedResponse.lastIndexOf('}');
+          if (lastCompleteObject > 0) {
+            const truncatedJson = cleanedResponse.substring(0, lastCompleteObject + 1);
+            try {
+              latticeData = JSON.parse(truncatedJson);
+            } catch (secondError) {
+              // If still failing, create fallback
+              throw new Error('Unable to parse AI response as JSON');
+            }
+          } else {
+            throw new Error('No valid JSON structure found');
+          }
+        }
         
         // Validate structure
         if (!latticeData.nodes || !Array.isArray(latticeData.nodes)) {
@@ -703,31 +749,13 @@ Remember: You are analyzing the specific content provided, not creating general 
         if (latticeData.nodes.length === 0) {
           throw new Error('No nodes generated in lattice');
         }
-        
-        // Validate that nodes contain actual content, not generic placeholders
-        const hasGenericContent = latticeData.nodes.some(node => 
-          node.content && (
-            node.content.toLowerCase().includes('json') ||
-            node.content.toLowerCase().includes('data structure') ||
-            node.content.toLowerCase().includes('api') ||
-            node.content.toLowerCase().includes('placeholder')
-          ) && !text.toLowerCase().includes('json') && !text.toLowerCase().includes('data')
-        );
-        
-        if (hasGenericContent) {
-          console.warn('Generated lattice contains generic content, creating fallback...');
-          
-          // Create a simple fallback lattice based on the actual text
-          const fallbackLattice = createFallbackConceptLattice(text, title);
-          return res.json(fallbackLattice);
-        }
 
         res.json(latticeData);
       } catch (parseError) {
         console.error('Failed to parse concept lattice response:', parseError);
         console.error('Raw response:', response.message.substring(0, 1000));
         
-        // Try to create a fallback lattice from the actual text
+        // Create a fallback lattice from the actual text
         try {
           console.log('Creating fallback concept lattice from actual text...');
           const fallbackLattice = createFallbackConceptLattice(text, title || 'Document');

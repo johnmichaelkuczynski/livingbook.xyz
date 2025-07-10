@@ -336,22 +336,21 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
     const childNodes = getChildNodes(node.id);
 
     const getNodeStyle = () => {
-      const baseStyle = "p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg";
-      const marginLeft = depth * 20;
+      const baseStyle = "p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg mb-3";
       
       switch (node.type) {
         case 'main_idea':
-          return `${baseStyle} text-xl font-bold bg-blue-50 border-blue-200 text-blue-900 ml-${marginLeft}`;
+          return `${baseStyle} text-xl font-bold bg-blue-50 border-blue-300 text-blue-900 shadow-md`;
         case 'basic_argument':
-          return `${baseStyle} text-lg font-semibold bg-green-50 border-green-200 text-green-900 ml-${marginLeft}`;
+          return `${baseStyle} text-lg font-semibold bg-green-50 border-green-300 text-green-900`;
         case 'example':
-          return `${baseStyle} text-base font-medium bg-orange-50 border-orange-200 text-orange-900 ml-${marginLeft}`;
+          return `${baseStyle} text-base font-medium bg-orange-50 border-orange-300 text-orange-900`;
         case 'supporting_quote':
-          return `${baseStyle} text-sm bg-purple-50 border-purple-200 text-purple-900 italic ml-${marginLeft}`;
+          return `${baseStyle} text-sm bg-purple-50 border-purple-300 text-purple-900 italic`;
         case 'fine_argument':
-          return `${baseStyle} text-sm bg-red-50 border-red-200 text-red-900 ml-${marginLeft}`;
+          return `${baseStyle} text-sm bg-red-50 border-red-300 text-red-900`;
         default:
-          return `${baseStyle} bg-gray-50 border-gray-200 text-gray-900 ml-${marginLeft}`;
+          return `${baseStyle} bg-gray-50 border-gray-200 text-gray-900`;
       }
     };
 
@@ -379,21 +378,11 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
                     {TYPE_LABELS[node.type]}
                   </Badge>
                 </div>
-                <div className={`${isContentExpanded ? '' : 'line-clamp-2'}`}>
+                <div className="w-full">
                   {node.type === 'supporting_quote' && '"'}
                   {node.content}
                   {node.type === 'supporting_quote' && '"'}
                 </div>
-                {node.content.length > 100 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleContentExpansion(node.id)}
-                    className="mt-1 p-1 h-6 text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    {isContentExpanded ? 'Collapse' : 'Expand'}
-                  </Button>
-                )}
               </div>
             </div>
             
@@ -454,7 +443,7 @@ export default function ConceptLattice({ selectedText, documentTitle, onClose, p
         </div>
         
         {hasChildren && isHierarchyExpanded && (
-          <div className="ml-4 mt-2 space-y-2">
+          <div className="ml-8 mt-3 space-y-3 border-l-2 border-gray-300 pl-4">
             {childNodes.map(child => renderNode(child, depth + 1))}
           </div>
         )}
