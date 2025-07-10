@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UserHeader } from "@/components/UserHeader";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
 
@@ -809,8 +810,11 @@ export default function ComparePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* User Header */}
+      <UserHeader />
+      
+      <div className="max-w-7xl mx-auto space-y-6 p-4">
         <div className="flex items-center justify-between">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
