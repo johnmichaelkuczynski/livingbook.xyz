@@ -89,6 +89,21 @@
   text-overflow: ellipsis;
 }
 
+/* Document content formatting */
+.katex-content p {
+  margin-bottom: 1rem !important;
+  line-height: 1.6 !important;
+  text-align: justify !important;
+}
+
+.katex-content p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.katex-content br {
+  line-height: 1.6 !important;
+}
+
 /* Math notation styling */
 .math-inline {
   font-family: 'JetBrains Mono', monospace;
