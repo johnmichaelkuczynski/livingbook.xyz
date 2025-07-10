@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, MessageSquare, X, Send, FileText } from 'lucide-react';
-import { KaTeXRenderer } from './KaTeXRenderer';
+import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessage {
