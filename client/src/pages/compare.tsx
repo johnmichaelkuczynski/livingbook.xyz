@@ -786,7 +786,7 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 min-h-[900px] pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 min-h-[900px] pb-32">
           {/* Document A - Takes 2 columns */}
           <div className="lg:col-span-2">
             <DocumentColumn
@@ -807,8 +807,8 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* AI Chat Column - Takes 1 column */}
-          <div className="lg:col-span-1">
+          {/* AI Chat Column - Takes 3 columns for much better readability */}
+          <div className="lg:col-span-3">
             <Card className="h-full min-h-[800px] flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -845,7 +845,7 @@ export default function ComparePage() {
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[85%] p-2 rounded-lg text-sm ${
+                          <div className={`max-w-[95%] p-4 rounded-lg text-base leading-relaxed ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
