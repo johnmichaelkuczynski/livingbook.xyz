@@ -87,12 +87,15 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
 
   const rewriteMutation = useMutation({
     mutationFn: async ({ chunkText, instructions, provider }: { chunkText: string; instructions: string; provider: string }) => {
-      const response = await apiRequest('POST', '/api/rewrite', {
-        text: chunkText,
-        instructions: instructions,
-        provider: provider,
+      const response = await apiRequest('/api/rewrite', {
+        method: 'POST',
+        body: {
+          text: chunkText,
+          instructions: instructions,
+          provider: provider,
+        }
       });
-      return response.json();
+      return response;
     },
     onError: (error: any) => {
       toast({

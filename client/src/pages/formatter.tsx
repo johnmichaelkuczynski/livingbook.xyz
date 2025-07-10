@@ -54,10 +54,11 @@ export default function FormatterPage() {
 
   const updateDocumentMutation = useMutation({
     mutationFn: async ({ documentId, content }: { documentId: number; content: string }) => {
-      const response = await apiRequest('PUT', `/api/documents/${documentId}`, {
-        content
+      const response = await apiRequest(`/api/documents/${documentId}`, {
+        method: 'PUT',
+        body: { content }
       });
-      return response.json();
+      return response;
     },
     onSuccess: (updatedDocument) => {
       setCurrentDocument(updatedDocument);

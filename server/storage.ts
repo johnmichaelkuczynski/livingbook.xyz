@@ -1,4 +1,6 @@
 import { documents, chatSessions, chatMessages, comparisonSessions, comparisonMessages, users, type Document, type ChatSession, type ChatMessage, type ComparisonSession, type ComparisonMessage, type User, type InsertDocument, type InsertChatSession, type InsertChatMessage, type InsertComparisonSession, type InsertComparisonMessage, type InsertUser } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -192,4 +194,117 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  // Document methods
+  async createDocument(insertDocument: InsertDocument): Promise<Document> {
+    const wordCount = insertDocument.content.split(/\s+/).filter(word => word.length > 0).length;
+    const documentData = {
+      ...insertDocument,
+      totalWords: wordCount,
+      isChunked: wordCount > 1000,
+      chunkCount: wordCount > 1000 ? Math.ceil(wordCount / 1000) : 1,
+    };
+    
+    const [document] = await db.insert(documents).values(documentData).returning();
+    return document;
+  }
+
+  async getDocument(id: number): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document || undefined;
+  }
+
+  async getAllDocuments(): Promise<Document[]> {
+    return await db.select().from(documents);
+  }
+
+  async updateDocument(id: number, updates: Partial<Document>): Promise<Document> {
+    const [document] = await db.update(documents)
+      .set(updates)
+      .where(eq(documents.id, id))
+      .returning();
+    
+    if (!document) {
+      throw new Error(`Document with id ${id} not found`);
+    }
+    return document;
+  }
+
+  // Chat session methods
+  async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
+    const [session] = await db.insert(chatSessions).values(insertSession).returning();
+    return session;
+  }
+
+  async getChatSession(id: number): Promise<ChatSession | undefined> {
+    const [session] = await db.select().from(chatSessions).where(eq(chatSessions.id, id));
+    return session || undefined;
+  }
+
+  async getChatSessionByDocumentId(documentId: number): Promise<ChatSession | undefined> {
+    const [session] = await db.select().from(chatSessions).where(eq(chatSessions.documentId, documentId));
+    return session || undefined;
+  }
+
+  // Chat message methods
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const [message] = await db.insert(chatMessages).values(insertMessage).returning();
+    return message;
+  }
+
+  async getChatMessages(sessionId: number): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages)
+      .where(eq(chatMessages.sessionId, sessionId))
+      .orderBy(chatMessages.timestamp);
+  }
+
+  // Comparison session methods
+  async createComparisonSession(insertSession: InsertComparisonSession): Promise<ComparisonSession> {
+    const [session] = await db.insert(comparisonSessions).values(insertSession).returning();
+    return session;
+  }
+
+  async getComparisonSession(id: number): Promise<ComparisonSession | undefined> {
+    const [session] = await db.select().from(comparisonSessions).where(eq(comparisonSessions.id, id));
+    return session || undefined;
+  }
+
+  async updateComparisonSession(id: number, updates: Partial<ComparisonSession>): Promise<ComparisonSession | undefined> {
+    const [session] = await db.update(comparisonSessions)
+      .set(updates)
+      .where(eq(comparisonSessions.id, id))
+      .returning();
+    return session || undefined;
+  }
+
+  // Comparison message methods
+  async createComparisonMessage(insertMessage: InsertComparisonMessage): Promise<ComparisonMessage> {
+    const [message] = await db.insert(comparisonMessages).values(insertMessage).returning();
+    return message;
+  }
+
+  async getComparisonMessages(sessionId: number): Promise<ComparisonMessage[]> {
+    return await db.select().from(comparisonMessages)
+      .where(eq(comparisonMessages.sessionId, sessionId))
+      .orderBy(comparisonMessages.timestamp);
+  }
+}
+
+// Use database storage for production, memory storage for development/testing
+export const storage = new DatabaseStorage();
