@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, MessageSquare, X, Send, FileText } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
 
@@ -100,205 +99,112 @@ export default function TextSelectionPopup({
     }
   };
 
-  const downloadConversation = async (format: 'pdf' | 'docx' | 'txt') => {
-    if (messages.length === 0) {
-      toast({
-        title: "No Conversation",
-        description: "Start a conversation before downloading.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Create conversation content with selected text and messages
-      const conversationContent = `SELECTED TEXT FROM "${documentTitle}":
-${selectedText}
-
-CONVERSATION:
-${messages.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n\n')}`;
-
-      const response = await fetch('/api/download/conversation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: conversationContent,
-          format: format,
-          filename: `selection-conversation-${Date.now()}`
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate download');
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `selection-conversation.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Success",
-        description: `Conversation downloaded as ${format.toUpperCase()}`
-      });
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download conversation",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const wordCount = selectedText.split(/\s+/).filter(word => word.length > 0).length;
-  const charCount = selectedText.length;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Text Selection Chat
-              <Badge variant="outline" className="text-xs">
-                {wordCount} words • {charCount} chars
-              </Badge>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b bg-gray-50">
+          <h2 className="text-xl font-semibold text-gray-900">Discuss This Passage</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
 
-        <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
-          {/* Selected Text Panel */}
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Selected Text from {documentTitle}</h3>
-              <Badge variant="secondary" className="text-xs">
-                {wordCount} words
-              </Badge>
+        <div className="flex flex-col h-[70vh]">
+          {/* Selected Text Display */}
+          <div className="p-6 border-b bg-blue-50">
+            <div className="mb-2">
+              <span className="text-sm font-medium text-blue-700">Selected Passage:</span>
             </div>
-            <ScrollArea className="flex-1 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[400px] max-h-[500px]">
-              <KaTeXRenderer 
-                content={selectedText} 
-                className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 whitespace-pre-wrap" 
-              />
-            </ScrollArea>
+            <div className="bg-white p-4 rounded-lg border border-blue-200 text-gray-700 leading-relaxed">
+              {selectedText}
+            </div>
           </div>
 
-          {/* Chat Panel */}
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">AI Discussion</h3>
-              <div className="flex items-center gap-2">
-                <Select value={provider} onValueChange={(value) => setProvider(value as any)}>
-                  <SelectTrigger className="w-32 h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="openai">OpenAI</SelectItem>
-                    <SelectItem value="anthropic">Anthropic</SelectItem>
-                    <SelectItem value="deepseek">DeepSeek</SelectItem>
-                    <SelectItem value="perplexity">Perplexity</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadConversation('pdf')}
-                    disabled={messages.length === 0}
-                    className="text-xs px-2 py-1"
-                  >
-                    PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadConversation('docx')}
-                    disabled={messages.length === 0}
-                    className="text-xs px-2 py-1"
-                  >
-                    Word
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadConversation('txt')}
-                    disabled={messages.length === 0}
-                    className="text-xs px-2 py-1"
-                  >
-                    TXT
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px] max-h-[400px]">
-              {messages.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
-                  Ask AI about the selected text!
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] p-3 rounded-lg text-sm ${
-                        msg.role === 'user' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                      }`}>
-                        <KaTeXRenderer content={msg.content} />
-                      </div>
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <ScrollArea className="flex-1 p-6">
+              <div className="space-y-6">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-400 py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Send className="w-8 h-8 text-gray-400" />
                     </div>
-                  ))}
-                </div>
-              )}
+                    <p className="text-lg">Ask a question about this passage...</p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div key={message.id} className="space-y-3">
+                      {message.role === 'user' ? (
+                        <div className="bg-blue-100 p-4 rounded-lg">
+                          <div className="text-sm font-medium text-blue-700 mb-1">YOU</div>
+                          <div className="text-gray-800 font-medium">{message.content}</div>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="text-sm font-medium text-gray-600 mb-2">AI</div>
+                          <div className="text-gray-800 leading-relaxed">
+                            <KaTeXRenderer content={message.content} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {isLoading && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-gray-600 mb-2">AI</div>
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-gray-600">Thinking...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </ScrollArea>
 
             {/* Input Area */}
-            <div className="space-y-2">
-              <Textarea
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                placeholder="Ask AI about the selected text..."
-                className="min-h-[80px] resize-none"
-                disabled={isLoading}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">
-                  Press Enter to send, Shift+Enter for new line
-                </span>
-                <Button
-                  onClick={sendMessage}
-                  disabled={!currentMessage.trim() || isLoading}
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  Send
-                </Button>
+            <div className="border-t bg-gray-50 p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-1">
+                  <Textarea
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    placeholder="Ask a question about this passage... (Enter to send, Shift+Enter for new line)"
+                    className="min-h-[80px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">Press Enter to send • Shift+Enter for new line</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Select value={provider} onValueChange={setProvider}>
+                        <SelectTrigger className="w-32 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="openai">OpenAI</SelectItem>
+                          <SelectItem value="anthropic">Anthropic</SelectItem>
+                          <SelectItem value="deepseek">DeepSeek</SelectItem>
+                          <SelectItem value="perplexity">Perplexity</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!currentMessage.trim() || isLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                      >
+                        Send
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
