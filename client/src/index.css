@@ -80,30 +80,6 @@
   }
 }
 
-/* Line clamp utility for text truncation */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Document content formatting */
-.katex-content p {
-  margin-bottom: 1rem !important;
-  line-height: 1.6 !important;
-  text-align: justify !important;
-}
-
-.katex-content p:last-child {
-  margin-bottom: 0 !important;
-}
-
-.katex-content br {
-  line-height: 1.6 !important;
-}
-
 /* Math notation styling */
 .math-inline {
   font-family: 'JetBrains Mono', monospace;
@@ -113,17 +89,6 @@
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.9em;
-}
-
-/* KaTeX content paragraph formatting */
-.katex-content p {
-  margin-bottom: 1em;
-  text-align: justify;
-  line-height: 1.6;
-}
-
-.katex-content p:last-child {
-  margin-bottom: 0;
 }
 
 .math-display {
