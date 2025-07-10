@@ -10,6 +10,7 @@ import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Set
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
+import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
 
 // Using any type to match existing codebase pattern
@@ -891,14 +892,13 @@ export default function ComparePage() {
                                 >
                                   <Download className="w-3 h-3" />
                                 </a>
-                                <a
-                                  href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>Comparison AI Response - DocMath AI</h1><div>${msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/\n/g, '<br>')}</div></body></html>`)}`}
-                                  download={`comparison-ai-response-${msg.id}.html`}
+                                <button
+                                  onClick={() => downloadAIResponseAsWord(msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'), msg.id, 'Document Comparison Response')}
                                   className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 inline-flex items-center justify-center rounded-md"
-                                  title="Download as HTML"
+                                  title="Download as Word"
                                 >
                                   <Download className="w-3 h-3" />
-                                </a>
+                                </button>
                               </div>
                             )}
                           </div>

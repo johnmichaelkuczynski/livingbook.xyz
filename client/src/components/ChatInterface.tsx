@@ -12,6 +12,7 @@ import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { downloadAIResponseAsWord } from '@/utils/wordGenerator';
 
 interface ChatInterfaceProps {
   document: any | null;
@@ -388,14 +389,13 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                           <Download className="w-3 h-3 mr-1" />
                           TXT
                         </a>
-                        <a
-                          href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${removeMarkupSymbols(msg.content).replace(/\n/g, '<br>')}</div></body></html>`)}`}
-                          download={`ai-response-${msg.id}.html`}
+                        <button
+                          onClick={() => downloadAIResponseAsWord(removeMarkupSymbols(msg.content), msg.id, 'AI Response')}
                           className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2 inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
                         >
                           <Download className="w-3 h-3 mr-1" />
-                          HTML
-                        </a>
+                          Word
+                        </button>
                         <Button
                           variant="ghost"
                           size="sm"

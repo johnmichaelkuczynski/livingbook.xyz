@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import KaTeXRenderer from './KaTeXRenderer';
+import { downloadChunkAsWord, downloadRewrittenContentAsWord } from '@/utils/wordGenerator';
 
 interface RewritePanelProps {
   document: any | null;
@@ -208,7 +209,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
     return `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
   };
 
-  const downloadChunk = (chunk: TextChunk, format: 'txt' | 'word' | 'pdf') => {
+  const downloadChunk = async (chunk: TextChunk, format: 'txt' | 'word' | 'pdf') => {
     const content = chunk.rewrittenText || chunk.text;
     const filename = `${document?.title || 'document'}_chunk_${chunk.id}_rewritten`;
     
@@ -223,15 +224,8 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
       a.click();
       document.body.removeChild(a);
     } else if (format === 'word') {
-      // Safe download without DOM manipulation
-      const a = Object.assign(document.createElement('a'), {
-        href: getWordDownloadUrl(content, filename),
-        download: filename + '.html',
-        style: 'display:none'
-      });
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Use Word generator for proper .docx file
+      await downloadChunkAsWord(content, chunk.id, document?.title);
     } else if (format === 'pdf') {
       // For PDF, create a clean version without complex math notation
       const cleanContent = content
@@ -298,7 +292,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
     });
   };
 
-  const downloadAllRewritten = (format: 'txt' | 'word' | 'pdf') => {
+  const downloadAllRewritten = async (format: 'txt' | 'word' | 'pdf') => {
     const rewrittenChunks = chunks.filter(chunk => chunk.rewritten);
     if (rewrittenChunks.length === 0) {
       toast({
@@ -325,15 +319,8 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
       a.click();
       document.body.removeChild(a);
     } else if (format === 'word') {
-      // Safe download without DOM manipulation
-      const a = Object.assign(document.createElement('a'), {
-        href: getWordDownloadUrl(allContent, filename),
-        download: filename + '.html',
-        style: 'display:none'
-      });
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Use Word generator for proper .docx file
+      await downloadRewrittenContentAsWord(allContent, document?.title);
     } else if (format === 'pdf') {
       // Clean math notation for PDF
       const cleanAllContent = allContent
