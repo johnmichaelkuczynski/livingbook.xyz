@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
-
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
 import { chunkDocument } from "./services/documentChunker";
@@ -69,7 +68,6 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-
   
   // Create document from text content (AI response conversion)
   app.post("/api/documents/create-from-text", async (req, res) => {
@@ -171,7 +169,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload document (alias route for convenience)  
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
+      const { originalname, filename, mimetype, size, path: filePath } = req.file;
+      
+      // Extract text from the document
+      let extractedText = await extractTextFromDocument(filePath, mimetype);
+      
+      // Process math notation
+      extractedText = processMathNotation(extractedText);
+      
+      // Save document to storage
+      const documentData = {
+        filename,
+        originalName: originalname,
+        fileType: mimetype,
+        fileSize: size,
+        content: extractedText,
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
+      };
+      
+      const validatedData = insertDocumentSchema.parse(documentData);
+      const document = await storage.createDocument(validatedData);
+      
+      // Create a chat session for this document
+      await storage.createChatSession({ documentId: document.id });
+      
+      // Clean up uploaded file
+      await fs.unlink(filePath);
+      
+      res.json({
+        id: document.id,
+        originalName: document.originalName,
+        fileType: document.fileType,
+        fileSize: document.fileSize,
+        content: document.content,
+        uploadedAt: document.uploadedAt
+      });
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      
+      // Clean up file if it exists
+      if (req.file?.path) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error cleaning up file:", unlinkError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process document" 
+      });
+    }
+  });
 
   // Get document by ID
   app.get("/api/documents/:id", async (req, res) => {
@@ -695,14 +752,7 @@ Please provide a helpful response based on the selected text. Keep your response
       );
       
       if (aiResponse.error) {
-        console.error("AI Response Error:", aiResponse.error);
         return res.status(500).json({ error: aiResponse.error });
-      }
-      
-      // Ensure we have a valid response
-      if (!aiResponse.message || typeof aiResponse.message !== 'string') {
-        console.error("Invalid AI response:", aiResponse);
-        return res.status(500).json({ error: "Invalid AI response" });
       }
       
       // Save AI response
@@ -714,15 +764,12 @@ Please provide a helpful response based on the selected text. Keep your response
       const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
       const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
       
-      // Create response object with proper validation
-      const responseData = {
+      res.json({
         id: savedAiMessage.id,
         role: savedAiMessage.role,
-        content: savedAiMessage.content || '',
+        content: savedAiMessage.content,
         timestamp: savedAiMessage.timestamp
-      };
-      
-      res.json(responseData);
+      });
       
     } catch (error) {
       console.error("Chat error:", error);

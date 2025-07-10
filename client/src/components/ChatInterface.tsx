@@ -69,12 +69,9 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   const sendMessageMutation = useMutation({
     mutationFn: async (messageContent: string) => {
       const endpoint = document ? `/api/chat/${document.id}/message` : '/api/chat/message';
-      return apiRequest(endpoint, {
-        method: 'POST',
-        body: {
-          message: messageContent,
-          provider: selectedProvider,
-        }
+      return apiRequest('POST', endpoint, {
+        message: messageContent,
+        provider: selectedProvider,
       });
     },
     onMutate: () => {
@@ -274,13 +271,10 @@ export default function ChatInterface({ document, showInputInline = true, onMess
     try {
       const processedContent = containsMath(content) ? processMathNotation(content) : content;
       
-      const response = await apiRequest('/api/email/send', {
-        method: 'POST',
-        body: {
-          subject: 'AI Response from DocMath AI',
-          content: processedContent,
-          contentType: 'html'
-        }
+      const response = await apiRequest('POST', '/api/email/send', {
+        subject: 'AI Response from DocMath AI',
+        content: processedContent,
+        contentType: 'html'
       });
 
       toast({
