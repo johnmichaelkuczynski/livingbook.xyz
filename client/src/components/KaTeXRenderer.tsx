@@ -63,14 +63,25 @@ function renderMathContent(content: string): string {
     .join('');
   
   // Enhanced math rendering with better fallbacks
-  // Block math: $$...$$
+  // Block math: $$...$$ and \[...\]
   processedContent = processedContent.replace(/\$\$([^$]+)\$\$/g, (match, expr) => {
     const cleanExpr = expr.trim();
     return `<div class="math-block" style="text-align: center; font-family: 'Times New Roman', serif; font-style: italic; margin: 1em 0; padding: 0.5em; background: linear-gradient(145deg, #f8f9fa, #e9ecef); border-radius: 8px; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${cleanExpr}</div>`;
   });
   
-  // Inline math: $...$
+  processedContent = processedContent.replace(/\\\[([^\]]+)\\\]/g, (match, expr) => {
+    const cleanExpr = expr.trim();
+    return `<div class="math-block" style="text-align: center; font-family: 'Times New Roman', serif; font-style: italic; margin: 1em 0; padding: 0.5em; background: linear-gradient(145deg, #f8f9fa, #e9ecef); border-radius: 8px; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${cleanExpr}</div>`;
+  });
+  
+  // Inline math: $...$, \(...\)
   processedContent = processedContent.replace(/\$([^$\n]+)\$/g, (match, expr) => {
+    const cleanExpr = expr.trim();
+    return `<span class="math-inline" style="font-family: 'Times New Roman', serif; font-style: italic; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; border: 1px solid #e9ecef;">${cleanExpr}</span>`;
+  });
+  
+  // CRITICAL FIX: Add support for \(...\) inline math delimiters
+  processedContent = processedContent.replace(/\\\(([^)]+)\\\)/g, (match, expr) => {
     const cleanExpr = expr.trim();
     return `<span class="math-inline" style="font-family: 'Times New Roman', serif; font-style: italic; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; border: 1px solid #e9ecef;">${cleanExpr}</span>`;
   });
@@ -105,7 +116,10 @@ function renderMathContent(content: string): string {
     '\\implies': '⇒', '\\iff': '⇔', '\\leq': '≤', '\\geq': '≥',
     '\\neq': '≠', '\\approx': '≈', '\\equiv': '≡', '\\pm': '±',
     '\\times': '×', '\\div': '÷', '\\cdot': '⋅', '\\sqrt': '√',
-    '\\therefore': '∴', '\\because': '∵'
+    '\\therefore': '∴', '\\because': '∵',
+    // Blackboard bold notation (common math sets)
+    '\\mathbb{N}': 'ℕ', '\\mathbb{Z}': 'ℤ', '\\mathbb{Q}': 'ℚ', 
+    '\\mathbb{R}': 'ℝ', '\\mathbb{C}': 'ℂ', '\\mathbb{P}': 'ℙ'
   };
   
   Object.entries(symbolMap).forEach(([latex, symbol]) => {
