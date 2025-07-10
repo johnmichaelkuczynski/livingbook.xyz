@@ -242,10 +242,7 @@ export default function ComparePage() {
       const document = await response.json();
       handleDocumentProcessing(document, column);
       
-      toast({
-        title: "Success",
-        description: `Document ${column} uploaded successfully (${Math.round(file.size / 1024)}KB)`,
-      });
+      // No popup - just successful upload
     } catch (error: any) {
       console.error('Upload error:', error);
       if (error.name === 'AbortError') {
@@ -329,10 +326,7 @@ export default function ComparePage() {
         setTextInputB('');
       }
       
-      toast({
-        title: "Text processed successfully",
-        description: `Document ${column} is ready for analysis.`,
-      });
+      // No popup - just successful processing
       
     } catch (error) {
       console.error('Text processing error:', error);
@@ -690,10 +684,12 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-6 min-h-[700px] max-h-[900px]">
-                <KaTeXRenderer 
-                  content={doc.content} 
-                  className="prose prose-lg max-w-none text-gray-800 dark:text-gray-200" 
-                />
+                <div className="prose prose-lg max-w-none text-gray-900 dark:text-gray-100 leading-relaxed">
+                  <KaTeXRenderer 
+                    content={doc.content} 
+                    className="text-base leading-7 text-gray-900 dark:text-gray-100" 
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <div className="relative">
