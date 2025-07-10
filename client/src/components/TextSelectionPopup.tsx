@@ -143,14 +143,27 @@ export default function TextSelectionPopup({
 
   const downloadResponse = async (messageContent: string, messageId: number) => {
     try {
-      // Find the corresponding message element in the DOM to get the formatted HTML
-      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+      console.log('Starting popup download for message:', messageId);
+      
+      // Try to find the corresponding message element in the DOM
       let htmlContent = messageContent;
       
-      if (messageElement) {
-        // Get the formatted HTML content from the rendered message
-        htmlContent = messageElement.innerHTML;
-      } else {
+      try {
+        const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+        if (messageElement && messageElement.innerHTML && messageElement.innerHTML.trim()) {
+          console.log('Found popup DOM element, extracting HTML content');
+          htmlContent = messageElement.innerHTML;
+        } else {
+          console.log('Popup DOM element not found or empty, using fallback formatting');
+          // Fallback: convert plain text to basic HTML paragraphs
+          htmlContent = messageContent
+            .split('\n\n')
+            .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
+            .filter(p => p)
+            .join('');
+        }
+      } catch (domError) {
+        console.log('Popup DOM query failed, using plain text with formatting:', domError);
         // Fallback: convert plain text to basic HTML paragraphs
         htmlContent = messageContent
           .split('\n\n')
@@ -158,6 +171,8 @@ export default function TextSelectionPopup({
           .filter(p => p)
           .join('');
       }
+
+      console.log('Sending popup export request with content length:', htmlContent.length);
 
       const response = await fetch('/api/export-document', {
         method: 'POST',
