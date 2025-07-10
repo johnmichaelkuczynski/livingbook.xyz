@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Send, Download } from 'lucide-react';
 import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
+import { downloadAIResponseAsWord } from '@/utils/wordGenerator';
 
 interface ChatMessage {
   id: number;
@@ -190,22 +191,23 @@ export default function TextSelectionPopup({
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-sm font-medium text-gray-600">AI</div>
-                            <a
-                              href={`data:text/plain;charset=utf-8,${encodeURIComponent(message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'))}`}
-                              download={`ai-response-${message.id}.txt`}
-                              className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              TXT
-                            </a>
-                            <a
-                              href={`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/\n/g, '<br>')}</div></body></html>`)}`}
-                              download={`ai-response-${message.id}.html`}
-                              className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              HTML
-                            </a>
+                            <div className="flex space-x-2">
+                              <a
+                                href={`data:text/plain;charset=utf-8,${encodeURIComponent(message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'))}`}
+                                download={`ai-response-${message.id}.txt`}
+                                className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                TXT
+                              </a>
+                              <button
+                                onClick={() => downloadAIResponseAsWord(message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'), message.id, 'Text Selection Response')}
+                                className="h-6 px-2 text-xs inline-flex items-center border border-transparent bg-transparent hover:bg-gray-100 rounded-md"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Word
+                              </button>
+                            </div>
                           </div>
                           <div className="text-gray-800 leading-relaxed">
                             <KaTeXRenderer content={message.content} className="prose" />
