@@ -568,7 +568,7 @@ export default function ComparePage() {
     
     return (
     <div className="flex-1">
-      <Card className="h-full min-h-[500px] flex flex-col">
+      <Card className="h-full min-h-[800px] flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -689,13 +689,11 @@ export default function ComparePage() {
                 </div>
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
-              <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4 min-h-[300px]">
-                <div className="max-h-[600px] overflow-y-auto">
-                  <KaTeXRenderer 
-                    content={doc.content} 
-                    className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300" 
-                  />
-                </div>
+              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-6 min-h-[700px] max-h-[900px]">
+                <KaTeXRenderer 
+                  content={doc.content} 
+                  className="prose prose-lg max-w-none text-gray-800 dark:text-gray-200" 
+                />
               </div>
               <div className="flex gap-2">
                 <div className="relative">
@@ -792,26 +790,30 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px] pb-32">
-          {/* Document A */}
-          <DocumentColumn
-            title="Document A"
-            document={documentA}
-            isUploading={isUploadingA}
-            column="A"
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 min-h-[900px] pb-32">
+          {/* Document A - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <DocumentColumn
+              title="Document A"
+              document={documentA}
+              isUploading={isUploadingA}
+              column="A"
+            />
+          </div>
           
-          {/* Document B */}
-          <DocumentColumn
-            title="Document B"
-            document={documentB}
-            isUploading={isUploadingB}
-            column="B"
-          />
+          {/* Document B - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <DocumentColumn
+              title="Document B"
+              document={documentB}
+              isUploading={isUploadingB}
+              column="B"
+            />
+          </div>
           
-          {/* AI Chat Column */}
+          {/* AI Chat Column - Takes 1 column */}
           <div className="lg:col-span-1">
-            <Card className="h-full min-h-[500px] flex flex-col">
+            <Card className="h-full min-h-[800px] flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
@@ -832,7 +834,7 @@ export default function ComparePage() {
                 )}
                 
                 {(documentA || documentB) && (
-                  <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[300px] mb-4">
+                  <div className="flex-1 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 min-h-[600px] mb-4">
                     {messages.length === 0 ? (
                       <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400 text-sm">
