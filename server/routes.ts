@@ -796,7 +796,14 @@ Please provide a helpful response based on the selected text. Keep your response
       );
       
       if (aiResponse.error) {
+        console.error("AI Response Error:", aiResponse.error);
         return res.status(500).json({ error: aiResponse.error });
+      }
+      
+      // Ensure we have a valid response
+      if (!aiResponse.message || typeof aiResponse.message !== 'string') {
+        console.error("Invalid AI response:", aiResponse);
+        return res.status(500).json({ error: "Invalid AI response" });
       }
       
       // Save AI response
@@ -808,12 +815,15 @@ Please provide a helpful response based on the selected text. Keep your response
       const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
       const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
       
-      res.json({
+      // Create response object with proper validation
+      const responseData = {
         id: savedAiMessage.id,
         role: savedAiMessage.role,
-        content: savedAiMessage.content,
+        content: savedAiMessage.content || '',
         timestamp: savedAiMessage.timestamp
-      });
+      };
+      
+      res.json(responseData);
       
     } catch (error) {
       console.error("Chat error:", error);
