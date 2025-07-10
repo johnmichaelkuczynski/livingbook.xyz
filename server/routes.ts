@@ -377,21 +377,95 @@ Please rewrite the text according to the instructions. Return only the rewritten
       }
 
       if (format === 'pdf') {
-        // Simple PDF export using HTML to PDF conversion
+        // Enhanced PDF export with KaTeX math rendering
         const htmlContent = `
           <!DOCTYPE html>
           <html>
           <head>
-            <title>${title || 'Document'}</title>
+            <title>${title || 'AI Response'}</title>
+            <meta charset="utf-8">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
-              .title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
-              .content { white-space: pre-wrap; }
+              @page { 
+                margin: 1in; 
+                size: letter;
+              }
+              body { 
+                font-family: 'Times New Roman', serif; 
+                line-height: 1.8; 
+                margin: 0; 
+                padding: 20px;
+                color: #333;
+                font-size: 12pt;
+              }
+              .header { 
+                text-align: center; 
+                font-size: 18pt; 
+                font-weight: bold; 
+                margin-bottom: 30px; 
+                color: #1a365d;
+                border-bottom: 2px solid #e2e8f0;
+                padding-bottom: 15px;
+              }
+              .content { 
+                white-space: pre-wrap; 
+                text-align: justify; 
+                line-height: 1.8;
+                font-size: 11pt;
+              }
+              .math { 
+                margin: 10px 0; 
+              }
+              .katex { 
+                font-size: 1.1em; 
+              }
+              h1, h2, h3, h4, h5, h6 {
+                color: #2d3748;
+                margin-top: 20px;
+                margin-bottom: 10px;
+              }
+              p { 
+                margin-bottom: 12px; 
+                text-indent: 0;
+              }
+              ul, ol { 
+                margin: 10px 0; 
+                padding-left: 30px; 
+              }
+              li { 
+                margin-bottom: 5px; 
+              }
+              .highlight {
+                background-color: #fff3cd;
+                padding: 2px 4px;
+                border-radius: 3px;
+              }
             </style>
           </head>
           <body>
-            <div class="title">${title || 'Document'}</div>
+            <div class="header">${title || 'AI Response'}</div>
             <div class="content">${content}</div>
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                renderMathInElement(document.body, {
+                  delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\\\(", right: "\\\\)", display: false},
+                    {left: "\\\\[", right: "\\\\]", display: true}
+                  ],
+                  throwOnError: false,
+                  errorColor: '#cc0000',
+                  strict: false,
+                  trust: false,
+                  macros: {
+                    "\\\\f": "#1f(#2)"
+                  }
+                });
+              });
+            </script>
           </body>
           </html>
         `;

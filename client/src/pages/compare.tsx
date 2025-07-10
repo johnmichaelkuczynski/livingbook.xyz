@@ -546,6 +546,48 @@ export default function ComparePage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadComparisonResponse = async (messageContent: string, messageId: number) => {
+    try {
+      const response = await fetch('/api/export-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          format: 'pdf',
+          title: `Comparison AI Response ${messageId}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `comparison-ai-response-${messageId}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "AI response downloaded with perfect math notation"
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download response",
+        variant: "destructive"
+      });
+    }
+  };
+
   const injectSynthesis = (target: 'A' | 'B') => {
     if (!synthesizedContent) return;
     
@@ -872,13 +914,24 @@ export default function ComparePage() {
                       </div>
                     ) : (
                       messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed ${
+                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
+                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed relative ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                           }`}>
                             <KaTeXRenderer content={msg.content} />
+                            {msg.role === 'assistant' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => downloadComparisonResponse(msg.content, msg.id)}
+                                className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100 hover:bg-gray-200 text-gray-600"
+                                title="Download as PDF"
+                              >
+                                <Download className="w-3 h-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))

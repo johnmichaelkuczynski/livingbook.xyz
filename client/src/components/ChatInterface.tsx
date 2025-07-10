@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator, Upload } from 'lucide-react';
+import { Lightbulb, Send, Paperclip, Bot, RotateCcw, Download, Mail, Calculator, Upload, FileDown } from 'lucide-react';
 import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
 import KaTeXRenderer from './KaTeXRenderer';
@@ -94,6 +94,48 @@ export default function ChatInterface({ document, showInputInline = true, onMess
       setIsTyping(false);
     },
   });
+
+  const downloadResponse = async (messageContent: string, messageId: number) => {
+    try {
+      const response = await fetch('/api/export-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          format: 'pdf',
+          title: `AI Response ${messageId}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ai-response-${messageId}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "AI response downloaded with math notation"
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download response",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleSendMessage = () => {
     if (!message.trim() || sendMessageMutation.isPending) return;
