@@ -8,25 +8,29 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
     
-    // Preserve PDF structure with intelligent paragraph detection
+    // Aggressive paragraph formatting for PDFs
     let formattedText = data.text
-      // Fix broken words that span lines (common in PDFs)
+      // First, fix hyphenated words split across lines
       .replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
-      // Preserve intentional paragraph breaks (sentences ending with punctuation followed by line break)
-      .replace(/([.!?:;])\s*\n\s*([A-Z])/g, '$1\n\n$2')
-      // Convert single line breaks within sentences to spaces (removes unwanted PDF line breaks)
-      .replace(/([a-z,])\s*\n\s*([a-z])/g, '$1 $2')
-      // Clean up excessive whitespace but preserve paragraph structure
+      // Remove unwanted line breaks within sentences (PDF artifacts)
+      .replace(/([a-z,])\s*\n+\s*([a-z])/g, '$1 $2')
+      // Force paragraph breaks after periods followed by capitals
+      .replace(/([.!?])\s*\n*\s*([A-Z])/g, '$1\n\n$2')
+      // Force paragraph breaks after colons followed by capitals  
+      .replace(/([:])\s*\n*\s*([A-Z][a-z])/g, '$1\n\n$2')
+      // Clean up excessive spaces
       .replace(/[ \t]+/g, ' ')
-      .replace(/\n[ \t]+/g, '\n')
-      // Remove page numbers and headers (lines with just numbers or short text)
+      // Remove standalone page numbers and short headers
       .replace(/^\s*\d+\s*$/gm, '')
-      .replace(/^\s*[A-Z\s]{2,20}\s*$/gm, '')
-      // Preserve section breaks and clean up multiple line breaks
-      .replace(/\n{4,}/g, '\n\n\n')
-      .replace(/\n{2,3}/g, '\n\n')
-      // Remove form feed characters
+      .replace(/^\s*[A-Z\s]{1,15}\s*$/gm, '')
+      // Force line breaks every 100-150 characters if no breaks exist
+      .replace(/([.!?])\s+([A-Z][^.!?]{100,150})/g, '$1\n\n$2')
+      // Clean up multiple line breaks but preserve intentional paragraph spacing
+      .replace(/\n{3,}/g, '\n\n')
+      // Remove form feeds
       .replace(/\f/g, '\n\n')
+      // Final cleanup
+      .replace(/^\s+|\s+$/gm, '')
       .trim();
     
     return formattedText;
