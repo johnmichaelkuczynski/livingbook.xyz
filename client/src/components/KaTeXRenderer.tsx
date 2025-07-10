@@ -32,14 +32,31 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Preserve original paragraph structure - split on double line breaks to maintain document formatting
-  const paragraphs = processedContent.split(/\n\s*\n/);
+  // EMERGENCY FIX: Since backend isn't providing paragraph breaks, we need to create them
+  // Split long text into readable paragraphs based on sentence endings
+  
+  // First, try to split on any existing line breaks
+  let paragraphs = processedContent.split(/\n+/);
+  
+  // If no line breaks exist, create paragraphs by splitting on sentence boundaries
+  if (paragraphs.length === 1) {
+    // Split after every 3-4 sentences to create readable paragraphs
+    const sentences = processedContent.match(/[^.!?]*[.!?]+/g) || [processedContent];
+    paragraphs = [];
+    
+    for (let i = 0; i < sentences.length; i += 3) {
+      const chunk = sentences.slice(i, i + 3).join(' ').trim();
+      if (chunk.length > 0) {
+        paragraphs.push(chunk);
+      }
+    }
+  }
   
   processedContent = paragraphs
     .filter(para => para.trim().length > 0) // Remove empty paragraphs
     .map(para => {
-      // Convert single line breaks within paragraphs to spaces (preserve flow)
-      const cleanPara = para.replace(/\n/g, ' ').trim();
+      // Clean up spacing within paragraph
+      const cleanPara = para.replace(/\s+/g, ' ').trim();
       return `<p style="text-indent: 2em; margin-bottom: 1.2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
     })
     .join('');
