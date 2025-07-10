@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Send } from 'lucide-react';
+import { X, Send, Download } from 'lucide-react';
 import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,13 +36,55 @@ export default function TextSelectionPopup({
   const [provider, setProvider] = useState<'openai' | 'anthropic' | 'deepseek' | 'perplexity'>('openai');
   const { toast } = useToast();
 
-  // Reset messages when popup opens with new selection
+  // Reset messages and start automatic discussion when popup opens with new selection
   useEffect(() => {
     if (isOpen && selectedText) {
       setMessages([]);
       setCurrentMessage('');
+      
+      // Automatically start discussion about the selected text
+      const startAutomaticDiscussion = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch('/api/chat/selection', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: "Please provide a brief discussion of the meaning and significance of this selected text. What are the key ideas and why are they important?",
+              selectedText: selectedText,
+              documentTitle: documentTitle,
+              conversationHistory: [],
+              provider: provider
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to get AI response');
+          }
+
+          const data = await response.json();
+          
+          const aiMessage: ChatMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: data.message,
+            timestamp: new Date().toISOString()
+          };
+
+          setMessages([aiMessage]);
+        } catch (error) {
+          console.error('Auto-discussion error:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      // Start automatic discussion after a short delay
+      setTimeout(startAutomaticDiscussion, 500);
     }
-  }, [isOpen, selectedText]);
+  }, [isOpen, selectedText, documentTitle, provider]);
 
   const sendMessage = async () => {
     if (!currentMessage.trim() || isLoading) return;
@@ -99,6 +141,48 @@ export default function TextSelectionPopup({
     }
   };
 
+  const downloadResponse = async (messageContent: string, messageId: number) => {
+    try {
+      const response = await fetch('/api/export-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          format: 'pdf',
+          title: `AI Response ${messageId}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ai-response-${messageId}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "AI response downloaded as PDF"
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download response",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0">
@@ -116,14 +200,16 @@ export default function TextSelectionPopup({
             <div className="mb-2">
               <span className="text-sm font-medium text-blue-700">Selected Passage:</span>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-blue-200 text-gray-700 leading-relaxed">
-              {selectedText}
-            </div>
+            <ScrollArea className="max-h-[200px]">
+              <div className="bg-white p-4 rounded-lg border border-blue-200 text-gray-700 leading-relaxed">
+                {selectedText}
+              </div>
+            </ScrollArea>
           </div>
 
           {/* Chat Area */}
           <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1 p-6 overflow-y-auto">
               <div className="space-y-6">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-400 py-12">
@@ -142,7 +228,18 @@ export default function TextSelectionPopup({
                         </div>
                       ) : (
                         <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm font-medium text-gray-600 mb-2">AI</div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium text-gray-600">AI</div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => downloadResponse(message.content, message.id)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              PDF
+                            </Button>
+                          </div>
                           <div className="text-gray-800 leading-relaxed">
                             <KaTeXRenderer content={message.content} />
                           </div>
