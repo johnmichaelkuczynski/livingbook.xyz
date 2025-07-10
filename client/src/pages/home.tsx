@@ -13,6 +13,7 @@ import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
+import TextSelectionPopup from '@/components/TextSelectionPopup';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -24,6 +25,8 @@ export default function Home() {
   const [isRewritePanelOpen, setIsRewritePanelOpen] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
+  const [showSelectionPopup, setShowSelectionPopup] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -385,6 +388,10 @@ export default function Home() {
                 onUploadClick={() => fileInputRef.current?.click()}
                 onRewriteClick={handleRewriteClick}
                 onFileDrop={handleFile}
+                onTextSelection={(text) => {
+                  setSelectedText(text);
+                  setShowSelectionPopup(true);
+                }}
               />
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
@@ -587,6 +594,14 @@ export default function Home() {
             }
           }
         }}
+      />
+
+      {/* Text Selection Popup */}
+      <TextSelectionPopup
+        isOpen={showSelectionPopup}
+        onClose={() => setShowSelectionPopup(false)}
+        selectedText={selectedText}
+        documentTitle={currentDocument?.originalName || "Document"}
       />
 
     </div>

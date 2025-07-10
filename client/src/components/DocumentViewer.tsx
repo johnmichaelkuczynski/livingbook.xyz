@@ -12,9 +12,10 @@ interface DocumentViewerProps {
   onUploadClick?: () => void;
   onRewriteClick?: () => void;
   onFileDrop?: (file: File) => void;
+  onTextSelection?: (selectedText: string) => void;
 }
 
-export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick, onFileDrop }: DocumentViewerProps) {
+export default function DocumentViewer({ document, isLoading, onUploadClick, onRewriteClick, onFileDrop, onTextSelection }: DocumentViewerProps) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -122,7 +123,18 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
                 )}
               </div>
             ) : (
-              <div className="w-full">
+              <div 
+                className="w-full"
+                onMouseUp={() => {
+                  const selection = window.getSelection();
+                  if (selection && selection.toString().length > 0) {
+                    const selectedText = selection.toString().trim();
+                    if (selectedText.length > 10 && onTextSelection) {
+                      onTextSelection(selectedText);
+                    }
+                  }
+                }}
+              >
                 <div className="space-y-4 text-lg leading-relaxed">
                   {formatContent(document.content)}
                 </div>

@@ -5,7 +5,7 @@ import path from 'path';
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
     // Use pdfjs-dist for better structure preservation
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js');
+    const pdfjs = await import('pdfjs-dist');
     const buffer = await fs.readFile(filePath);
     
     // Load PDF document
