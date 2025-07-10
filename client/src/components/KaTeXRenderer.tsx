@@ -32,17 +32,17 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Preserve paragraph structure by converting double line breaks to paragraph tags with proper indentation
-  processedContent = processedContent
-    .replace(/\n\n+/g, '</p><p style="text-indent: 2em; margin-bottom: 1em;">') // Convert paragraph breaks with indentation
-    .replace(/\n/g, '<br>'); // Convert remaining line breaks
+  // Preserve original paragraph structure - split on double line breaks to maintain document formatting
+  const paragraphs = processedContent.split(/\n\s*\n/);
   
-  // Wrap in paragraph tags with indentation
-  if (processedContent.length > 0) {
-    processedContent = '<p style="text-indent: 2em; margin-bottom: 1em;">' + processedContent + '</p>';
-    // Clean up empty paragraphs
-    processedContent = processedContent.replace(/<p[^>]*><\/p>/g, '');
-  }
+  processedContent = paragraphs
+    .filter(para => para.trim().length > 0) // Remove empty paragraphs
+    .map(para => {
+      // Convert single line breaks within paragraphs to spaces (preserve flow)
+      const cleanPara = para.replace(/\n/g, ' ').trim();
+      return `<p style="text-indent: 2em; margin-bottom: 1.2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+    })
+    .join('');
   
   // Enhanced math rendering with better fallbacks
   // Block math: $$...$$
@@ -128,12 +128,9 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
       ref={containerRef} 
       className={`prose prose-lg max-w-none ${className}`}
       style={{ 
-        lineHeight: '1.6',
         wordWrap: 'break-word',
         overflowWrap: 'break-word',
-        fontFamily: 'Georgia, "Times New Roman", serif',
-        textAlign: 'justify',
-        textIndent: '2em'
+        fontFamily: 'Georgia, "Times New Roman", serif'
       }}
     />
   );
