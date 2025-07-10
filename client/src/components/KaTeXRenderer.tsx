@@ -33,33 +33,22 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // EMERGENCY FIX: Since backend isn't providing paragraph breaks, we need to create them
-  // Split long text into readable paragraphs based on sentence endings
+  // PRESERVE ORIGINAL FORMATTING: Don't destroy line breaks that come from backend
+  // The backend AI providers now handle proper formatting, so preserve it
   
-  // First, try to split on any existing line breaks
-  let paragraphs = processedContent.split(/\n+/);
-  
-  // If no line breaks exist, create paragraphs by splitting on sentence boundaries
-  if (paragraphs.length === 1) {
-    // Split after every 3-4 sentences to create readable paragraphs
-    const sentences = processedContent.match(/[^.!?]*[.!?]+/g) || [processedContent];
-    paragraphs = [];
-    
-    for (let i = 0; i < sentences.length; i += 3) {
-      const chunk = sentences.slice(i, i + 3).join(' ').trim();
-      if (chunk.length > 0) {
-        paragraphs.push(chunk);
-      }
-    }
-  }
-  
-  processedContent = paragraphs
-    .filter(para => para.trim().length > 0) // Remove empty paragraphs
+  // Convert line breaks to proper HTML paragraphs while preserving structure
+  processedContent = processedContent
+    .split(/\n\s*\n/)  // Split on double line breaks (paragraph separators)
+    .filter(para => para.trim().length > 0)
     .map(para => {
-      // Clean up spacing within paragraph
-      const cleanPara = para.replace(/\s+/g, ' ').trim();
-      return `<p style="text-indent: 2em; margin-bottom: 1.2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+      // Clean up internal spacing but preserve intentional line breaks
+      const cleanPara = para.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      if (cleanPara.length > 0) {
+        return `<p style="margin-bottom: 1.2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+      }
+      return '';
     })
+    .filter(para => para.length > 0)
     .join('');
   
   // Enhanced math rendering with better fallbacks
