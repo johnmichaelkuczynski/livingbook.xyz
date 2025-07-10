@@ -80,17 +80,13 @@ export default function Home() {
   const handleFileUploaded = (document: any) => {
     setCurrentDocument(document);
     
-    // Check if document is large and needs chunking
+    // Prepare chunks ONLY for rewrite functionality (not for display)
     if (document && document.content) {
       const wordCount = document.content.split(/\s+/).filter((word: string) => word.length > 0).length;
       if (wordCount > 1000) {
-        // Chunk the document for better performance
+        // Chunk the document ONLY for rewrite functionality
         const chunkedDoc = chunkDocumentClient(document.content, 1000);
         setDocumentChunks(chunkedDoc);
-        toast({
-          title: "Large Document Detected",
-          description: `Document split into ${chunkedDoc.chunkCount} chunks for better performance (${wordCount} words total).`,
-        });
       } else {
         setDocumentChunks(null);
       }
@@ -383,37 +379,13 @@ export default function Home() {
           
           <div className="flex-1">
             {currentDocument ? (
-              documentChunks && documentChunks.chunkCount > 1 ? (
-                <ChunkedDocumentViewer 
-                  document={currentDocument}
-                  chunks={documentChunks.chunks}
-                  onChunkUpdate={(chunkIndex, newContent) => {
-                    // Update chunk content
-                    const updatedChunks = [...documentChunks.chunks];
-                    updatedChunks[chunkIndex] = {
-                      ...updatedChunks[chunkIndex],
-                      content: newContent,
-                      isModified: true
-                    };
-                    setDocumentChunks({
-                      ...documentChunks,
-                      chunks: updatedChunks
-                    });
-                  }}
-                  onRewriteChunk={(chunkIndex, instructions) => {
-                    // Handle rewrite from chunk view - open main rewrite panel
-                    setIsRewritePanelOpen(true);
-                  }}
-                />
-              ) : (
-                <DocumentViewer 
-                  document={currentDocument}
-                  isLoading={isUploading}
-                  onUploadClick={() => fileInputRef.current?.click()}
-                  onRewriteClick={handleRewriteClick}
-                  onFileDrop={handleFile}
-                />
-              )
+              <DocumentViewer 
+                document={currentDocument}
+                isLoading={isUploading}
+                onUploadClick={() => fileInputRef.current?.click()}
+                onRewriteClick={handleRewriteClick}
+                onFileDrop={handleFile}
+              />
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
                 <CardHeader>
