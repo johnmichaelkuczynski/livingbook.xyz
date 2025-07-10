@@ -654,11 +654,14 @@ Please provide a helpful response based on the selected text. Keep your response
         return res.status(500).json({ error: aiResponse.error });
       }
 
+      // Clean AI response of markup symbols
+      const cleanedResponse = removeMarkupSymbols(aiResponse.message);
+      
       // Save AI response
       const aiMessageData = {
         sessionId: session.id,
         role: "assistant",
-        content: aiResponse.message
+        content: cleanedResponse
       };
       const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
       const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
@@ -755,11 +758,14 @@ Please provide a helpful response based on the selected text. Keep your response
         return res.status(500).json({ error: aiResponse.error });
       }
       
+      // Clean AI response of markup symbols
+      const cleanedResponse = removeMarkupSymbols(aiResponse.message);
+      
       // Save AI response
       const aiMessageData = {
         sessionId: session.id,
         role: "assistant",
-        content: aiResponse.message
+        content: cleanedResponse
       };
       const validatedAiMessage = insertChatMessageSchema.parse(aiMessageData);
       const savedAiMessage = await storage.createChatMessage(validatedAiMessage);
@@ -1165,11 +1171,14 @@ Instructions: ${instructions}
         return res.status(500).json({ error: aiResponse.error });
       }
 
+      // Clean AI response of markup symbols
+      const cleanedResponse = removeMarkupSymbols(aiResponse.message);
+
       // Save AI response
       const aiMessageData = {
         sessionId: session.id,
         role: "assistant",
-        content: aiResponse.message
+        content: cleanedResponse
       };
       const validatedAiMessage = insertComparisonMessageSchema.parse(aiMessageData);
       const savedAiMessage = await storage.createComparisonMessage(validatedAiMessage);
