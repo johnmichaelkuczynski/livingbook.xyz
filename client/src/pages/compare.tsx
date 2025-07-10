@@ -874,6 +874,8 @@ export default function ComparePage() {
                 <div className="flex-1">
                   <textarea
                     ref={inputRef}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
