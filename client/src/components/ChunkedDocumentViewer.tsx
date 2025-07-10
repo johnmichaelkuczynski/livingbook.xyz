@@ -201,27 +201,20 @@ export default function ChunkedDocumentViewer({
             <div className="flex items-center gap-2">
               <Badge variant="outline">{chunks.length} chunks</Badge>
               <Badge variant="secondary">{document.fileType.toUpperCase()}</Badge>
-              {(selectedText || selectedChunks.size > 0) ? (
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  onClick={handleVisualize}
-                  className="bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
-                >
-                  <Network className="w-4 h-4 mr-1" />
-                  {selectedText ? 'Visualize Selected Text' : `Visualize ${selectedChunks.size} Chunk${selectedChunks.size > 1 ? 's' : ''}`}
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled
-                  className="opacity-50"
-                >
-                  <Network className="w-4 h-4 mr-1" />
-                  Select Text or Chunks
-                </Button>
-              )}
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleVisualize}
+                disabled={!selectedText && selectedChunks.size === 0}
+                className={`bg-purple-600 hover:bg-purple-700 text-white ${
+                  selectedText || selectedChunks.size > 0 ? 'animate-pulse' : ''
+                }`}
+              >
+                <Network className="w-4 h-4 mr-1" />
+                {selectedText ? 'Visualize Selected Text' : 
+                 selectedChunks.size > 0 ? `Visualize ${selectedChunks.size} Chunk${selectedChunks.size > 1 ? 's' : ''}` :
+                 'Visualize Text (Select Text or Chunks)'}
+              </Button>
               <Button 
                 variant="default" 
                 size="sm"

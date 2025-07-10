@@ -26,8 +26,16 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Convert line breaks to HTML
-  processedContent = processedContent.replace(/\n/g, '<br>');
+  // Convert paragraph breaks to proper HTML paragraphs
+  // First, split by double newlines to get paragraphs
+  const paragraphs = processedContent.split(/\n\n+/);
+  
+  // Wrap each paragraph in <p> tags, and convert single newlines to <br>
+  processedContent = paragraphs
+    .map(para => para.trim())
+    .filter(para => para.length > 0)
+    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
   
   // Enhanced math rendering with better fallbacks
   // Block math: $$...$$
@@ -111,7 +119,7 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   return (
     <div 
       ref={containerRef} 
-      className={`prose prose-sm max-w-none ${className}`}
+      className={`prose prose-sm max-w-none katex-content ${className}`}
       style={{ 
         lineHeight: '1.6',
         wordWrap: 'break-word',

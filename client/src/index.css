@@ -100,6 +100,17 @@
   font-size: 0.9em;
 }
 
+/* KaTeX content paragraph formatting */
+.katex-content p {
+  margin-bottom: 1em;
+  text-align: justify;
+  line-height: 1.6;
+}
+
+.katex-content p:last-child {
+  margin-bottom: 0;
+}
+
 .math-display {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 500;

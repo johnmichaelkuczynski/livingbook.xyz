@@ -578,87 +578,49 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      // CRITICAL: Pass the user's exact text and requirements to the AI without interference
-      const prompt = `**VERBATIM INSTRUCTIONS FOR AI SYSTEM — CONCEPT LATTICE 1.0**
+      const prompt = `Analyze this text for its intellectual content: "${text}"
 
-You are analyzing this exact text: "${text}"
+Create a concept lattice with:
 
-MANDATORY REQUIREMENTS:
+MAIN IDEAS: Complete intellectual statements (not text fragments)
+BASIC ARGUMENTS: Logical reasoning supporting main ideas  
+EXAMPLES: Specific instances from the text (format: 🎯 description)
+QUOTES: Direct quotations (format: "exact quote")
+FINE ARGUMENTS: Detailed sub-points (format: • elaboration)
 
-**MAIN IDEAS** must be:
-- Complete intellectual propositions about what the author is arguing
-- NOT fragments, phrases, or random sentences from the text
-- The central thesis or key concepts the author wants to communicate
-- What a philosophy professor would identify as the core arguments
+DO NOT extract random sentence fragments. Think like a scholar.
 
-**BASIC ARGUMENTS** must be:
-- Logical reasoning supporting the main ideas
-- How the author builds their case
-- The evidence or logic presented
-
-**EXAMPLES** must be:
-- Specific instances mentioned in the text
-- Concrete illustrations of the arguments
-- Format: "🎯 [description]"
-
-**SUPPORTING QUOTES** must be:
-- Actual direct quotations from the source text
-- Format: "[exact quote from text]"
-
-**FINE ARGUMENTS** must be:
-- Detailed sub-points elaborating on basic arguments
-- Format: "• [elaboration]"
-
-CRITICAL ANALYSIS RULES:
-1. READ the entire text for comprehension
-2. IDENTIFY what the author is actually arguing/teaching
-3. DO NOT extract random sentence fragments
-4. THINK like a scholar analyzing the intellectual content
-5. CREATE meaningful propositions, not text snippets
-
-For example, if analyzing Sun Tzu's "Art of War", the main idea would be something like:
-"Military success depends on strategic preparation and intelligence rather than brute force"
-NOT random fragments like "of his projects; and as my plans will depend upon his"
-
-Return ONLY this JSON:
+Return JSON:
 {
   "nodes": [
     {
       "id": "main_1",
       "type": "main_idea",
-      "content": "[COMPLETE INTELLECTUAL STATEMENT]",
+      "content": "Complete intellectual statement",
       "parentId": null,
       "isExpanded": true,
-      "connections": ["basic_1", "basic_2"]
+      "connections": ["basic_1"]
     },
     {
       "id": "basic_1",
-      "type": "basic_argument", 
-      "content": "[LOGICAL ARGUMENT SUPPORTING MAIN IDEA]",
+      "type": "basic_argument",
+      "content": "Logical argument supporting main idea",
       "parentId": "main_1",
       "isExpanded": true,
-      "connections": ["example_1", "quote_1", "fine_1"]
+      "connections": ["example_1", "quote_1"]
     },
     {
       "id": "example_1",
       "type": "example",
-      "content": "🎯 [SPECIFIC EXAMPLE FROM TEXT]",
+      "content": "🎯 Specific example",
       "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
     },
     {
-      "id": "quote_1", 
+      "id": "quote_1",
       "type": "supporting_quote",
-      "content": "[EXACT QUOTE FROM SOURCE]",
-      "parentId": "basic_1",
-      "isExpanded": true,
-      "connections": []
-    },
-    {
-      "id": "fine_1",
-      "type": "fine_argument",
-      "content": "• [DETAILED SUB-POINT]",
+      "content": "Direct quote from text",
       "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
@@ -666,12 +628,10 @@ Return ONLY this JSON:
   ],
   "metadata": {
     "sourceText": "${text.substring(0, 200)}...",
-    "title": "${title || 'Concept Lattice Analysis'}",
+    "title": "${title || 'Analysis'}",
     "generatedAt": "${new Date().toISOString()}"
   }
-}
-
-ANALYZE THE INTELLECTUAL CONTENT, NOT EXTRACT RANDOM TEXT FRAGMENTS.`;
+}`;
 
       const response = await generateChatResponse(prompt, "", []);
       
