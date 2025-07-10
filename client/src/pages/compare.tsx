@@ -788,9 +788,9 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-8 gap-6 min-h-[900px] pb-32">
-          {/* Document A - Takes 3/8 */}
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
+          {/* Document A - Takes 2/6 */}
+          <div className="lg:col-span-2">
             <DocumentColumn
               title="Document A"
               document={documentA}
@@ -799,8 +799,8 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* Document B - Takes 3/8 */}
-          <div className="lg:col-span-3">
+          {/* Document B - Takes 2/6 */}
+          <div className="lg:col-span-2">
             <DocumentColumn
               title="Document B"
               document={documentB}
@@ -809,7 +809,7 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* AI Chat Column - Takes 2/8 (much wider) */}
+          {/* AI Chat Column - Takes 2/6 (much wider) */}
           <div className="lg:col-span-2">
             <Card className="h-full min-h-[800px] flex flex-col">
               <CardHeader>
@@ -847,7 +847,7 @@ export default function ComparePage() {
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed ${
+                          <div className={`max-w-[95%] p-2 rounded-lg text-xs leading-tight ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
