@@ -128,10 +128,12 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
       ref={containerRef} 
       className={`prose prose-lg max-w-none ${className}`}
       style={{ 
-        lineHeight: '1.8',
+        lineHeight: '1.6',
         wordWrap: 'break-word',
         overflowWrap: 'break-word',
-        fontFamily: 'Georgia, "Times New Roman", serif'
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        textAlign: 'justify',
+        textIndent: '2em'
       }}
     />
   );

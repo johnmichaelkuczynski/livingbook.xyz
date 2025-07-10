@@ -693,7 +693,7 @@ export default function ComparePage() {
             </Tabs>
           ) : (
             <div className="flex-1 flex flex-col space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{doc.title}</h3>
                   {sessionId && (
@@ -702,58 +702,61 @@ export default function ComparePage() {
                     </p>
                   )}
                 </div>
-                <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
+                <div className="flex gap-2 ml-4">
+                  <div className="relative">
+                    <input
+                      id={`replace-${column}`}
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleFileUpload(e.target.files[0], column);
+                          e.target.value = ''; // Reset input
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => document.getElementById(`replace-${column}`)?.click()}
+                      disabled={isUploading}
+                    >
+                      <Upload className="w-3 h-3 mr-1" />
+                      {isUploading ? 'Uploading...' : 'Replace'}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const setDocument = column === 'A' ? setDocumentA : setDocumentB;
+                      const setDocumentChunks = column === 'A' ? setDocumentChunksA : setDocumentChunksB;
+                      setDocument(null);
+                      setDocumentChunks(null);
+                    }}
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Remove
+                  </Button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
                 <div 
                   className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
                   onMouseUp={() => handleTextSelection(`Document ${column}`)}
                   onTouchEnd={() => handleTextSelection(`Document ${column}`)}
+                  style={{ 
+                    textAlign: 'justify',
+                    textIndent: '2em',
+                    lineHeight: '1.6'
+                  }}
                 >
                   <KaTeXRenderer 
                     content={doc.content} 
                     className="text-sm leading-6 text-gray-900 dark:text-gray-100" 
                   />
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <input
-                    id={`replace-${column}`}
-                    type="file"
-                    accept=".pdf,.docx,.txt"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleFileUpload(e.target.files[0], column);
-                        e.target.value = ''; // Reset input
-                      }
-                    }}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => document.getElementById(`replace-${column}`)?.click()}
-                    disabled={isUploading}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? 'Uploading...' : 'Replace Document'}
-                  </Button>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const setDocument = column === 'A' ? setDocumentA : setDocumentB;
-                    const setDocumentChunks = column === 'A' ? setDocumentChunksA : setDocumentChunksB;
-                    setDocument(null);
-                    setDocumentChunks(null);
-                  }}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Remove
-                </Button>
               </div>
             </div>
           )}
