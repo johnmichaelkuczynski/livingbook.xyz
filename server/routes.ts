@@ -578,77 +578,87 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      const prompt = `You are a brilliant philosopher and literary analyst. Your task is to create a sophisticated Concept Lattice that reveals the deep intellectual structure of the provided text.
+      // CRITICAL: Pass the user's exact text and requirements to the AI without interference
+      const prompt = `**VERBATIM INSTRUCTIONS FOR AI SYSTEM — CONCEPT LATTICE 1.0**
 
-ANALYZE THIS TEXT:
-"${text}"
+You are analyzing this exact text: "${text}"
 
-CONCEPT LATTICE STRUCTURE REQUIREMENTS:
+MANDATORY REQUIREMENTS:
 
-1. MAIN IDEAS (1-3 nodes):
-   - These are the fundamental concepts the author is communicating
-   - Complete, meaningful statements that capture the core thesis
-   - NOT random phrases or sentence fragments
-   - What would a scholar identify as the central arguments?
+**MAIN IDEAS** must be:
+- Complete intellectual propositions about what the author is arguing
+- NOT fragments, phrases, or random sentences from the text
+- The central thesis or key concepts the author wants to communicate
+- What a philosophy professor would identify as the core arguments
 
-2. BASIC ARGUMENTS (2-4 per main idea):
-   - Logical reasoning that supports each main idea
-   - How does the author build their case?
-   - What evidence or logic do they present?
+**BASIC ARGUMENTS** must be:
+- Logical reasoning supporting the main ideas
+- How the author builds their case
+- The evidence or logic presented
 
-3. EXAMPLES (1-2 per basic argument):
-   - Specific instances, cases, or illustrations from the text
-   - Concrete details that demonstrate the argument
+**EXAMPLES** must be:
+- Specific instances mentioned in the text
+- Concrete illustrations of the arguments
+- Format: "🎯 [description]"
 
-4. SUPPORTING QUOTES (1-2 per basic argument):
-   - Direct quotations from the text that reinforce the argument
-   - Actual words from the source material
+**SUPPORTING QUOTES** must be:
+- Actual direct quotations from the source text
+- Format: "[exact quote from text]"
 
-5. FINE-GRAINED ARGUMENTS (1-2 per basic argument):
-   - Detailed sub-points that elaborate on the basic arguments
-   - Nuanced aspects of the reasoning
+**FINE ARGUMENTS** must be:
+- Detailed sub-points elaborating on basic arguments
+- Format: "• [elaboration]"
 
-CRITICAL: This is intellectual analysis, not text extraction. Think about what the author is actually trying to communicate. What would a professor teaching this text identify as the key concepts?
+CRITICAL ANALYSIS RULES:
+1. READ the entire text for comprehension
+2. IDENTIFY what the author is actually arguing/teaching
+3. DO NOT extract random sentence fragments
+4. THINK like a scholar analyzing the intellectual content
+5. CREATE meaningful propositions, not text snippets
 
-Return ONLY this JSON structure:
+For example, if analyzing Sun Tzu's "Art of War", the main idea would be something like:
+"Military success depends on strategic preparation and intelligence rather than brute force"
+NOT random fragments like "of his projects; and as my plans will depend upon his"
+
+Return ONLY this JSON:
 {
   "nodes": [
     {
       "id": "main_1",
       "type": "main_idea",
-      "content": "A complete intellectual statement of the actual main idea",
+      "content": "[COMPLETE INTELLECTUAL STATEMENT]",
       "parentId": null,
       "isExpanded": true,
       "connections": ["basic_1", "basic_2"]
     },
     {
-      "id": "basic_1", 
-      "type": "basic_argument",
-      "content": "A logical argument supporting the main idea",
+      "id": "basic_1",
+      "type": "basic_argument", 
+      "content": "[LOGICAL ARGUMENT SUPPORTING MAIN IDEA]",
       "parentId": "main_1",
       "isExpanded": true,
       "connections": ["example_1", "quote_1", "fine_1"]
     },
     {
       "id": "example_1",
-      "type": "example", 
-      "content": "🎯 A specific example from the text",
+      "type": "example",
+      "content": "🎯 [SPECIFIC EXAMPLE FROM TEXT]",
       "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
     },
     {
-      "id": "quote_1",
+      "id": "quote_1", 
       "type": "supporting_quote",
-      "content": "\"An actual quote from the text\"",
-      "parentId": "basic_1", 
+      "content": "[EXACT QUOTE FROM SOURCE]",
+      "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
     },
     {
       "id": "fine_1",
       "type": "fine_argument",
-      "content": "• A detailed sub-point elaborating on the basic argument",
+      "content": "• [DETAILED SUB-POINT]",
       "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
@@ -661,7 +671,7 @@ Return ONLY this JSON structure:
   }
 }
 
-Think like a scholar. What is this text really about? What are the author's main points? How do they build their argument?`;
+ANALYZE THE INTELLECTUAL CONTENT, NOT EXTRACT RANDOM TEXT FRAGMENTS.`;
 
       const response = await generateChatResponse(prompt, "", []);
       
