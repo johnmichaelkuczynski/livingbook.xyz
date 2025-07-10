@@ -57,6 +57,8 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
     
     // Clean and enhance HTML while preserving structure
     let formattedHtml = result.value
+      // Remove any invalid control characters that could cause parsing errors
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
       // Ensure paragraphs have proper styling
       .replace(/<p>/gi, '<p style="margin-bottom: 1.2em; text-indent: 2em; text-align: justify; line-height: 1.6;">')
       // Style headings appropriately
@@ -75,6 +77,8 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
       .replace(/&quot;/g, '"')
       // Remove empty paragraphs
       .replace(/<p[^>]*>\s*<\/p>/gi, '')
+      // Fix any potential malformed tags
+      .replace(/<([^>]+)(?![>])/g, '<$1>')
       .trim();
     
     // Return HTML instead of plain text
