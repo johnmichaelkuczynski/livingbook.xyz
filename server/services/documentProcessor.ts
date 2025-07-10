@@ -8,28 +8,32 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath);
     const data = await pdfParse.default(buffer);
     
-    // Aggressive paragraph formatting for PDFs
+    // AGGRESSIVE paragraph formatting for perfect display
     let formattedText = data.text
-      // First, fix hyphenated words split across lines
+      // Fix hyphenated words split across lines
       .replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
-      // Remove unwanted line breaks within sentences (PDF artifacts)
+      // Remove unwanted line breaks within sentences
       .replace(/([a-z,])\s*\n+\s*([a-z])/g, '$1 $2')
-      // Force paragraph breaks after periods followed by capitals
-      .replace(/([.!?])\s*\n*\s*([A-Z])/g, '$1\n\n$2')
-      // Force paragraph breaks after colons followed by capitals  
-      .replace(/([:])\s*\n*\s*([A-Z][a-z])/g, '$1\n\n$2')
-      // Clean up excessive spaces
+      // FORCE paragraph breaks after sentence endings
+      .replace(/([.!?])\s+([A-Z])/g, '$1\n\n$2')
+      // FORCE paragraph breaks after colons with new sentences
+      .replace(/([:])\s+([A-Z][a-z])/g, '$1\n\n$2')
+      // AGGRESSIVE: Force breaks after long sentences (every 80+ words)
+      .replace(/((?:[^.!?]*[.!?]){2,3})\s+([A-Z])/g, '$1\n\n$2')
+      // AGGRESSIVE: Break very long continuous text every 300-400 characters
+      .replace(/([.!?])\s+([A-Z][^.!?]{300,400})/g, '$1\n\n$2')
+      // Clean excessive spaces
       .replace(/[ \t]+/g, ' ')
-      // Remove standalone page numbers and short headers
+      // Remove page numbers and headers
       .replace(/^\s*\d+\s*$/gm, '')
-      .replace(/^\s*[A-Z\s]{1,15}\s*$/gm, '')
-      // Force line breaks every 100-150 characters if no breaks exist
-      .replace(/([.!?])\s+([A-Z][^.!?]{100,150})/g, '$1\n\n$2')
-      // Clean up multiple line breaks but preserve intentional paragraph spacing
-      .replace(/\n{3,}/g, '\n\n')
-      // Remove form feeds
+      .replace(/^\s*[A-Z\s]{1,20}\s*$/gm, '')
+      // FORCE breaks at natural paragraph boundaries
+      .replace(/([.!?])\s*([A-Z][a-z]+[^.!?]*[.!?])\s*([A-Z])/g, '$1\n\n$2\n\n$3')
+      // Clean up excessive line breaks
+      .replace(/\n{4,}/g, '\n\n\n')
+      .replace(/\n{3}/g, '\n\n')
+      // Remove form feeds and clean
       .replace(/\f/g, '\n\n')
-      // Final cleanup
       .replace(/^\s+|\s+$/gm, '')
       .trim();
     

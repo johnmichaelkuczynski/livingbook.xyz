@@ -80,45 +80,54 @@
   }
 }
 
-/* Document formatting preservation */
+/* Document formatting preservation - PERFECT DISPLAY */
 .prose {
   max-width: none !important;
 }
 
-.prose p {
-  margin-top: 1.25em !important;
-  margin-bottom: 1.25em !important;
-  text-align: justify;
-  text-indent: 1.5em;
-  line-height: 1.8 !important;
+/* Force proper paragraph display */
+.prose p, p {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  text-align: justify !important;
+  text-indent: 2em !important;
+  line-height: 1.9 !important;
+  font-size: 1.1em !important;
+  color: #2c3e50 !important;
 }
 
-.prose p:first-child {
+.prose p:first-child, p:first-child {
   margin-top: 0 !important;
+  text-indent: 0 !important;
 }
 
-.prose p:last-child {
+.prose p:last-child, p:last-child {
   margin-bottom: 0 !important;
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-  margin-top: 2em !important;
-  margin-bottom: 1em !important;
-  text-align: left;
-  text-indent: 0;
-  font-weight: bold;
+/* Headers and structure */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6,
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 2.5em !important;
+  margin-bottom: 1.5em !important;
+  text-align: left !important;
+  text-indent: 0 !important;
+  font-weight: bold !important;
+  color: #1a202c !important;
 }
 
-.prose ul, .prose ol {
-  margin-top: 1.25em !important;
-  margin-bottom: 1.25em !important;
-  padding-left: 2em;
+/* Lists */
+.prose ul, .prose ol, ul, ol {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  padding-left: 2.5em !important;
 }
 
-.prose li {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  text-align: justify;
+.prose li, li {
+  margin-top: 0.75em !important;
+  margin-bottom: 0.75em !important;
+  text-align: justify !important;
+  line-height: 1.8 !important;
 }
 
 /* Math notation styling */
