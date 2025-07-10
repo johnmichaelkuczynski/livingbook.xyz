@@ -458,6 +458,68 @@ Please rewrite the text according to the instructions. Return only the rewritten
     }
   });
 
+  // Send chat message about selected text
+  app.post("/api/chat/selection", async (req, res) => {
+    try {
+      const { message, selectedText, documentTitle, provider = 'openai', conversationHistory = [] } = req.body;
+      
+      if (!message || !selectedText) {
+        return res.status(400).json({ error: "Message and selectedText are required" });
+      }
+
+      // Create context prompt with selected text
+      const contextPrompt = `You are analyzing selected text from a document titled "${documentTitle}". Here is the selected text:
+
+"${selectedText}"
+
+User question: ${message}
+
+Please provide a helpful response based on the selected text. Keep your response clear and focused on the specific text selection.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate AI response with selected text context
+      const aiResponse = await generateChatResponse(
+        contextPrompt,
+        selectedText, // Pass selected text as document content
+        conversationHistory
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      // Clean the response of any markdown formatting
+      const cleanedMessage = removeMarkupSymbols(aiResponse.message);
+      
+      res.json({
+        message: cleanedMessage
+      });
+      
+    } catch (error) {
+      console.error("Selection chat error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process selection chat" 
+      });
+    }
+  });
+
   // Send chat message without document
   app.post("/api/chat/message", async (req, res) => {
     try {
