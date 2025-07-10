@@ -132,19 +132,33 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   const isHtml = content.includes('<') && content.includes('>');
   
   if (isHtml) {
-    // Parse and render HTML directly with all formatting preserved
-    return (
-      <div 
-        className={`prose prose-lg max-w-none ${className}`}
-        style={{ 
-          wordWrap: 'break-word',
-          overflowWrap: 'break-word',
-          fontFamily: 'Georgia, "Times New Roman", serif'
-        }}
-      >
-        {parse(content)}
-      </div>
-    );
+    try {
+      // Sanitize HTML content to prevent parsing errors
+      const sanitizedContent = content
+        // Remove any invalid characters that could cause parsing errors
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Fix any unclosed tags
+        .replace(/<([^>]+)(?![>])/g, '<$1>')
+        // Remove any malformed HTML
+        .replace(/<\s*\/?\s*>/g, '');
+      
+      // Parse and render HTML directly with all formatting preserved
+      return (
+        <div 
+          className={`prose prose-lg max-w-none ${className}`}
+          style={{ 
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            fontFamily: 'Georgia, "Times New Roman", serif'
+          }}
+        >
+          {parse(sanitizedContent)}
+        </div>
+      );
+    } catch (error) {
+      console.error('HTML parsing error:', error);
+      // Fallback to plain text rendering if HTML parsing fails
+    }
   }
   
   // Fallback for plain text - use legacy renderer
