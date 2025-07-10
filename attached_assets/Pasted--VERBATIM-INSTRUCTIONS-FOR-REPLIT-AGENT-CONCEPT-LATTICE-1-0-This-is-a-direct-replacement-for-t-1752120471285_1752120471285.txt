@@ -1,0 +1,125 @@
+**VERBATIM INSTRUCTIONS FOR REPLIT AGENT — CONCEPT LATTICE 1.0**
+
+This is a direct replacement for the previously broken 'mind map' feature. You are now building something entirely new: **Concept Lattice 1.0**.
+
+---
+
+### 🔁 OVERVIEW
+
+When the user selects text (either manually by highlighting or by selecting chunks from the rewrite popup), and presses the **"Visualize"** button, the app generates a structured, multi-layered visual breakdown of the selected content.
+
+---
+
+### 🧠 THE VISUAL STRUCTURE MUST INCLUDE:
+
+1. **Main Ideas**
+
+   * Large font
+   * Distinct color per idea
+   * Static (not expandable)
+   * Centerpiece nodes in the lattice
+
+2. **Basic Arguments**
+
+   * Medium font
+   * Bulleted
+   * Expandable/collapsible
+   * Connected to corresponding Main Idea by visual line
+
+3. **Examples**
+
+   * Small font
+   * Fun or bold typography, emojis allowed (🎯, 📌, etc)
+   * Clearly connected to the argument or idea they illustrate
+
+4. **Supporting Quotes**
+
+   * Very small font
+   * Quotation marks
+   * Shown inline, but expandable for context
+   * Click opens scrollable quote list and a chat box
+
+5. **Fine-Grained Arguments**
+
+   * Tiny font
+   * Bullet-point format
+   * Nested under Basic Arguments or their own cluster
+
+Each element must be **visually connected** to the node it supports. This can be through:
+
+* Positioning
+* Connecting lines
+* Hover highlights
+
+---
+
+### 💬 INTERACTIVITY
+
+All nodes are **clickable** and support **deep interaction**:
+
+* **Main Ideas**: View-only
+* **Other nodes (arguments, examples, quotes)**:
+
+  * Expandable
+  * Editable (user can replace with better argument or quote)
+  * Opens context chat box with prefilled message window
+  * Scrollable context bank (e.g., other quotes, related examples)
+  * Allows recursive regeneration and refinement
+
+User can:
+
+* Ask for clarification ("what does 'X' mean here?")
+* Ask for substitution ("give a better quote/example")
+* Ask for modification ("rephrase this without using assumption Y")
+* Issue commands ("Replace quote with one from Darwin")
+
+Changes must be reflected **live in the visual**.
+
+---
+
+### 🧩 GLOBAL CUSTOMIZATION
+
+The user can also issue **global instructions** via a chat box tied to the entire lattice:
+
+Example:
+
+> “I like Big Idea #2 and its examples, but I want the arguments tied to Big Idea #4 instead. Replace supporting quotes with examples from evolutionary psychology and proofs from linear algebra.”
+
+These instructions must:
+
+* Be passed to the LLM
+* Trigger regeneration of the relevant parts only
+* Visually update the lattice in place
+
+---
+
+### 📤 OUTPUT REQUIREMENTS
+
+* User must be able to export the Concept Lattice as:
+
+  * PDF
+  * JPG
+  * PNG
+* User must also be able to send it by email (via SendGrid)
+
+---
+
+### 🛠️ TECHNICAL IMPLEMENTATION NOTES
+
+* Use a graph-rendering library that supports dynamic node interaction (e.g., react-flow, vis.js, or cytoscape.js)
+* All nodes should be draggable, zoomable, and hover-highlightable
+* All node content should be stored in a structured data object so it can be regenerated, replaced, or re-rendered
+* All edits and replacements should be persistent in the current session
+
+---
+
+### DO NOT:
+
+* Do not collapse the content into a single column
+* Do not use prebuilt mind map presets or plugins
+* Do not flatten everything into uniform boxes
+* Do not suppress interactivity or recursion
+
+---
+
+This is not a "mind map." This is **Concept Lattice 1.0**. Think recursively. Think inferentially. Think like a philosopher building an intelligent visual prosthetic.

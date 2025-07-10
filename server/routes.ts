@@ -46,57 +46,7 @@ function removeMarkupSymbols(text: string): string {
 }
 
 // Create fallback concept lattice when AI generates generic content
-function createFallbackConceptLattice(text: string, title: string) {
-  // Extract key concepts from the actual text
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 20);
-  
-  const nodes = [];
-  const timestamp = new Date().toISOString();
-  
-  // Create main ideas from key paragraphs or sentences
-  const mainIdeas = paragraphs.slice(0, 3).map((paragraph, index) => {
-    const firstSentence = paragraph.split(/[.!?]/)[0].trim();
-    return {
-      id: `main_${index + 1}`,
-      type: "main_idea",
-      content: firstSentence.length > 100 ? firstSentence.substring(0, 100) + "..." : firstSentence,
-      isExpanded: true,
-      connections: []
-    };
-  });
-  
-  nodes.push(...mainIdeas);
-  
-  // Create supporting arguments from remaining sentences
-  let nodeId = 1;
-  mainIdeas.forEach((mainIdea, mainIndex) => {
-    const relevantSentences = sentences.slice(mainIndex * 2, (mainIndex + 1) * 2 + 2);
-    
-    relevantSentences.forEach((sentence, sentIndex) => {
-      if (sentence.trim().length > 20) {
-        nodeId++;
-        nodes.push({
-          id: `arg_${nodeId}`,
-          type: "basic_argument",
-          content: sentence.trim(),
-          parentId: mainIdea.id,
-          isExpanded: true,
-          connections: [mainIdea.id]
-        });
-      }
-    });
-  });
-  
-  return {
-    nodes,
-    metadata: {
-      sourceText: text.substring(0, 200) + "...",
-      title: `Analysis of ${title}`,
-      generatedAt: timestamp
-    }
-  };
-}
+
 
 
 
@@ -628,32 +578,45 @@ Please rewrite the text according to the instructions. Return only the rewritten
           break;
       }
 
-      const prompt = `You are creating a CONCEPT LATTICE 1.0 for the following text. Follow these exact specifications:
+      const prompt = `You are a brilliant philosopher and literary analyst. Your task is to create a sophisticated Concept Lattice that reveals the deep intellectual structure of the provided text.
 
-TEXT TO ANALYZE:
+ANALYZE THIS TEXT:
 "${text}"
 
-CONCEPT LATTICE 1.0 SPECIFICATIONS:
-1. **Main Ideas**: Large, centerpiece concepts - complete sentences that capture the core ideas from the text
-2. **Basic Arguments**: Medium font arguments that support the main ideas - complete sentences from the text
-3. **Examples**: Specific examples from the text that illustrate the arguments
-4. **Supporting Quotes**: Actual quotes extracted from the text - always complete sentences in quotes
-5. **Fine-Grained Arguments**: Detailed sub-arguments that support the basic arguments
+CONCEPT LATTICE STRUCTURE REQUIREMENTS:
 
-CRITICAL REQUIREMENTS:
-- Every node must contain COMPLETE SENTENCES, never truncated text
-- All content must be extracted directly from the provided text
-- Each node header must show the full content (no truncation in headers)
-- Create proper hierarchical relationships showing subordination and superordination
-- All nodes except Main Ideas must be expandable and interactive
+1. MAIN IDEAS (1-3 nodes):
+   - These are the fundamental concepts the author is communicating
+   - Complete, meaningful statements that capture the core thesis
+   - NOT random phrases or sentence fragments
+   - What would a scholar identify as the central arguments?
 
-Return ONLY valid JSON in this exact format:
+2. BASIC ARGUMENTS (2-4 per main idea):
+   - Logical reasoning that supports each main idea
+   - How does the author build their case?
+   - What evidence or logic do they present?
+
+3. EXAMPLES (1-2 per basic argument):
+   - Specific instances, cases, or illustrations from the text
+   - Concrete details that demonstrate the argument
+
+4. SUPPORTING QUOTES (1-2 per basic argument):
+   - Direct quotations from the text that reinforce the argument
+   - Actual words from the source material
+
+5. FINE-GRAINED ARGUMENTS (1-2 per basic argument):
+   - Detailed sub-points that elaborate on the basic arguments
+   - Nuanced aspects of the reasoning
+
+CRITICAL: This is intellectual analysis, not text extraction. Think about what the author is actually trying to communicate. What would a professor teaching this text identify as the key concepts?
+
+Return ONLY this JSON structure:
 {
   "nodes": [
     {
       "id": "main_1",
       "type": "main_idea",
-      "content": "Complete sentence stating main idea from text",
+      "content": "A complete intellectual statement of the actual main idea",
       "parentId": null,
       "isExpanded": true,
       "connections": ["basic_1", "basic_2"]
@@ -661,15 +624,15 @@ Return ONLY valid JSON in this exact format:
     {
       "id": "basic_1", 
       "type": "basic_argument",
-      "content": "Complete sentence stating argument from text",
+      "content": "A logical argument supporting the main idea",
       "parentId": "main_1",
       "isExpanded": true,
-      "connections": ["example_1", "quote_1"]
+      "connections": ["example_1", "quote_1", "fine_1"]
     },
     {
       "id": "example_1",
       "type": "example", 
-      "content": "Complete example from the text",
+      "content": "🎯 A specific example from the text",
       "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
@@ -677,20 +640,28 @@ Return ONLY valid JSON in this exact format:
     {
       "id": "quote_1",
       "type": "supporting_quote",
-      "content": "Complete quote from the text",
+      "content": "\"An actual quote from the text\"",
       "parentId": "basic_1", 
+      "isExpanded": true,
+      "connections": []
+    },
+    {
+      "id": "fine_1",
+      "type": "fine_argument",
+      "content": "• A detailed sub-point elaborating on the basic argument",
+      "parentId": "basic_1",
       "isExpanded": true,
       "connections": []
     }
   ],
   "metadata": {
     "sourceText": "${text.substring(0, 200)}...",
-    "title": "${title}",
+    "title": "${title || 'Concept Lattice Analysis'}",
     "generatedAt": "${new Date().toISOString()}"
   }
 }
 
-EXTRACT AND ANALYZE THE ACTUAL CONTENT FROM THE PROVIDED TEXT. Do not create generic examples.`;
+Think like a scholar. What is this text really about? What are the author's main points? How do they build their argument?`;
 
       const response = await generateChatResponse(prompt, "", []);
       
@@ -698,74 +669,35 @@ EXTRACT AND ANALYZE THE ACTUAL CONTENT FROM THE PROVIDED TEXT. Do not create gen
         return res.status(500).json({ error: response.error });
       }
 
+      // Clean the response and parse JSON
+      let cleanedResponse = response.message.trim();
+      
+      // Remove markdown code blocks
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.slice(7);
+      }
+      if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.slice(3);
+      }
+      if (cleanedResponse.endsWith('```')) {
+        cleanedResponse = cleanedResponse.slice(0, -3);
+      }
+      
+      // Try to find JSON in the response if it's embedded in text
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+      
       try {
-        // Clean the response and parse JSON
-        let cleanedResponse = response.message.trim();
-        
-        // Remove markdown code blocks
-        if (cleanedResponse.startsWith('```json')) {
-          cleanedResponse = cleanedResponse.slice(7);
-        }
-        if (cleanedResponse.startsWith('```')) {
-          cleanedResponse = cleanedResponse.slice(3);
-        }
-        if (cleanedResponse.endsWith('```')) {
-          cleanedResponse = cleanedResponse.slice(0, -3);
-        }
-        
-        // Try to find JSON in the response if it's embedded in text
-        const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          cleanedResponse = jsonMatch[0];
-        }
-        
-        console.log('Attempting to parse lattice response:', cleanedResponse.substring(0, 500));
-        
-        // Try to fix malformed JSON by finding the last complete object
-        let latticeData;
-        try {
-          latticeData = JSON.parse(cleanedResponse);
-        } catch (firstError) {
-          // Try to find where the JSON is cut off and reconstruct
-          const lastCompleteObject = cleanedResponse.lastIndexOf('}');
-          if (lastCompleteObject > 0) {
-            const truncatedJson = cleanedResponse.substring(0, lastCompleteObject + 1);
-            try {
-              latticeData = JSON.parse(truncatedJson);
-            } catch (secondError) {
-              // If still failing, create fallback
-              throw new Error('Unable to parse AI response as JSON');
-            }
-          } else {
-            throw new Error('No valid JSON structure found');
-          }
-        }
-        
-        // Validate structure
-        if (!latticeData.nodes || !Array.isArray(latticeData.nodes)) {
-          throw new Error('Invalid lattice structure - missing nodes array');
-        }
-        
-        if (latticeData.nodes.length === 0) {
-          throw new Error('No nodes generated in lattice');
-        }
-
+        const latticeData = JSON.parse(cleanedResponse);
         res.json(latticeData);
       } catch (parseError) {
-        console.error('Failed to parse concept lattice response:', parseError);
-        console.error('Raw response:', response.message.substring(0, 1000));
-        
-        // Create a fallback lattice from the actual text
-        try {
-          console.log('Creating fallback concept lattice from actual text...');
-          const fallbackLattice = createFallbackConceptLattice(text, title || 'Document');
-          res.json(fallbackLattice);
-        } catch (fallbackError) {
-          console.error('Failed to create fallback lattice:', fallbackError);
-          res.status(500).json({ 
-            error: 'Failed to generate concept lattice. Please try selecting a smaller section of text or try again.' 
-          });
-        }
+        console.error('AI response parsing failed:', parseError);
+        console.error('Raw AI response:', response.message);
+        res.status(500).json({ 
+          error: 'AI failed to generate valid concept lattice. Please try again or select different text.' 
+        });
       }
     } catch (error) {
       console.error('Concept lattice generation error:', error);
