@@ -141,74 +141,163 @@ export default function TextSelectionPopup({
     }
   };
 
-  const downloadResponse = async (messageContent: string, messageId: number) => {
+  const downloadResponse = (messageContent: string, messageId: number) => {
     try {
-      console.log('Starting popup download for message:', messageId);
+      // Get the formatted content from the DOM element
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+      let formattedContent = messageContent;
       
-      // Try to find the corresponding message element in the DOM
-      let htmlContent = messageContent;
-      
-      try {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
-        if (messageElement && messageElement.innerHTML && messageElement.innerHTML.trim()) {
-          console.log('Found popup DOM element, extracting HTML content');
-          htmlContent = messageElement.innerHTML;
-        } else {
-          console.log('Popup DOM element not found or empty, using fallback formatting');
-          // Fallback: convert plain text to basic HTML paragraphs
-          htmlContent = messageContent
-            .split('\n\n')
-            .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
-            .filter(p => p)
-            .join('');
-        }
-      } catch (domError) {
-        console.log('Popup DOM query failed, using plain text with formatting:', domError);
-        // Fallback: convert plain text to basic HTML paragraphs
-        htmlContent = messageContent
-          .split('\n\n')
-          .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
-          .filter(p => p)
-          .join('');
+      if (messageElement && messageElement.innerHTML) {
+        formattedContent = messageElement.innerHTML;
       }
 
-      console.log('Sending popup export request with content length:', htmlContent.length);
-
-      const response = await fetch('/api/export-document', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: htmlContent,
-          format: 'pdf',
-          title: `AI Response ${messageId}`
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+      // Open print window with formatted content
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Pop-up blocked. Please allow pop-ups and try again.');
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ai-response-${messageId}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>AI Response - DocMath AI</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+          <style>
+            @page {
+              size: letter;
+              margin: 1in;
+            }
+            body { 
+              font-family: 'Times New Roman', 'Times', serif; 
+              font-size: 12pt;
+              line-height: 1.8;
+              padding: 0;
+              margin: 0;
+              color: #000000;
+              background: #ffffff;
+              text-rendering: optimizeLegibility;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            .katex { 
+              font-size: 1em; 
+              font-family: 'KaTeX_Main', 'Times New Roman', serif;
+            }
+            h1, h2, h3, h4, h5, h6 { 
+              font-family: 'Times New Roman', 'Times', serif;
+              font-weight: bold; 
+              margin: 24pt 0 12pt 0; 
+              page-break-after: avoid;
+              page-break-inside: avoid;
+              text-align: left;
+              text-indent: 0;
+            }
+            h1 { font-size: 16pt; }
+            h2 { font-size: 14pt; }
+            h3 { font-size: 13pt; }
+            h4, h5, h6 { font-size: 12pt; }
+            p { 
+              margin: 0 0 12pt 0;
+              padding: 0;
+              text-align: justify;
+              text-indent: 18pt;
+              orphans: 2;
+              widows: 2;
+              page-break-inside: avoid;
+              word-wrap: break-word;
+              hyphens: auto;
+            }
+            p:first-child,
+            h1 + p,
+            h2 + p,
+            h3 + p,
+            h4 + p,
+            h5 + p,
+            h6 + p {
+              text-indent: 0;
+            }
+            strong, b { 
+              font-weight: bold;
+              font-family: inherit;
+            }
+            em, i { 
+              font-style: italic;
+              font-family: inherit;
+            }
+            .math-display { 
+              text-align: center; 
+              margin: 12pt 0; 
+              text-indent: 0;
+              page-break-inside: avoid;
+            }
+            .math-inline {
+              font-size: inherit;
+              vertical-align: baseline;
+            }
+            ul, ol {
+              margin: 12pt 0;
+              padding-left: 36pt;
+            }
+            li {
+              margin: 6pt 0;
+              text-align: justify;
+            }
+            blockquote {
+              margin: 12pt 36pt;
+              font-style: italic;
+              border-left: none;
+              padding-left: 0;
+            }
+            @media print {
+              body { 
+                margin: 0; 
+                padding: 0;
+                font-size: 12pt !important;
+              }
+              .no-print { display: none !important; }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+            }
+            @media screen {
+              body {
+                padding: 1in;
+                max-width: 8.5in;
+                margin: 0 auto;
+                background: #ffffff;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div>${formattedContent}</div>
+          <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+          <script>
+            // Auto-print when page loads
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
 
       toast({
-        title: "Success",
-        description: "AI response downloaded as PDF"
+        title: "Print Ready",
+        description: "Print dialog opened - save as PDF from print options"
       });
     } catch (error) {
-      console.error('Download error:', error);
+      console.error('Print error:', error);
       toast({
         title: "Error",
-        description: "Failed to download response",
+        description: error instanceof Error ? error.message : "Failed to open print dialog",
         variant: "destructive"
       });
     }
