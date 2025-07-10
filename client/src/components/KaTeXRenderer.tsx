@@ -32,16 +32,16 @@ function cleanMarkdownFormatting(text: string): string {
 function renderMathContent(content: string): string {
   let processedContent = cleanMarkdownFormatting(content);
   
-  // Preserve paragraph structure by converting double line breaks to paragraph tags
+  // Preserve paragraph structure by converting double line breaks to paragraph tags with proper indentation
   processedContent = processedContent
-    .replace(/\n\n+/g, '</p><p>') // Convert paragraph breaks
+    .replace(/\n\n+/g, '</p><p style="text-indent: 2em; margin-bottom: 1em;">') // Convert paragraph breaks with indentation
     .replace(/\n/g, '<br>'); // Convert remaining line breaks
   
-  // Wrap in paragraph tags
+  // Wrap in paragraph tags with indentation
   if (processedContent.length > 0) {
-    processedContent = '<p>' + processedContent + '</p>';
+    processedContent = '<p style="text-indent: 2em; margin-bottom: 1em;">' + processedContent + '</p>';
     // Clean up empty paragraphs
-    processedContent = processedContent.replace(/<p><\/p>/g, '');
+    processedContent = processedContent.replace(/<p[^>]*><\/p>/g, '');
   }
   
   // Enhanced math rendering with better fallbacks
