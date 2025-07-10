@@ -10,6 +10,7 @@ import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Set
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
+import TextSelectionPopup from "@/components/TextSelectionPopup";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -59,6 +60,11 @@ export default function ComparePage() {
   const [documentChunksA, setDocumentChunksA] = useState<any>(null);
   const [documentChunksB, setDocumentChunksB] = useState<any>(null);
   
+  // Text Selection State
+  const [showSelectionPopup, setShowSelectionPopup] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionDocument, setSelectionDocument] = useState<string>("");
+  
   // Synthesis Modal State
   const [showSynthesisModal, setShowSynthesisModal] = useState(false);
   const [chunksA, setChunksA] = useState<DocumentChunk[]>([]);
@@ -71,6 +77,19 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Text selection handler
+  const handleTextSelection = useCallback((docTitle: string) => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      const text = selection.toString().trim();
+      if (text.length > 10) { // Only show popup for meaningful selections
+        setSelectedText(text);
+        setSelectionDocument(docTitle);
+        setShowSelectionPopup(true);
+      }
+    }
+  }, []);
 
   // Simple client-side chunking function for compare page
   const chunkDocumentClient = (content: string, maxWords: number = 1000) => {
@@ -686,7 +705,11 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
-                <div className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed">
+                <div 
+                  className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
+                  onMouseUp={() => handleTextSelection(`Document ${column}`)}
+                  onTouchEnd={() => handleTextSelection(`Document ${column}`)}
+                >
                   <KaTeXRenderer 
                     content={doc.content} 
                     className="text-sm leading-6 text-gray-900 dark:text-gray-100" 
@@ -1129,6 +1152,14 @@ export default function ComparePage() {
             </div>
           </div>
         )}
+
+        {/* Text Selection Popup */}
+        <TextSelectionPopup
+          isOpen={showSelectionPopup}
+          onClose={() => setShowSelectionPopup(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
       </div>
     </div>
   );
