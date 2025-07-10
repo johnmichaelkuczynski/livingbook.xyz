@@ -67,6 +67,7 @@ export default function ComparePage() {
   const [useChatData, setUseChatData] = useState(false);
   const [synthesizedContent, setSynthesizedContent] = useState<string>("");
   const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false);
+  const [synthesisInstructions, setSynthesisInstructions] = useState<string>("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -453,15 +454,14 @@ export default function ComparePage() {
         description: "Creating synthesis... This may take 30-60 seconds."
       });
 
-      // Prepare chunk pairs with selected chunks
-      const processedPairs = chunkPairs.map(pair => ({
-        chunkAIndexes: chunksA.filter(c => c.selected).map(c => c.chunkIndex),
-        chunkBIndexes: chunksB.filter(c => c.selected).map(c => c.chunkIndex),
-        instructions: pair.instructions
-      }));
+      // Prepare synthesis request with selected chunks and custom instructions
+      const selectedChunksA = chunksA.filter(c => c.selected).map(c => c.chunkIndex);
+      const selectedChunksB = chunksB.filter(c => c.selected).map(c => c.chunkIndex);
 
       console.log('Sending synthesis request:', {
-        chunkPairs: processedPairs,
+        chunkAIndexes: selectedChunksA,
+        chunkBIndexes: selectedChunksB,
+        instructions: synthesisInstructions,
         useChatData,
         provider,
         sessionId,
@@ -475,7 +475,9 @@ export default function ComparePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chunkPairs: processedPairs,
+          chunkAIndexes: selectedChunksA,
+          chunkBIndexes: selectedChunksB,
+          instructions: synthesisInstructions,
           useChatData,
           provider,
           sessionId,
@@ -1073,45 +1075,22 @@ export default function ComparePage() {
                   </div>
                 )}
 
-                {/* Chunk Pairs Section */}
+                {/* Synthesis Instructions Section */}
                 <div className="border-t border-gray-200 dark:border-gray-600 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
                       Synthesis Instructions
                     </h3>
-                    <Button onClick={addChunkPair} size="sm" className="flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      Add Instruction Set
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {chunkPairs.map((pair) => (
-                      <div key={pair.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                            Instruction Set #{chunkPairs.indexOf(pair) + 1}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeChunkPair(pair.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <Textarea
-                          placeholder="Enter synthesis instructions for selected chunks..."
-                          value={pair.instructions}
-                          onChange={(e) => updateChunkPair(pair.id, { instructions: e.target.value })}
-                          className="mb-3"
-                          rows={3}
-                        />
-                        <div className="text-xs text-gray-500">
-                          Selected: {chunksA.filter(c => c.selected).length} from Doc A, {chunksB.filter(c => c.selected).length} from Doc B
-                        </div>
-                      </div>
-                    ))}
+                    <Textarea
+                      value={synthesisInstructions}
+                      onChange={(e) => setSynthesisInstructions(e.target.value)}
+                      placeholder="Type your custom synthesis instructions here... For example: 'Create a unified summary that combines the main arguments from both documents' or 'Write a comparative analysis highlighting the differences in approach'"
+                      className="min-h-[120px] resize-vertical"
+                      disabled={isGeneratingSynthesis}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Enter exactly what you want the AI to do with the selected content from both documents.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1119,7 +1098,7 @@ export default function ComparePage() {
               {/* Modal Footer */}
               <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-600">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {chunkPairs.length} instruction sets • Chat context: {useChatData ? 'Enabled' : 'Disabled'}
+                  Selected: {chunksA.filter(c => c.selected).length} from Doc A, {chunksB.filter(c => c.selected).length} from Doc B • Chat context: {useChatData ? 'Enabled' : 'Disabled'}
                 </div>
                 <div className="flex gap-3">
                   <Button
@@ -1131,7 +1110,7 @@ export default function ComparePage() {
                   <Button
                     onClick={generateSynthesis}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-                    disabled={chunkPairs.length === 0 || isGeneratingSynthesis}
+                    disabled={!synthesisInstructions.trim() || isGeneratingSynthesis}
                   >
                     {isGeneratingSynthesis ? (
                       <>
