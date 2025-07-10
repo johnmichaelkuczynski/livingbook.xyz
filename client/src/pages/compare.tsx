@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { UserHeader } from "@/components/UserHeader";
+
 import KaTeXRenderer from "@/components/KaTeXRenderer";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
 

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
-import session from "express-session";
+
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
 import { chunkDocument } from "./services/documentChunker";
@@ -12,7 +12,7 @@ import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
-import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema, insertUserSchema } from "@shared/schema";
+import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema } from "@shared/schema";
 
 // Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
@@ -68,109 +68,8 @@ const upload = multer({
   }
 });
 
-// Extend session data interface
-declare module 'express-session' {
-  interface SessionData {
-    userId?: number;
-    userEmail?: string;
-  }
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'dev-secret-key-please-change-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-      secure: false, // Set to true in production with HTTPS
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    }
-  }));
 
-  // Authentication middleware
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    next();
-  };
-
-  // Login route - email only, no password
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: "Invalid email format" });
-      }
-
-      // Try to find existing user
-      let user = await storage.getUserByEmail(email);
-      
-      // If user doesn't exist, create them
-      if (!user) {
-        const validatedUser = insertUserSchema.parse({ email });
-        user = await storage.createUser(validatedUser);
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.userEmail = user.email;
-
-      res.json({ 
-        user: { 
-          id: user.id, 
-          email: user.email,
-          createdAt: user.createdAt
-        } 
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
-
-  // Logout route
-  app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: "Logout failed" });
-      }
-      res.clearCookie('connect.sid');
-      res.json({ message: "Logged out successfully" });
-    });
-  });
-
-  // Get current user
-  app.get("/api/auth/user", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    try {
-      const user = await storage.getUser(req.session.userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      res.json({ 
-        id: user.id, 
-        email: user.email,
-        createdAt: user.createdAt
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ error: "Failed to get user" });
-    }
-  });
   
   // Create document from text content (AI response conversion)
   app.post("/api/documents/create-from-text", async (req, res) => {
