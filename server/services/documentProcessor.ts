@@ -1,58 +1,88 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-// For PDF processing - convert to properly formatted HTML
+// For PDF processing - use PDF.js for proper structure extraction
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
-    const pdfParse = await import('pdf-parse');
+    // Use pdfjs-dist for better structure preservation
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js');
     const buffer = await fs.readFile(filePath);
-    const data = await pdfParse.default(buffer);
     
-    // Convert PDF text to HTML with proper paragraph structure
-    let formattedText = data.text
-      // Fix hyphenated words split across lines
-      .replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
-      // Remove unwanted line breaks within sentences
-      .replace(/([a-z,])\s*\n+\s*([a-z])/g, '$1 $2')
-      // Clean excessive spaces
-      .replace(/[ \t]+/g, ' ')
-      // Remove page numbers and headers
-      .replace(/^\s*\d+\s*$/gm, '')
-      .replace(/^\s*[A-Z\s]{1,20}\s*$/gm, '')
-      .trim();
+    // Load PDF document
+    const pdf = await pdfjs.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true
+    }).promise;
     
-    // FORCE paragraph breaks every few sentences to create readable structure
-    // Split text into sentences first
-    const sentences = formattedText.match(/[^.!?]*[.!?]+[^.!?]*/g) || [formattedText];
+    let fullText = '';
     
-    // Group sentences into paragraphs (every 3-4 sentences)
-    const paragraphs = [];
-    for (let i = 0; i < sentences.length; i += 3) {
-      const paragraphText = sentences.slice(i, i + 3).join(' ').trim();
-      if (paragraphText.length > 0) {
-        paragraphs.push(paragraphText);
+    // Extract text from each page with positioning info
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      
+      let pageText = '';
+      let lastY = 0;
+      
+      for (const item of textContent.items) {
+        if ('str' in item && 'transform' in item) {
+          const currentY = item.transform[5];
+          
+          // Detect paragraph breaks based on vertical spacing
+          if (lastY > 0 && Math.abs(lastY - currentY) > 15) {
+            pageText += '\n\n';
+          }
+          
+          pageText += item.str + ' ';
+          lastY = currentY;
+        }
       }
+      
+      fullText += pageText + '\n\n';
     }
     
-    let htmlContent = paragraphs
-      .filter(para => para.trim().length > 0)
+    // Convert to proper HTML with paragraph structure
+    const paragraphs = fullText.split(/\n\s*\n/);
+    
+    const htmlContent = paragraphs
+      .filter(para => para.trim().length > 20) // Filter out short fragments
       .map(para => {
         const cleanPara = para.replace(/\s+/g, ' ').trim();
         
-        // Detect headings (all caps or short lines)
-        if (cleanPara.length < 100 && (cleanPara === cleanPara.toUpperCase() || cleanPara.match(/^[A-Z][^.]*$/))) {
-          return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.5em 0 1em 0; text-align: center;">${cleanPara}</h2>`;
+        // Detect headings based on length and capitalization
+        if (cleanPara.length < 80 && (
+          cleanPara === cleanPara.toUpperCase() || 
+          cleanPara.match(/^[A-Z][^.]*$/) ||
+          cleanPara.split(' ').length < 10
+        )) {
+          return `<h2 style="font-size: 1.4em; font-weight: bold; margin: 2em 0 1em 0; text-align: left;">${cleanPara}</h2>`;
         }
         
-        // Regular paragraphs with forced spacing and clear breaks
-        return `<p style="margin-bottom: 2em; text-indent: 2em; text-align: justify; line-height: 1.6; display: block; clear: both;">${cleanPara}</p>`;
+        // Regular paragraphs
+        return `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
       })
       .join('');
     
     return htmlContent;
   } catch (error) {
-    console.error('PDF parsing error:', error);
-    throw new Error(`Failed to extract text from PDF: ${error}`);
+    console.error('PDF.js parsing error:', error);
+    // Fallback to pdf-parse if PDF.js fails
+    const pdfParse = await import('pdf-parse');
+    const buffer = await fs.readFile(filePath);
+    const data = await pdfParse.default(buffer);
+    
+    // Simple paragraph creation as fallback
+    const sentences = data.text.match(/[^.!?]*[.!?]+/g) || [data.text];
+    const paragraphs = [];
+    
+    for (let i = 0; i < sentences.length; i += 4) {
+      const chunk = sentences.slice(i, i + 4).join(' ').trim();
+      if (chunk.length > 0) {
+        paragraphs.push(`<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${chunk}</p>`);
+      }
+    }
+    
+    return paragraphs.join('');
   }
 }
 
@@ -65,49 +95,64 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
     // Extract HTML to preserve ALL formatting
     const result = await mammoth.convertToHtml({ buffer });
     
-    // If no proper HTML structure exists, force paragraph creation
-    if (!result.value.includes('<p>') && !result.value.includes('<h1>') && !result.value.includes('<h2>')) {
-      // Convert plain text to proper HTML paragraphs
-      const paragraphs = result.value.split(/\n\s*\n/);
-      result.value = paragraphs
-        .filter(para => para.trim().length > 0)
-        .map(para => `<p>${para.trim()}</p>`)
-        .join('');
-    }
-
-    // Clean and enhance HTML while preserving structure
-    let formattedHtml = result.value
-      // Remove any invalid control characters that could cause parsing errors
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-      // Ensure paragraphs have STRONG visual separation
-      .replace(/<p>/gi, '<p style="margin-bottom: 2em; text-indent: 2em; text-align: justify; line-height: 1.6; display: block; clear: both;">')
-      // Style headings appropriately with strong margins
-      .replace(/<h1>/gi, '<h1 style="font-size: 1.8em; font-weight: bold; margin: 2em 0 1.5em 0; text-align: center; display: block;">')
-      .replace(/<h2>/gi, '<h2 style="font-size: 1.5em; font-weight: bold; margin: 2em 0 1em 0; display: block;">')
-      .replace(/<h3>/gi, '<h3 style="font-size: 1.3em; font-weight: bold; margin: 1.5em 0 0.8em 0; display: block;">')
-      // Style lists with proper indentation and spacing
-      .replace(/<ul>/gi, '<ul style="margin: 1.5em 0; padding-left: 2em; display: block;">')
-      .replace(/<ol>/gi, '<ol style="margin: 1.5em 0; padding-left: 2em; display: block;">')
-      .replace(/<li>/gi, '<li style="margin-bottom: 0.8em; display: list-item;">')
-      // Preserve bold and italic formatting
-      .replace(/<strong>/gi, '<strong style="font-weight: bold;">')
-      .replace(/<em>/gi, '<em style="font-style: italic;">')
-      .replace(/<b>/gi, '<b style="font-weight: bold;">')
-      .replace(/<i>/gi, '<i style="font-style: italic;">')
-      // Clean up entities but preserve HTML
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      // Remove empty paragraphs
-      .replace(/<p[^>]*>\s*<\/p>/gi, '')
-      // Fix any potential malformed tags
-      .replace(/<([^>]+)(?![>])/g, '<$1>')
-      .trim();
+    console.log('Raw mammoth output length:', result.value.length);
+    console.log('Raw mammoth sample:', result.value.substring(0, 500));
     
-    // Return HTML instead of plain text
-    return formattedHtml;
+    // Extract raw text if mammoth only gives us plain text
+    let htmlContent = result.value;
+    
+    // If mammoth didn't generate proper HTML, create it from the text
+    if (!htmlContent.includes('<p>') || htmlContent.replace(/<[^>]*>/g, '').length === htmlContent.length) {
+      console.log('Converting plain text to HTML...');
+      const plainText = htmlContent.replace(/<[^>]*>/g, '');
+      const paragraphs = plainText.split(/\n\s*\n/);
+      
+      htmlContent = paragraphs
+        .filter(para => para.trim().length > 10)
+        .map(para => {
+          const cleanPara = para.replace(/\s+/g, ' ').trim();
+          
+          // Detect headings
+          if (cleanPara.length < 100 && !cleanPara.endsWith('.')) {
+            return `<h2 style="font-size: 1.4em; font-weight: bold; margin: 2em 0 1em 0;">${cleanPara}</h2>`;
+          }
+          
+          return `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+        })
+        .join('');
+    } else {
+      // Clean and enhance existing HTML
+      htmlContent = htmlContent
+        // Remove invalid characters
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Style paragraphs
+        .replace(/<p([^>]*)>/gi, '<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">')
+        // Style headings
+        .replace(/<h1([^>]*)>/gi, '<h1 style="font-size: 1.6em; font-weight: bold; margin: 2em 0 1em 0;">')
+        .replace(/<h2([^>]*)>/gi, '<h2 style="font-size: 1.4em; font-weight: bold; margin: 1.8em 0 0.8em 0;">')
+        .replace(/<h3([^>]*)>/gi, '<h3 style="font-size: 1.2em; font-weight: bold; margin: 1.5em 0 0.6em 0;">')
+        // Style lists
+        .replace(/<ul([^>]*)>/gi, '<ul style="margin: 1em 0; padding-left: 2em;">')
+        .replace(/<ol([^>]*)>/gi, '<ol style="margin: 1em 0; padding-left: 2em;">')
+        .replace(/<li([^>]*)>/gi, '<li style="margin-bottom: 0.5em;">')
+        // Ensure bold/italic are preserved
+        .replace(/<strong([^>]*)>/gi, '<strong style="font-weight: bold;">')
+        .replace(/<em([^>]*)>/gi, '<em style="font-style: italic;">')
+        .replace(/<b([^>]*)>/gi, '<b style="font-weight: bold;">')
+        .replace(/<i([^>]*)>/gi, '<i style="font-style: italic;">')
+        // Clean up entities
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .trim();
+    }
+    
+    console.log('Final HTML length:', htmlContent.length);
+    console.log('Final HTML sample:', htmlContent.substring(0, 500));
+    
+    return htmlContent;
   } catch (error) {
     console.error('DOCX parsing error:', error);
     throw new Error(`Failed to extract text from DOCX: ${error}`);

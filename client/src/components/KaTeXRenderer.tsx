@@ -131,6 +131,9 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
   // Check if content is HTML (contains tags) or plain text
   const isHtml = content.includes('<') && content.includes('>');
   
+  console.log('KaTeXRenderer received content:', content.substring(0, 200) + '...');
+  console.log('Is HTML detected:', isHtml);
+  
   if (isHtml) {
     // Sanitize HTML content to prevent XSS while preserving formatting
     const sanitizedContent = content
@@ -140,6 +143,8 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
       .replace(/<script[^>]*>.*?<\/script>/gi, '')
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
       .replace(/javascript:/gi, '');
+    
+    console.log('Sanitized HTML:', sanitizedContent.substring(0, 200) + '...');
     
     // Use dangerouslySetInnerHTML to force HTML rendering
     return (
