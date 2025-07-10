@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import parse from 'html-react-parser';
 
 interface KaTeXRendererProps {
   content: string;
@@ -127,6 +128,26 @@ function renderMathContent(content: string): string {
 }
 
 export default function KaTeXRenderer({ content, className = '' }: KaTeXRendererProps) {
+  // Check if content is HTML (contains tags) or plain text
+  const isHtml = content.includes('<') && content.includes('>');
+  
+  if (isHtml) {
+    // Parse and render HTML directly with all formatting preserved
+    return (
+      <div 
+        className={`prose prose-lg max-w-none ${className}`}
+        style={{ 
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          fontFamily: 'Georgia, "Times New Roman", serif'
+        }}
+      >
+        {parse(content)}
+      </div>
+    );
+  }
+  
+  // Fallback for plain text - use legacy renderer
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
