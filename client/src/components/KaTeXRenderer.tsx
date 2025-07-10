@@ -5,9 +5,15 @@ interface KaTeXRendererProps {
   className?: string;
 }
 
-// Helper function to clean markdown formatting
+// Helper function to clean markdown formatting and metadata
 function cleanMarkdownFormatting(text: string): string {
   return text
+    // Remove file type metadata at start of document
+    .replace(/^APPLICATION\/VND\.OPENXMLFORMATS-OFFICEDOCUMENT\.WORDPROCESSINGML\.DOCUMENT\s*/i, '')
+    .replace(/^APPLICATION\/VND\.OPENXML[^\s]*\s*/i, '')
+    .replace(/^APPLICATION\/[A-Z\-\.]+\s*/i, '')
+    .replace(/^[A-Z]+\/[A-Z\-\.]+\s*/gm, '') // Remove any MIME type lines
+    // Remove markdown formatting
     .replace(/\*\*/g, '')         // Remove bold markdown
     .replace(/\*/g, '')           // Remove italic markdown  
     .replace(/#{1,6}\s?/g, '')    // Remove headers

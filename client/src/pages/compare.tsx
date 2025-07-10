@@ -686,10 +686,10 @@ export default function ComparePage() {
                 <Badge variant="secondary">{doc.fileType.toUpperCase()}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
-                <div className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-tight">
+                <div className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed">
                   <KaTeXRenderer 
                     content={doc.content} 
-                    className="text-xs leading-5 text-gray-900 dark:text-gray-100" 
+                    className="text-sm leading-6 text-gray-900 dark:text-gray-100" 
                   />
                 </div>
               </div>
@@ -847,7 +847,7 @@ export default function ComparePage() {
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[95%] p-2 rounded-lg text-xs leading-tight ${
+                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
