@@ -142,12 +142,15 @@ export default function TextSelectionPopup({
   };
 
   const downloadAsTxt = (content: string, messageId: number) => {
+    if (typeof window === 'undefined') return;
+    
     const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-    const blob = new Blob([cleanContent], { type: 'text/plain' });
+    const blob = new Blob([cleanContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `ai-response-${messageId}.txt`;
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -155,25 +158,36 @@ export default function TextSelectionPopup({
   };
 
   const downloadAsWord = (content: string, messageId: number) => {
-    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-    const htmlContent = `
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>AI Response ${messageId}</title>
-        </head>
-        <body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;">
-          <h1>AI Response - DocMath AI</h1>
-          <div>${cleanContent.replace(/\n/g, '<br>')}</div>
-        </body>
-      </html>
-    `;
+    if (typeof window === 'undefined') return;
     
-    const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI Response ${messageId}</title>
+  <style>
+    body { 
+      font-family: 'Times New Roman', serif; 
+      font-size: 12pt; 
+      line-height: 1.6; 
+      margin: 1in; 
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Response - DocMath AI</h1>
+  <div>${cleanContent.replace(/\n/g, '<br>')}</div>
+</body>
+</html>`;
+    
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ai-response-${messageId}.docx`;
+    a.download = `ai-response-${messageId}.html`;
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -230,7 +244,16 @@ export default function TextSelectionPopup({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => downloadAsTxt(message.content, message.id)}
+                              onClick={() => {
+                                const cleanContent = message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+                                const element = document.createElement('a');
+                                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(cleanContent));
+                                element.setAttribute('download', `ai-response-${message.id}.txt`);
+                                element.style.display = 'none';
+                                document.body.appendChild(element);
+                                element.click();
+                                document.body.removeChild(element);
+                              }}
                               className="h-6 px-2 text-xs"
                             >
                               <Download className="w-3 h-3 mr-1" />
@@ -239,11 +262,21 @@ export default function TextSelectionPopup({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => downloadAsWord(message.content, message.id)}
+                              onClick={() => {
+                                const cleanContent = message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+                                const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Response</title></head><body style="font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.6; margin: 1in;"><h1>AI Response - DocMath AI</h1><div>${cleanContent.replace(/\n/g, '<br>')}</div></body></html>`;
+                                const element = document.createElement('a');
+                                element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+                                element.setAttribute('download', `ai-response-${message.id}.html`);
+                                element.style.display = 'none';
+                                document.body.appendChild(element);
+                                element.click();
+                                document.body.removeChild(element);
+                              }}
                               className="h-6 px-2 text-xs"
                             >
                               <Download className="w-3 h-3 mr-1" />
-                              Word
+                              HTML
                             </Button>
                           </div>
                           <div className="text-gray-800 leading-relaxed">
