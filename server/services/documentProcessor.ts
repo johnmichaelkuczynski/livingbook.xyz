@@ -21,21 +21,31 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
       .replace(/^\s*[A-Z\s]{1,20}\s*$/gm, '')
       .trim();
     
-    // Convert to HTML with proper paragraph structure
-    const paragraphs = formattedText.split(/\n\s*\n/);
+    // FORCE paragraph breaks every few sentences to create readable structure
+    // Split text into sentences first
+    const sentences = formattedText.match(/[^.!?]*[.!?]+[^.!?]*/g) || [formattedText];
+    
+    // Group sentences into paragraphs (every 3-4 sentences)
+    const paragraphs = [];
+    for (let i = 0; i < sentences.length; i += 3) {
+      const paragraphText = sentences.slice(i, i + 3).join(' ').trim();
+      if (paragraphText.length > 0) {
+        paragraphs.push(paragraphText);
+      }
+    }
     
     let htmlContent = paragraphs
       .filter(para => para.trim().length > 0)
       .map(para => {
-        const cleanPara = para.replace(/\n/g, ' ').trim();
+        const cleanPara = para.replace(/\s+/g, ' ').trim();
         
         // Detect headings (all caps or short lines)
         if (cleanPara.length < 100 && (cleanPara === cleanPara.toUpperCase() || cleanPara.match(/^[A-Z][^.]*$/))) {
           return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.5em 0 1em 0; text-align: center;">${cleanPara}</h2>`;
         }
         
-        // Regular paragraphs
-        return `<p style="margin-bottom: 1.2em; text-indent: 2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+        // Regular paragraphs with forced spacing and clear breaks
+        return `<p style="margin-bottom: 2em; text-indent: 2em; text-align: justify; line-height: 1.6; display: block; clear: both;">${cleanPara}</p>`;
       })
       .join('');
     
@@ -55,20 +65,35 @@ async function extractTextFromDOCX(filePath: string): Promise<string> {
     // Extract HTML to preserve ALL formatting
     const result = await mammoth.convertToHtml({ buffer });
     
+    // If no proper HTML structure exists, force paragraph creation
+    if (!result.value.includes('<p>') && !result.value.includes('<h1>') && !result.value.includes('<h2>')) {
+      // Convert plain text to proper HTML paragraphs
+      const paragraphs = result.value.split(/\n\s*\n/);
+      result.value = paragraphs
+        .filter(para => para.trim().length > 0)
+        .map(para => `<p>${para.trim()}</p>`)
+        .join('');
+    }
+
     // Clean and enhance HTML while preserving structure
     let formattedHtml = result.value
       // Remove any invalid control characters that could cause parsing errors
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-      // Ensure paragraphs have proper styling
-      .replace(/<p>/gi, '<p style="margin-bottom: 1.2em; text-indent: 2em; text-align: justify; line-height: 1.6;">')
-      // Style headings appropriately
-      .replace(/<h1>/gi, '<h1 style="font-size: 1.8em; font-weight: bold; margin: 1.5em 0 1em 0; text-align: center;">')
-      .replace(/<h2>/gi, '<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.3em 0 0.8em 0;">')
-      .replace(/<h3>/gi, '<h3 style="font-size: 1.3em; font-weight: bold; margin: 1.2em 0 0.6em 0;">')
-      // Style lists with proper indentation
-      .replace(/<ul>/gi, '<ul style="margin: 1em 0; padding-left: 2em;">')
-      .replace(/<ol>/gi, '<ol style="margin: 1em 0; padding-left: 2em;">')
-      .replace(/<li>/gi, '<li style="margin-bottom: 0.5em;">')
+      // Ensure paragraphs have STRONG visual separation
+      .replace(/<p>/gi, '<p style="margin-bottom: 2em; text-indent: 2em; text-align: justify; line-height: 1.6; display: block; clear: both;">')
+      // Style headings appropriately with strong margins
+      .replace(/<h1>/gi, '<h1 style="font-size: 1.8em; font-weight: bold; margin: 2em 0 1.5em 0; text-align: center; display: block;">')
+      .replace(/<h2>/gi, '<h2 style="font-size: 1.5em; font-weight: bold; margin: 2em 0 1em 0; display: block;">')
+      .replace(/<h3>/gi, '<h3 style="font-size: 1.3em; font-weight: bold; margin: 1.5em 0 0.8em 0; display: block;">')
+      // Style lists with proper indentation and spacing
+      .replace(/<ul>/gi, '<ul style="margin: 1.5em 0; padding-left: 2em; display: block;">')
+      .replace(/<ol>/gi, '<ol style="margin: 1.5em 0; padding-left: 2em; display: block;">')
+      .replace(/<li>/gi, '<li style="margin-bottom: 0.8em; display: list-item;">')
+      // Preserve bold and italic formatting
+      .replace(/<strong>/gi, '<strong style="font-weight: bold;">')
+      .replace(/<em>/gi, '<em style="font-style: italic;">')
+      .replace(/<b>/gi, '<b style="font-weight: bold;">')
+      .replace(/<i>/gi, '<i style="font-style: italic;">')
       // Clean up entities but preserve HTML
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
@@ -94,21 +119,30 @@ async function extractTextFromTXT(filePath: string): Promise<string> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     
-    // Convert text to HTML preserving paragraph structure
-    const paragraphs = content.trim().split(/\n\s*\n/);
+    // Force paragraph breaks every few sentences for TXT files too
+    const sentences = content.trim().match(/[^.!?]*[.!?]+[^.!?]*/g) || [content.trim()];
+    
+    // Group sentences into paragraphs (every 3-4 sentences)
+    const paragraphs = [];
+    for (let i = 0; i < sentences.length; i += 3) {
+      const paragraphText = sentences.slice(i, i + 3).join(' ').trim();
+      if (paragraphText.length > 0) {
+        paragraphs.push(paragraphText);
+      }
+    }
     
     const htmlContent = paragraphs
       .filter(para => para.trim().length > 0)
       .map(para => {
-        const cleanPara = para.replace(/\n/g, ' ').trim();
+        const cleanPara = para.replace(/\s+/g, ' ').trim();
         
         // Detect headings (lines that are short and don't end with punctuation)
         if (cleanPara.length < 100 && !cleanPara.match(/[.!?]$/)) {
-          return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.5em 0 1em 0;">${cleanPara}</h2>`;
+          return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 2em 0 1em 0; display: block;">${cleanPara}</h2>`;
         }
         
-        // Regular paragraphs
-        return `<p style="margin-bottom: 1.2em; text-indent: 2em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
+        // Regular paragraphs with strong visual separation
+        return `<p style="margin-bottom: 2em; text-indent: 2em; text-align: justify; line-height: 1.6; display: block; clear: both;">${cleanPara}</p>`;
       })
       .join('');
     
