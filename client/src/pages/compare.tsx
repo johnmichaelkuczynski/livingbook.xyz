@@ -624,15 +624,15 @@ export default function ComparePage() {
     const dragActive = column === 'A' ? dragActiveA : dragActiveB;
     
     return (
-    <div className="h-full">
-      <Card className="h-full flex flex-col">
-        <CardHeader className="flex-shrink-0">
+    <div className="flex-1">
+      <Card className="h-[800px] flex flex-col">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col min-h-0">
+        <CardContent className="flex-1 flex flex-col">
           {!doc ? (
             <Tabs 
               value={inputMode} 
@@ -783,7 +783,7 @@ export default function ComparePage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-0">
+              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
                 <div 
                   className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
                   onMouseUp={() => handleTextSelection(`Document ${column}`)}
@@ -856,9 +856,9 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 h-[calc(100vh-200px)] pb-32">
-          {/* Document A - Takes 2/6 - INDEPENDENT SCROLLING */}
-          <div className="lg:col-span-2 h-full overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
+          {/* Document A - Takes 2/6 */}
+          <div className="lg:col-span-2">
             <DocumentColumn
               title="Document A"
               document={documentA}
@@ -867,8 +867,8 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* Document B - Takes 2/6 - INDEPENDENT SCROLLING */}
-          <div className="lg:col-span-2 h-full overflow-hidden">
+          {/* Document B - Takes 2/6 */}
+          <div className="lg:col-span-2">
             <DocumentColumn
               title="Document B"
               document={documentB}
@@ -877,10 +877,10 @@ export default function ComparePage() {
             />
           </div>
           
-          {/* AI Chat Column - Takes 2/6 - INDEPENDENT SCROLLING */}
-          <div className="lg:col-span-2 h-full overflow-hidden">
-            <Card className="h-full flex flex-col">
-              <CardHeader className="flex-shrink-0">
+          {/* AI Chat Column - Takes 2/6 (much wider) */}
+          <div className="lg:col-span-2">
+            <Card className="h-[800px] flex flex-col">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <MessageSquare className="w-4 h-4" />
                   AI Comparison Chat
@@ -892,7 +892,7 @@ export default function ComparePage() {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4 min-h-0">
+              <CardContent className="flex-1 flex flex-col space-y-4">
                 {!documentA && !documentB && (
                   <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-center text-sm">
                     Upload documents to start AI comparison chat
@@ -900,9 +900,9 @@ export default function ComparePage() {
                 )}
                 
                 {(documentA || documentB) && (
-                  <div className="flex-1 overflow-y-auto space-y-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="flex-1 overflow-y-auto space-y-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800 h-[600px] mb-4">
                     {messages.length === 0 ? (
-                      <div className="text-center py-8">
+                      <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400 text-sm">
                           Ask AI to compare your documents!
                         </p>
