@@ -450,9 +450,7 @@ Please rewrite the text according to the instructions. Return only the rewritten
           <body>
             <div class="header">${title || 'AI Response'}</div>
             <div class="content">
-              ${content.split('\n\n').map(paragraph => 
-                paragraph.trim() ? `<p>${paragraph.trim().replace(/\n/g, ' ')}</p>` : ''
-              ).filter(p => p).join('')}
+              ${content}
             </div>
             <script>
               document.addEventListener("DOMContentLoaded", function() {

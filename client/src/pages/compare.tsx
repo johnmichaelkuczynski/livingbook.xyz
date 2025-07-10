@@ -548,13 +548,29 @@ export default function ComparePage() {
 
   const downloadComparisonResponse = async (messageContent: string, messageId: number) => {
     try {
+      // Find the corresponding message element in the DOM to get the formatted HTML
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+      let htmlContent = messageContent;
+      
+      if (messageElement) {
+        // Get the formatted HTML content from the rendered message
+        htmlContent = messageElement.innerHTML;
+      } else {
+        // Fallback: convert plain text to basic HTML paragraphs
+        htmlContent = messageContent
+          .split('\n\n')
+          .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
+          .filter(p => p)
+          .join('');
+      }
+
       const response = await fetch('/api/export-document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: messageContent,
+          content: htmlContent,
           format: 'pdf',
           title: `Comparison AI Response ${messageId}`
         }),
@@ -914,13 +930,13 @@ export default function ComparePage() {
                       </div>
                     ) : (
                       messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
+                        <div key={msg.id} data-message-id={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
                           <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed relative ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                           }`}>
-                            <KaTeXRenderer content={msg.content} />
+                            <KaTeXRenderer content={msg.content} className="prose" />
                             {msg.role === 'assistant' && (
                               <Button
                                 variant="ghost"

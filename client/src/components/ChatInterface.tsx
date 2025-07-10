@@ -97,13 +97,29 @@ export default function ChatInterface({ document, showInputInline = true, onMess
 
   const downloadResponse = async (messageContent: string, messageId: number) => {
     try {
+      // Find the corresponding message element in the DOM to get the formatted HTML
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+      let htmlContent = messageContent;
+      
+      if (messageElement) {
+        // Get the formatted HTML content from the rendered message
+        htmlContent = messageElement.innerHTML;
+      } else {
+        // Fallback: convert plain text to basic HTML paragraphs
+        htmlContent = messageContent
+          .split('\n\n')
+          .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
+          .filter(p => p)
+          .join('');
+      }
+
       const response = await fetch('/api/export-document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: messageContent,
+          content: htmlContent,
           format: 'pdf',
           title: `AI Response ${messageId}`
         }),
@@ -384,7 +400,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
 
             {/* Chat Messages */}
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex items-start space-x-3 ${
+              <div key={msg.id} data-message-id={msg.id} className={`flex items-start space-x-3 ${
                 msg.role === 'user' ? 'justify-end' : ''
               }`}>
                 {msg.role === 'assistant' && (
@@ -400,9 +416,9 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                       : 'bg-gray-50 text-gray-700'
                   }`}>
                     {mathRenderingEnabled ? (
-                      <KaTeXRenderer content={removeMarkupSymbols(msg.content)} className="whitespace-pre-wrap text-lg" />
+                      <KaTeXRenderer content={removeMarkupSymbols(msg.content)} className="prose whitespace-pre-wrap text-lg" />
                     ) : (
-                      <div className="text-lg whitespace-pre-wrap">{removeMarkupSymbols(msg.content)}</div>
+                      <div className="prose text-lg whitespace-pre-wrap">{removeMarkupSymbols(msg.content)}</div>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
@@ -423,7 +439,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => downloadMessageAsPDF(msg.content)}
+                          onClick={() => downloadResponse(msg.content, msg.id)}
                           className="text-xs text-gray-400 hover:text-gray-600 h-6 px-2"
                         >
                           <Download className="w-3 h-3 mr-1" />

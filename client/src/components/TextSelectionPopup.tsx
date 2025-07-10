@@ -143,13 +143,29 @@ export default function TextSelectionPopup({
 
   const downloadResponse = async (messageContent: string, messageId: number) => {
     try {
+      // Find the corresponding message element in the DOM to get the formatted HTML
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+      let htmlContent = messageContent;
+      
+      if (messageElement) {
+        // Get the formatted HTML content from the rendered message
+        htmlContent = messageElement.innerHTML;
+      } else {
+        // Fallback: convert plain text to basic HTML paragraphs
+        htmlContent = messageContent
+          .split('\n\n')
+          .map(paragraph => paragraph.trim() ? `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.8;">${paragraph.trim().replace(/\n/g, ' ')}</p>` : '')
+          .filter(p => p)
+          .join('');
+      }
+
       const response = await fetch('/api/export-document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: messageContent,
+          content: htmlContent,
           format: 'pdf',
           title: `AI Response ${messageId}`
         }),
@@ -220,7 +236,7 @@ export default function TextSelectionPopup({
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <div key={message.id} className="space-y-3">
+                    <div key={message.id} data-message-id={message.id} className="space-y-3">
                       {message.role === 'user' ? (
                         <div className="bg-blue-100 p-4 rounded-lg">
                           <div className="text-sm font-medium text-blue-700 mb-1">YOU</div>
@@ -241,7 +257,7 @@ export default function TextSelectionPopup({
                             </Button>
                           </div>
                           <div className="text-gray-800 leading-relaxed">
-                            <KaTeXRenderer content={message.content} />
+                            <KaTeXRenderer content={message.content} className="prose" />
                           </div>
                         </div>
                       )}
