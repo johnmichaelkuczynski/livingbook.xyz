@@ -62,6 +62,8 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
   uploadedAt: true,
   isChunked: true,
   chunkCount: true,
+}).extend({
+  filePath: z.string().optional(),
 });
 
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
