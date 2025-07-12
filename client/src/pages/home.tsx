@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
+import PDFViewer from '@/components/PDFViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 import TextSelectionPopup from '@/components/TextSelectionPopup';
@@ -382,17 +383,27 @@ export default function Home() {
           
           <div className="flex-1">
             {currentDocument ? (
-              <DocumentViewer 
-                document={currentDocument}
-                isLoading={isUploading}
-                onUploadClick={() => fileInputRef.current?.click()}
-                onRewriteClick={handleRewriteClick}
-                onFileDrop={handleFile}
-                onTextSelection={(text) => {
-                  setSelectedText(text);
-                  setShowSelectionPopup(true);
-                }}
-              />
+              currentDocument.fileType === 'application/pdf' ? (
+                <PDFViewer 
+                  document={currentDocument}
+                  onTextSelection={(text, pageNumber) => {
+                    setSelectedText(text);
+                    setShowSelectionPopup(true);
+                  }}
+                />
+              ) : (
+                <DocumentViewer 
+                  document={currentDocument}
+                  isLoading={isUploading}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  onRewriteClick={handleRewriteClick}
+                  onFileDrop={handleFile}
+                  onTextSelection={(text) => {
+                    setSelectedText(text);
+                    setShowSelectionPopup(true);
+                  }}
+                />
+              )
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
                 <CardHeader>
