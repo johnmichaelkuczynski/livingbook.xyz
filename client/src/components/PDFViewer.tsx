@@ -1,10 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
-import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+import { ZoomIn, ZoomOut, FileText, Download } from 'lucide-react';
 
 interface PDFViewerProps {
   document: any;
@@ -12,49 +8,50 @@ interface PDFViewerProps {
 }
 
 export default function PDFViewer({ document: pdfDocument, onTextSelection }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
-  const [rotation, setRotation] = useState<number>(0);
   const [selectedText, setSelectedText] = useState<string>('');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState<number>(100);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Handle document load success
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
-    setNumPages(numPages);
-  }
-
-  // Handle text selection
+  // Handle text selection from iframe
   useEffect(() => {
     const handleSelection = () => {
-      const selection = window.getSelection();
-      if (selection && selection.toString().trim()) {
-        const text = selection.toString().trim();
-        setSelectedText(text);
-        if (onTextSelection) {
-          onTextSelection(text, pageNumber);
+      try {
+        const iframe = iframeRef.current;
+        if (iframe && iframe.contentWindow) {
+          const selection = iframe.contentWindow.getSelection();
+          if (selection && selection.toString().trim()) {
+            const text = selection.toString().trim();
+            setSelectedText(text);
+            if (onTextSelection) {
+              onTextSelection(text, 1); // PDF page number not easily available in iframe
+            }
+          }
         }
+      } catch (error) {
+        // Cross-origin restrictions may prevent access
+        console.log('Text selection from PDF iframe not available due to security restrictions');
       }
     };
 
-    // Add event listener for text selection on window object
+    // Add event listener for text selection
     window.addEventListener('mouseup', handleSelection);
-    window.addEventListener('keyup', handleSelection);
-
+    
     return () => {
       window.removeEventListener('mouseup', handleSelection);
-      window.removeEventListener('keyup', handleSelection);
     };
-  }, [pageNumber, onTextSelection]);
+  }, [onTextSelection]);
 
   // Zoom functions
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3.0));
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
-  const rotate = () => setRotation(prev => (prev + 90) % 360);
+  const zoomIn = () => setScale(prev => Math.min(prev + 25, 200));
+  const zoomOut = () => setScale(prev => Math.max(prev - 25, 50));
+  const resetZoom = () => setScale(100);
 
-  // Navigation functions
-  const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
-  const goToNextPage = () => setPageNumber(prev => Math.min(prev + 1, numPages || 1));
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = `/api/documents/${pdfDocument.id}/pdf`;
+    link.download = pdfDocument.originalName;
+    link.click();
+  };
 
   if (!pdfDocument) {
     return <div className="flex items-center justify-center h-full text-gray-500">No document loaded</div>;
@@ -65,85 +62,70 @@ export default function PDFViewer({ document: pdfDocument, onTextSelection }: PD
       {/* PDF Controls */}
       <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
         <div className="flex items-center space-x-2">
-          <Button
-            onClick={goToPrevPage}
-            disabled={pageNumber <= 1}
-            variant="outline"
-            size="sm"
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {pageNumber} of {numPages || '?'}
+          <FileText className="w-5 h-5 text-gray-600" />
+          <span className="text-sm font-medium text-gray-800 truncate max-w-xs">
+            {pdfDocument.originalName}
           </span>
-          <Button
-            onClick={goToNextPage}
-            disabled={pageNumber >= (numPages || 1)}
-            variant="outline"
-            size="sm"
-          >
-            Next
-          </Button>
         </div>
 
         <div className="flex items-center space-x-2">
           <Button onClick={zoomOut} variant="outline" size="sm">
             <ZoomOut className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-gray-600 min-w-[60px] text-center">
-            {Math.round(scale * 100)}%
-          </span>
+          <Button onClick={resetZoom} variant="outline" size="sm">
+            {scale}%
+          </Button>
           <Button onClick={zoomIn} variant="outline" size="sm">
             <ZoomIn className="w-4 h-4" />
           </Button>
-          <Button onClick={rotate} variant="outline" size="sm">
-            <RotateCw className="w-4 h-4" />
+          <Button onClick={handleDownload} variant="outline" size="sm">
+            <Download className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* PDF Document */}
-      <div 
-        ref={containerRef}
-        className="flex-1 overflow-auto bg-gray-200 p-4"
-      >
-        <div className="flex justify-center">
-          <div className="bg-white shadow-lg">
-            <Document
-              file={`/api/documents/${pdfDocument.id}/pdf`}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="flex items-center justify-center p-8">
-                  <div className="text-gray-500">Loading PDF...</div>
-                </div>
-              }
-              error={
-                <div className="flex items-center justify-center p-8">
-                  <div className="text-red-500">Failed to load PDF</div>
-                </div>
-              }
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                rotate={rotation}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-              />
-            </Document>
-          </div>
-        </div>
+      {/* PDF Document via iframe */}
+      <div className="flex-1 overflow-hidden bg-gray-200">
+        <iframe
+          ref={iframeRef}
+          src={`/api/documents/${pdfDocument.id}/pdf#zoom=${scale}`}
+          className="w-full h-full border-none"
+          title={`PDF Viewer - ${pdfDocument.originalName}`}
+          onLoad={() => {
+            console.log('PDF loaded successfully');
+          }}
+          onError={() => {
+            console.error('Failed to load PDF');
+          }}
+        />
       </div>
 
-      {/* Selected Text Display */}
-      {selectedText && (
-        <div className="p-3 bg-blue-50 border-t border-blue-200">
-          <div className="text-sm text-blue-800 font-medium">Selected Text:</div>
-          <div className="text-sm text-blue-700 mt-1 max-h-20 overflow-y-auto">
-            {selectedText}
-          </div>
+      {/* Manual Text Selection Input */}
+      <div className="p-3 bg-white border-t border-gray-200">
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            placeholder="Copy and paste text from PDF to analyze with AI..."
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={selectedText}
+            onChange={(e) => setSelectedText(e.target.value)}
+          />
+          <Button
+            onClick={() => {
+              if (selectedText.trim() && onTextSelection) {
+                onTextSelection(selectedText.trim(), 1);
+              }
+            }}
+            disabled={!selectedText.trim()}
+            size="sm"
+          >
+            Analyze
+          </Button>
         </div>
-      )}
+        <p className="text-xs text-gray-500 mt-1">
+          Select text in the PDF above and copy it here, or type directly to analyze with AI
+        </p>
+      </div>
     </div>
   );
 }
