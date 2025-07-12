@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload document (main route) - preserve original files
+  // Upload document (main route) - keeping legacy /api/upload for compatibility
   app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
@@ -116,33 +116,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { originalname, filename, mimetype, size, path: filePath } = req.file;
       
-      // For PDFs, preserve the original file and only extract text for AI context
-      let extractedText = "";
-      let preservedFilePath = filePath;
+      // Extract text from the document
+      let extractedText = await extractTextFromDocument(filePath, mimetype);
       
-      if (mimetype === 'application/pdf') {
-        // Extract text for AI but keep the original PDF file
-        try {
-          extractedText = await extractTextFromDocument(filePath, mimetype);
-          extractedText = processMathNotation(extractedText);
-        } catch (error) {
-          console.warn("Text extraction failed, proceeding with PDF viewer only:", error);
-          extractedText = ""; // Empty text, will rely on manual text selection
-        }
-        
-        // Move the PDF to a permanent location
-        const permanentPath = path.join("uploads", "preserved", filename);
-        await fs.mkdir(path.dirname(permanentPath), { recursive: true });
-        await fs.rename(filePath, permanentPath);
-        preservedFilePath = permanentPath;
-      } else {
-        // For non-PDF files, extract text as before
-        extractedText = await extractTextFromDocument(filePath, mimetype);
-        extractedText = processMathNotation(extractedText);
-        
-        // Clean up the temporary file for non-PDFs
-        await fs.unlink(filePath);
-      }
+      // Process math notation
+      extractedText = processMathNotation(extractedText);
       
       // Save document to storage
       const documentData = {
@@ -151,15 +129,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: mimetype,
         fileSize: size,
         content: extractedText,
-        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length,
-        filePath: mimetype === 'application/pdf' ? preservedFilePath : undefined
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
       };
       
+
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
       
       // Create a chat session for this document
       await storage.createChatSession({ documentId: document.id });
+      
+      // Clean up uploaded file
+      await fs.unlink(filePath);
       
       res.json({
         id: document.id,
@@ -167,8 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: document.fileType,
         fileSize: document.fileSize,
         content: document.content,
-        uploadedAt: document.uploadedAt,
-        isPDF: mimetype === 'application/pdf'
+        uploadedAt: document.uploadedAt
       });
       
     } catch (error) {
@@ -189,42 +169,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve PDF files
-  app.get("/api/documents/:id/pdf", async (req, res) => {
+  // Upload document (alias route for convenience)  
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
-      const documentId = parseInt(req.params.id);
-      const document = await storage.getDocument(documentId);
-      
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
       }
+
+      const { originalname, filename, mimetype, size, path: filePath } = req.file;
       
-      if (document.fileType !== 'application/pdf') {
-        return res.status(400).json({ error: "Document is not a PDF" });
-      }
+      // Extract text from the document
+      let extractedText = await extractTextFromDocument(filePath, mimetype);
       
-      if (!document.filePath) {
-        return res.status(404).json({ error: "PDF file not found" });
-      }
+      // Process math notation
+      extractedText = processMathNotation(extractedText);
       
-      // Check if file exists
-      try {
-        await fs.access(document.filePath);
-      } catch {
-        return res.status(404).json({ error: "PDF file not found on disk" });
-      }
+      // Save document to storage
+      const documentData = {
+        filename,
+        originalName: originalname,
+        fileType: mimetype,
+        fileSize: size,
+        content: extractedText,
+        totalWords: extractedText.split(/\s+/).filter(word => word.length > 0).length
+      };
       
-      // Set appropriate headers for PDF
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+      const validatedData = insertDocumentSchema.parse(documentData);
+      const document = await storage.createDocument(validatedData);
       
-      // Stream the PDF file
-      const stream = require('fs').createReadStream(document.filePath);
-      stream.pipe(res);
+      // Create a chat session for this document
+      await storage.createChatSession({ documentId: document.id });
+      
+      // Clean up uploaded file
+      await fs.unlink(filePath);
+      
+      res.json({
+        id: document.id,
+        originalName: document.originalName,
+        fileType: document.fileType,
+        fileSize: document.fileSize,
+        content: document.content,
+        uploadedAt: document.uploadedAt
+      });
       
     } catch (error) {
-      console.error("PDF serve error:", error);
-      res.status(500).json({ error: "Failed to serve PDF" });
+      console.error("Upload error:", error);
+      
+      // Clean up file if it exists
+      if (req.file?.path) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error cleaning up file:", unlinkError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process document" 
+      });
     }
   });
 

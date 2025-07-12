@@ -12,7 +12,6 @@ export const documents = pgTable("documents", {
   isChunked: boolean("is_chunked").default(false).notNull(),
   chunkCount: integer("chunk_count").default(1).notNull(),
   totalWords: integer("total_words").notNull(),
-  filePath: text("file_path"), // For storing original PDF file path
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
@@ -62,8 +61,6 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
   uploadedAt: true,
   isChunked: true,
   chunkCount: true,
-}).extend({
-  filePath: z.string().optional(),
 });
 
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
