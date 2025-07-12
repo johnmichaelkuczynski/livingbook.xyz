@@ -370,8 +370,8 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex h-[calc(100vh-120px)] pb-32">
-        {/* Left Side: Document Area */}
-        <div className="flex-1 flex flex-col p-8">
+        {/* Left Side: Document Area - MAXIMUM WIDTH FOR READING */}
+        <div className="flex-[5] flex flex-col p-4">
           {/* Hidden file input */}
           <input
             type="file"
@@ -517,8 +517,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right Side: AI Chat Messages */}
-        <div className="w-[600px] border-l border-gray-200 flex flex-col">
+        {/* Right Side: AI Chat Messages - MINIMAL WIDTH TO MAXIMIZE READING SPACE */}
+        <div className="w-[350px] border-l border-gray-200 flex flex-col">
           <ChatInterface 
             document={currentDocument} 
             showInputInline={false} 

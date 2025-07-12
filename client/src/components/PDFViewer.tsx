@@ -4,17 +4,14 @@ import { Button } from '@/components/ui/button';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 
 // Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url,
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface PDFViewerProps {
   document: any;
   onTextSelection?: (selectedText: string, pageNumber: number) => void;
 }
 
-export default function PDFViewer({ document, onTextSelection }: PDFViewerProps) {
+export default function PDFViewer({ document: pdfDocument, onTextSelection }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
@@ -40,13 +37,13 @@ export default function PDFViewer({ document, onTextSelection }: PDFViewerProps)
       }
     };
 
-    // Add event listener for text selection
-    document.addEventListener('mouseup', handleSelection);
-    document.addEventListener('keyup', handleSelection);
+    // Add event listener for text selection on window object
+    window.addEventListener('mouseup', handleSelection);
+    window.addEventListener('keyup', handleSelection);
 
     return () => {
-      document.removeEventListener('mouseup', handleSelection);
-      document.removeEventListener('keyup', handleSelection);
+      window.removeEventListener('mouseup', handleSelection);
+      window.removeEventListener('keyup', handleSelection);
     };
   }, [pageNumber, onTextSelection]);
 
@@ -59,7 +56,7 @@ export default function PDFViewer({ document, onTextSelection }: PDFViewerProps)
   const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
   const goToNextPage = () => setPageNumber(prev => Math.min(prev + 1, numPages || 1));
 
-  if (!document) {
+  if (!pdfDocument) {
     return <div className="flex items-center justify-center h-full text-gray-500">No document loaded</div>;
   }
 
@@ -113,7 +110,7 @@ export default function PDFViewer({ document, onTextSelection }: PDFViewerProps)
         <div className="flex justify-center">
           <div className="bg-white shadow-lg">
             <Document
-              file={`/api/documents/${document.id}/pdf`}
+              file={`/api/documents/${pdfDocument.id}/pdf`}
               onLoadSuccess={onDocumentLoadSuccess}
               loading={
                 <div className="flex items-center justify-center p-8">
