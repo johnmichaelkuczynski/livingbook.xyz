@@ -9,6 +9,10 @@ export async function generateChatResponse(
   conversationHistory: Array<{ role: string; content: string }>
 ): Promise<ChatResponse> {
   try {
+    console.log(`🤖 DEEPSEEK SERVICE - Generating response for: "${userMessage.substring(0, 50)}..."`);
+    
+    const requestId = Math.random().toString(36).substring(2, 8);
+    console.log(`🔑 DEEPSEEK REQUEST ID: ${requestId}`);
     const systemPrompt = documentContent && documentContent.trim() ? 
       `You are a professional academic writing assistant specializing in document analysis and educational content creation. The user has uploaded a document with the following content:
 
@@ -85,6 +89,7 @@ You excel at: writing essays, academic analysis, mathematical explanations, rese
       throw new Error("No response generated");
     }
 
+    console.log(`✅ DEEPSEEK RESPONSE (${requestId}): "${assistantMessage.substring(0, 100)}..."`);
     return { message: assistantMessage };
   } catch (error) {
     console.error("DeepSeek API error:", error);
