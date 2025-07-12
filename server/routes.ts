@@ -604,6 +604,8 @@ Please provide a helpful response based on the selected text. Keep your response
     try {
       const { message, provider = 'deepseek' } = req.body;
       
+      console.log(`🔍 PROVIDER DEBUG - Global Chat: Provider received: "${provider}"`);
+      
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
@@ -634,16 +636,20 @@ Please provide a helpful response based on the selected text. Keep your response
       let generateChatResponse;
       switch (provider.toLowerCase()) {
         case 'openai':
+          console.log(`✅ PROVIDER DEBUG - Global Chat Using OpenAI service`);
           generateChatResponse = openaiService.generateChatResponse;
           break;
         case 'anthropic':
+          console.log(`✅ PROVIDER DEBUG - Global Chat Using Anthropic service`);
           generateChatResponse = anthropicService.generateChatResponse;
           break;
         case 'perplexity':
+          console.log(`✅ PROVIDER DEBUG - Global Chat Using Perplexity service`);
           generateChatResponse = perplexityService.generateChatResponse;
           break;
         case 'deepseek':
         default:
+          console.log(`✅ PROVIDER DEBUG - Global Chat Using DeepSeek service (provider: ${provider})`);
           generateChatResponse = deepseekService.generateChatResponse;
           break;
       }
@@ -692,6 +698,8 @@ Please provide a helpful response based on the selected text. Keep your response
       const documentId = parseInt(req.params.documentId);
       const { message, provider = 'deepseek' } = req.body;
       
+      console.log(`🔍 PROVIDER DEBUG - Document Chat: Provider received: "${provider}"`);
+      
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
@@ -728,16 +736,20 @@ Please provide a helpful response based on the selected text. Keep your response
       let generateChatResponse;
       switch (provider.toLowerCase()) {
         case 'openai':
+          console.log(`✅ PROVIDER DEBUG - Document Chat Using OpenAI service`);
           generateChatResponse = openaiService.generateChatResponse;
           break;
         case 'anthropic':
+          console.log(`✅ PROVIDER DEBUG - Document Chat Using Anthropic service`);
           generateChatResponse = anthropicService.generateChatResponse;
           break;
         case 'perplexity':
+          console.log(`✅ PROVIDER DEBUG - Document Chat Using Perplexity service`);
           generateChatResponse = perplexityService.generateChatResponse;
           break;
         case 'deepseek':
         default:
+          console.log(`✅ PROVIDER DEBUG - Document Chat Using DeepSeek service (provider: ${provider})`);
           generateChatResponse = deepseekService.generateChatResponse;
           break;
       }
