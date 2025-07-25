@@ -61,9 +61,14 @@ export default function PodcastGenerator({
       setPodcastScript(data.script);
       setIsRestricted(data.isRestricted);
       toast({
-        title: "Podcast script generated",
-        description: "Your podcast analysis is ready!"
+        title: "Script generated - Creating audio...",
+        description: "Generating complete podcast with Azure Speech Services"
       });
+      
+      // Automatically generate audio for complete podcast experience
+      setTimeout(() => {
+        generateAudioMutation.mutate();
+      }, 1000);
     },
     onError: (error: any) => {
       toast({
@@ -104,8 +109,8 @@ export default function PodcastGenerator({
     onSuccess: (url) => {
       setAudioUrl(url);
       toast({
-        title: "Audio generated",
-        description: "Your podcast audio is ready to play!"
+        title: "🎧 Complete Podcast Ready!",
+        description: "Your podcast with AI script and Azure TTS audio is ready to play and download!"
       });
     },
     onError: (error: any) => {
@@ -230,14 +235,24 @@ export default function PodcastGenerator({
             )}
           </div>
 
-          {/* Generate Script Button */}
+          {/* Generate Complete Podcast Button */}
           <Button 
             onClick={() => generateScriptMutation.mutate()}
             disabled={generateScriptMutation.isPending}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             size="lg"
           >
-            {generateScriptMutation.isPending ? 'Generating Script...' : 'Generate Podcast Script'}
+            {generateScriptMutation.isPending ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Creating Complete Podcast...
+              </>
+            ) : (
+              <>
+                <Mic className="w-5 h-5 mr-2" />
+                🎧 Generate Complete Podcast (Script + Audio)
+              </>
+            )}
           </Button>
 
           {/* Script Preview */}
