@@ -126,13 +126,16 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               <div 
                 className="w-full"
                 onMouseUp={() => {
-                  const selection = window.getSelection();
-                  if (selection && selection.toString().length > 0) {
-                    const selectedText = selection.toString().trim();
+                  setTimeout(() => {
+                    const selection = window.getSelection();
+                    const selectedText = selection?.toString().trim() || '';
+                    console.log('🎙️ DOCUMENT VIEWER SELECTION:', selectedText, 'Length:', selectedText.length);
+                    
                     if (selectedText.length > 10 && onTextSelection) {
+                      console.log('🎙️ CALLING onTextSelection with:', selectedText);
                       onTextSelection(selectedText);
                     }
-                  }
+                  }, 200);
                 }}
               >
                 <div className="space-y-4 text-lg leading-relaxed">

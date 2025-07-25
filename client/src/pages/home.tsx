@@ -400,8 +400,13 @@ export default function Home() {
                   onRewriteClick={handleRewriteClick}
                   onFileDrop={handleFile}
                   onTextSelection={(text) => {
+                    console.log('🎙️ DOCUMENT VIEWER - Text selected:', text.substring(0, 100) + '...');
+                    // For regular text selection popup
                     setSelectedText(text);
                     setShowSelectionPopup(true);
+                    
+                    // ALSO set for podcast generation
+                    setPodcastSelectedText(text);
                   }}
                 />
               </TextSelectionHandler>
