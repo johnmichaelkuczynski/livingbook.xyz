@@ -82,9 +82,32 @@ export default function PodcastGenerator({
   // Generate audio from script
   const generateAudioMutation = useMutation({
     mutationFn: async () => {
-      if (!podcastScript?.fullScript) {
-        throw new Error("No script available for audio generation");
+      // For unregistered users, use the summary + key quotes instead of restricted fullScript
+      let scriptForAudio = podcastScript?.fullScript || '';
+      
+      // If the script is restricted or empty, create audio from available parts
+      if (!scriptForAudio || scriptForAudio.includes('[Full content available for registered users]')) {
+        scriptForAudio = `
+Welcome to our podcast analysis. 
+
+${podcastScript?.summary || ''}
+
+Key strengths and considerations: ${podcastScript?.strengthsWeaknesses || ''}
+
+What readers can gain: ${podcastScript?.readerGains || ''}
+
+Here are some key quotations from the text: ${podcastScript?.quotations?.join('. ') || ''}
+
+Thank you for listening to this analysis.
+        `.trim();
       }
+      
+      if (!scriptForAudio || scriptForAudio.length < 20) {
+        console.error('❌ AUDIO GENERATION - No usable script content found');
+        throw new Error("No script content available for audio generation");
+      }
+      
+      console.log('🎧 AUDIO GENERATION - Using script content (length ' + scriptForAudio.length + '):', scriptForAudio.substring(0, 150) + '...');
 
       const response = await fetch('/api/podcast/audio', {
         method: 'POST',
@@ -92,7 +115,7 @@ export default function PodcastGenerator({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          scriptText: podcastScript.fullScript,
+          scriptText: scriptForAudio,
           voice: selectedVoice,
           isRegistered
         })
