@@ -22,6 +22,8 @@ export default function TextSelectionHandler({
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
+      console.log('🎙️ TEXT SELECTION:', text, 'Length:', text?.length);
+      
       if (text && text.length > 10) { // Minimum 10 characters for podcast generation
         setSelectedText(text);
         
@@ -29,6 +31,7 @@ export default function TextSelectionHandler({
         const range = selection?.getRangeAt(0);
         if (range) {
           const rect = range.getBoundingClientRect();
+          console.log('🎙️ SELECTION POSITION:', { x: rect.left + (rect.width / 2), y: rect.top - 10 });
           setSelectionPosition({
             x: rect.left + (rect.width / 2),
             y: rect.top - 10
@@ -74,30 +77,37 @@ export default function TextSelectionHandler({
       {/* Floating Podcast Button */}
       {selectedText && selectionPosition && (
         <div 
-          className="fixed z-50 transform -translate-x-1/2 -translate-y-full"
+          className="fixed z-[9999] transform -translate-x-1/2 -translate-y-full pointer-events-auto"
           style={{
-            left: selectionPosition.x,
-            top: selectionPosition.y,
+            left: `${selectionPosition.x}px`,
+            top: `${selectionPosition.y}px`,
           }}
         >
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-600 p-2">
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border-2 border-blue-500 p-3 animate-pulse">
             <Button
               onClick={handlePodcastGeneration}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 flex items-center space-x-1"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm px-4 py-2 flex items-center space-x-2 shadow-lg"
             >
-              <Mic className="w-3 h-3" />
+              <Mic className="w-4 h-4" />
               <span>🎧 Generate Podcast</span>
             </Button>
-            <div className="text-xs text-gray-500 mt-1 text-center">
-              {selectedText.length} chars selected
+            <div className="text-xs text-gray-600 dark:text-gray-300 mt-2 text-center font-medium">
+              {selectedText.length} characters selected
             </div>
           </div>
           
           {/* Arrow pointing to selection */}
           <div className="absolute left-1/2 transform -translate-x-1/2 top-full">
-            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-200 dark:border-t-gray-600"></div>
+            <div className="w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-blue-500"></div>
           </div>
+        </div>
+      )}
+      
+      {/* Debug indicator when text is selected */}
+      {selectedText && (
+        <div className="fixed top-4 right-4 z-[9999] bg-green-500 text-white p-2 rounded">
+          Text Selected: {selectedText.length} chars
         </div>
       )}
     </div>
