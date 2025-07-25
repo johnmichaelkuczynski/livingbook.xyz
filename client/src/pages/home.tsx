@@ -638,6 +638,22 @@ export default function Home() {
         isRegistered={false}
       />
 
+      {/* Force Test Button for Debugging */}
+      <div className="fixed bottom-20 right-4 z-[9999]">
+        <Button
+          onClick={() => {
+            const testText = "Algorithm: A fixed procedure for carrying out a task. The rules that we learn in grade school to multiply, add, etc., multi-digit numbers are algorithms. By formalizing inferences, logicians create algorithms for determining whether, given two statements, one of them follows from the other.";
+            console.log('🎙️ FORCE TEST - Triggering podcast with sample text');
+            setPodcastSelectedText(testText);
+            setShowPodcastGenerator(true);
+          }}
+          className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
+        >
+          <Mic className="w-4 h-4 mr-2" />
+          🎧 Force Test
+        </Button>
+      </div>
+
     </div>
   );
 }

@@ -19,35 +19,52 @@ export default function TextSelectionHandler({
 
   useEffect(() => {
     const handleSelection = () => {
-      // Add delay to ensure selection is complete
+      // Multiple checks with different delays to catch selection
       setTimeout(() => {
         const selection = window.getSelection();
         const text = selection?.toString().trim();
         
-        console.log('🎙️ TEXT SELECTION:', text, 'Length:', text?.length);
+        console.log('🎙️ TEXT SELECTION ATTEMPT 1:', text, 'Length:', text?.length);
         console.log('🎙️ SELECTION STATE:', selection?.rangeCount || 0, 'ranges');
         
-        if (text && text.length > 10) { // Minimum 10 characters for podcast generation
+        if (text && text.length > 10) {
+          console.log('🎙️ VALID SELECTION FOUND - SETTING UP BUTTON');
           setSelectedText(text);
           
           // Get selection position for floating button
           const range = selection?.getRangeAt(0);
           if (range) {
             const rect = range.getBoundingClientRect();
-            console.log('🎙️ BUTTON WILL APPEAR AT:', { x: rect.left + (rect.width / 2), y: rect.top - 10 });
+            console.log('🎙️ BUTTON POSITION CALCULATED:', { x: rect.left + (rect.width / 2), y: rect.top - 50 });
             setSelectionPosition({
               x: rect.left + (rect.width / 2),
-              y: rect.top - 50 // Move button higher to avoid text overlap
+              y: rect.top - 60 // Move button higher to avoid text overlap
             });
           }
-        } else if (text?.length === 0) {
-          // Only clear after delay to prevent immediate disappearing
-          setTimeout(() => {
-            setSelectedText('');
-            setSelectionPosition(null);
-          }, 3000); // Keep visible for 3 seconds after deselection
         }
-      }, 250); // Increased delay for proper selection detection
+      }, 100);
+      
+      // Second attempt with longer delay
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        
+        console.log('🎙️ TEXT SELECTION ATTEMPT 2:', text, 'Length:', text?.length);
+        
+        if (text && text.length > 10 && !selectedText) {
+          console.log('🎙️ SECOND ATTEMPT SUCCESS - SETTING UP BUTTON');
+          setSelectedText(text);
+          
+          const range = selection?.getRangeAt(0);
+          if (range) {
+            const rect = range.getBoundingClientRect();
+            setSelectionPosition({
+              x: rect.left + (rect.width / 2),
+              y: rect.top - 60
+            });
+          }
+        }
+      }, 500);
     };
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -119,9 +136,20 @@ export default function TextSelectionHandler({
       {/* Debug indicator when text is selected */}
       {selectedText && (
         <div className="fixed top-4 right-4 z-[9999] bg-green-500 text-white p-2 rounded">
-          Text Selected: {selectedText.length} chars
+          🎧 Podcast Ready: {selectedText.length} chars
         </div>
       )}
+      
+      {/* Always show current selection state for debugging */}
+      <div className="fixed top-4 left-4 z-[9999] bg-blue-500 text-white p-2 rounded text-xs">
+        Live Selection: {(() => {
+          try {
+            return window.getSelection()?.toString().length || 0;
+          } catch (e) {
+            return 'Error';
+          }
+        })()} chars
+      </div>
     </div>
   );
 }
