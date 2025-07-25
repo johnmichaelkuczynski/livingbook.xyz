@@ -110,6 +110,19 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 25, 2025: COMPREHENSIVE PODCAST GENERATION FEATURE - AZURE TTS INTEGRATION COMPLETE
+  - **COMPLETE IMPLEMENTATION**: Professional podcast generation system with Azure Speech Services integration
+  - **TEXT SELECTION SYSTEM**: Floating podcast button appears on text selection with enhanced visibility and animation
+  - **AI-POWERED SCRIPT GENERATION**: Structured podcast format with summary, strengths/weaknesses, reader gains, and quotations
+  - **AZURE TTS INTEGRATION**: High-quality speech synthesis using Microsoft Azure Cognitive Services
+    * Multiple voice options: Jenny (Female, Clear), Davis (Male, Professional), Aria, Guy, Amber
+    * MP3 audio output with professional quality
+    * Advanced text-to-speech processing with natural intonation
+  - **MULTI-PROVIDER AI SUPPORT**: OpenAI GPT-4o, Anthropic Claude, DeepSeek, and Perplexity for script generation
+  - **ACCESS CONTROL**: Freemium model with 100-word script and 30-second audio limits for unregistered users
+  - **COMPREHENSIVE UI**: Modal-based podcast generator with custom instructions, voice selection, and audio playback
+  - **PRODUCTION READY**: Full error handling, logging, and user feedback systems
+  - Complete podcast workflow: text selection → AI script generation → Azure TTS → MP3 playback/download
 - July 10, 2025: WORD DOWNLOAD FEATURE IMPLEMENTED - GENUINE DOCX GENERATION SYSTEM OPERATIONAL
   - **COMPLETE IMPLEMENTATION**: Added real Microsoft Word (.docx) document generation using the `docx` library
   - **COMPREHENSIVE REPLACEMENT**: Replaced ALL HTML "Word" downloads with genuine .docx files across entire application:

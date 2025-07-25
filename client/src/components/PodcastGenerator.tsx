@@ -180,8 +180,8 @@ export default function PodcastGenerator({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="openai">OpenAI GPT-4o</SelectItem>
+                  <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                   <SelectItem value="deepseek">DeepSeek</SelectItem>
                   <SelectItem value="perplexity">Perplexity</SelectItem>
                 </SelectContent>

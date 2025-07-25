@@ -12,9 +12,15 @@ export async function generatePodcastAudio(
   try {
     const speechKey = process.env.AZURE_SPEECH_KEY;
     const speechRegion = process.env.AZURE_SPEECH_REGION;
+    const speechEndpoint = process.env.AZURE_SPEECH_ENDPOINT;
+
+    console.log(`🔑 AZURE CREDENTIALS CHECK:`);
+    console.log(`- AZURE_SPEECH_KEY: ${speechKey ? 'EXISTS' : 'MISSING'}`);
+    console.log(`- AZURE_SPEECH_REGION: ${speechRegion || 'MISSING'}`);
+    console.log(`- AZURE_SPEECH_ENDPOINT: ${speechEndpoint || 'MISSING'}`);
 
     if (!speechKey || !speechRegion) {
-      throw new Error("Azure Speech credentials not configured");
+      throw new Error(`Azure Speech credentials not configured. Key: ${speechKey ? 'OK' : 'MISSING'}, Region: ${speechRegion || 'MISSING'}`);
     }
 
     console.log(`🎤 AZURE SPEECH - Generating audio for script length: ${scriptText.length} characters`);
