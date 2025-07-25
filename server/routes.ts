@@ -11,6 +11,8 @@ import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
+import * as podcastGenerator from "./services/podcastGenerator";
+import * as azureSpeech from "./services/azureSpeech";
 import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema } from "@shared/schema";
 
 // Helper function to clean markup symbols and metadata from AI responses
@@ -1007,7 +1009,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         if (documentA && chunkAIndexes.length > 0) {
           const chunkedDocA = chunkDocument(documentA.content, 1000);
           chunkAContent = chunkAIndexes
-            .map(index => chunkedDocA.chunks[index]?.content || "")
+            .map((index: number) => chunkedDocA.chunks[index]?.content || "")
             .join("\n\n");
         }
         
@@ -1016,7 +1018,7 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         if (documentB && chunkBIndexes.length > 0) {
           const chunkedDocB = chunkDocument(documentB.content, 1000);
           chunkBContent = chunkBIndexes
-            .map(index => chunkedDocB.chunks[index]?.content || "")
+            .map((index: number) => chunkedDocB.chunks[index]?.content || "")
             .join("\n\n");
         }
 
@@ -1227,6 +1229,99 @@ Instructions: ${instructions}
     } catch (error) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to get comparison messages" 
+      });
+    }
+  });
+
+  // Generate podcast from selected text
+  app.post("/api/podcast/generate", async (req, res) => {
+    try {
+      const { 
+        selectedText, 
+        documentTitle, 
+        provider = 'openai', 
+        customInstructions,
+        isRegistered = false 
+      } = req.body;
+      
+      console.log(`🎙️ PODCAST API - Generate request for ${selectedText.length} chars, provider: ${provider}`);
+      
+      if (!selectedText || selectedText.trim().length === 0) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      if (selectedText.length > 5000) {
+        return res.status(400).json({ error: "Selected text is too long. Please select a shorter passage (max 5000 characters)." });
+      }
+
+      // Generate podcast script
+      const { script, error } = await podcastGenerator.generatePodcastScript(
+        selectedText,
+        documentTitle || "Document",
+        provider,
+        customInstructions
+      );
+
+      if (error) {
+        return res.status(500).json({ error });
+      }
+
+      // Apply restrictions for unregistered users
+      const finalScript = isRegistered 
+        ? script 
+        : podcastGenerator.truncateScriptForUnregistered(script, 100);
+
+      res.json({
+        script: finalScript,
+        isRestricted: !isRegistered
+      });
+
+    } catch (error) {
+      console.error("Podcast generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate podcast script" 
+      });
+    }
+  });
+
+  // Generate audio from podcast script
+  app.post("/api/podcast/audio", async (req, res) => {
+    try {
+      const { 
+        scriptText, 
+        voice = "en-US-JennyNeural",
+        isRegistered = false 
+      } = req.body;
+      
+      console.log(`🎤 PODCAST AUDIO API - Generate audio for ${scriptText.length} chars, voice: ${voice}`);
+      
+      if (!scriptText || scriptText.trim().length === 0) {
+        return res.status(400).json({ error: "Script text is required" });
+      }
+
+      // Generate audio using Azure Speech Service
+      const { audioBuffer, error } = await azureSpeech.generatePodcastAudio(scriptText, voice);
+
+      if (error) {
+        return res.status(500).json({ error });
+      }
+
+      // Apply restrictions for unregistered users (30 seconds max)
+      const finalAudioBuffer = isRegistered 
+        ? audioBuffer 
+        : azureSpeech.truncateAudioForUnregistered(audioBuffer, 30);
+
+      // Set appropriate headers for MP3 audio
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', finalAudioBuffer.length);
+      res.setHeader('Content-Disposition', 'attachment; filename="podcast.mp3"');
+      
+      res.send(finalAudioBuffer);
+
+    } catch (error) {
+      console.error("Podcast audio generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate podcast audio" 
       });
     }
   });
