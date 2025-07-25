@@ -19,35 +19,47 @@ export default function TextSelectionHandler({
 
   useEffect(() => {
     const handleSelection = () => {
-      const selection = window.getSelection();
-      const text = selection?.toString().trim();
-      
-      console.log('🎙️ TEXT SELECTION:', text, 'Length:', text?.length);
-      
-      if (text && text.length > 10) { // Minimum 10 characters for podcast generation
-        setSelectedText(text);
+      // Add delay to ensure selection is complete
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
         
-        // Get selection position for floating button
-        const range = selection?.getRangeAt(0);
-        if (range) {
-          const rect = range.getBoundingClientRect();
-          console.log('🎙️ SELECTION POSITION:', { x: rect.left + (rect.width / 2), y: rect.top - 10 });
-          setSelectionPosition({
-            x: rect.left + (rect.width / 2),
-            y: rect.top - 10
-          });
+        console.log('🎙️ TEXT SELECTION:', text, 'Length:', text?.length);
+        console.log('🎙️ SELECTION STATE:', selection?.rangeCount || 0, 'ranges');
+        
+        if (text && text.length > 10) { // Minimum 10 characters for podcast generation
+          setSelectedText(text);
+          
+          // Get selection position for floating button
+          const range = selection?.getRangeAt(0);
+          if (range) {
+            const rect = range.getBoundingClientRect();
+            console.log('🎙️ BUTTON WILL APPEAR AT:', { x: rect.left + (rect.width / 2), y: rect.top - 10 });
+            setSelectionPosition({
+              x: rect.left + (rect.width / 2),
+              y: rect.top - 50 // Move button higher to avoid text overlap
+            });
+          }
+        } else if (text?.length === 0) {
+          // Only clear after delay to prevent immediate disappearing
+          setTimeout(() => {
+            setSelectedText('');
+            setSelectionPosition(null);
+          }, 3000); // Keep visible for 3 seconds after deselection
         }
-      } else {
-        setSelectedText('');
-        setSelectionPosition(null);
-      }
+      }, 250); // Increased delay for proper selection detection
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      // Clear selection if clicking outside the container
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setSelectedText('');
-        setSelectionPosition(null);
+      // Only clear selection if clicking outside AND not on the podcast button
+      const target = event.target as Element;
+      if (containerRef.current && 
+          !containerRef.current.contains(target) && 
+          !target.closest('[data-podcast-button]')) {
+        setTimeout(() => {
+          setSelectedText('');
+          setSelectionPosition(null);
+        }, 1000); // Delay to allow button interaction
       }
     };
 
