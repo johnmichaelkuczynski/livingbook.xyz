@@ -127,13 +127,24 @@ Thank you for listening to this analysis.
       }
 
       const audioBlob = await response.blob();
-      return URL.createObjectURL(audioBlob);
+      const blobUrl = URL.createObjectURL(audioBlob);
+      console.log('🎧 AUDIO BLOB - Size:', audioBlob.size, 'bytes');
+      console.log('🎧 AUDIO BLOB - Type:', audioBlob.type);
+      console.log('🎧 AUDIO BLOB - URL:', blobUrl);
+      return blobUrl;
     },
     onSuccess: (url) => {
       console.log('✅ AUDIO SUCCESS - Setting audio URL:', url);
       console.log('✅ AUDIO SUCCESS - Blob URL created, length:', url.length);
+      console.log('✅ AUDIO SUCCESS - Current audioUrl state before:', audioUrl);
       setAudioUrl(url);
-      console.log('✅ AUDIO SUCCESS - State should be updated');
+      console.log('✅ AUDIO SUCCESS - setAudioUrl called with:', url);
+      
+      // Force immediate state update check
+      setTimeout(() => {
+        console.log('✅ AUDIO SUCCESS - State after timeout:', audioUrl);
+      }, 100);
+      
       toast({
         title: "🎧 Complete Podcast Ready!",
         description: "Your podcast with AI script and Azure TTS audio is ready to play and download!"
@@ -338,6 +349,11 @@ Thank you for listening to this analysis.
                   <Volume2 className="w-4 h-4 mr-2" />
                   {generateAudioMutation.isPending ? 'Generating Audio...' : 'Generate Audio'}
                 </Button>
+              </div>
+
+              {/* DEBUG: Show current audioUrl state */}
+              <div className="bg-red-100 p-2 rounded text-xs border border-red-300">
+                <strong>DEBUG:</strong> audioUrl = {audioUrl ? `SET: ${audioUrl.substring(0, 60)}...` : 'NOT SET'}
               </div>
 
               {/* Audio Player */}
