@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Play, Pause, Download, Mic, Volume2, Settings } from 'lucide-react';
+import { X, Play, Pause, Download, Mic, Volume2, Settings, Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -264,19 +264,23 @@ Thank you for listening to this analysis.
           {/* Generate Complete Podcast Button */}
           <Button 
             onClick={() => generateScriptMutation.mutate()}
-            disabled={generateScriptMutation.isPending}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            size="lg"
+            disabled={generateScriptMutation.isPending || generateAudioMutation.isPending}
+            className="w-full bg-slate-700 hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-md transition-colors duration-200"
           >
             {generateScriptMutation.isPending ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Creating Complete Podcast...
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Generating Script...
+              </>
+            ) : generateAudioMutation.isPending ? (
+              <>
+                <Volume2 className="w-5 h-5 mr-2 animate-pulse" />
+                Creating Audio...
               </>
             ) : (
               <>
                 <Mic className="w-5 h-5 mr-2" />
-                🎧 Generate Complete Podcast (Script + Audio)
+                Generate Complete Podcast
               </>
             )}
           </Button>
@@ -336,20 +340,20 @@ Thank you for listening to this analysis.
                 </Button>
               </div>
 
-              {/* Debug Audio URL Status */}
-              <div className="bg-red-100 p-2 rounded text-xs">
-                Audio URL Status: {audioUrl ? 'SET' : 'NOT SET'} | 
-                Audio URL: {audioUrl ? audioUrl.substring(0, 50) + '...' : 'None'}
-              </div>
-
               {/* Audio Player */}
               {audioUrl && (
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3 flex items-center">
+                    <Volume2 className="w-4 h-4 mr-2" />
+                    🎧 Your Podcast is Ready!
+                  </h4>
+                  
                   <div className="flex items-center space-x-4">
                     <Button
                       onClick={handlePlayPause}
                       variant="outline"
                       size="sm"
+                      className="bg-green-100 hover:bg-green-200 border-green-300"
                     >
                       {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </Button>
@@ -370,6 +374,7 @@ Thank you for listening to this analysis.
                       onClick={handleDownloadAudio}
                       variant="outline"
                       size="sm"
+                      className="bg-blue-100 hover:bg-blue-200 border-blue-300"
                     >
                       <Download className="w-4 h-4" />
                     </Button>
@@ -382,6 +387,19 @@ Thank you for listening to this analysis.
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Audio Generation Status */}
+              {generateAudioMutation.isPending && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    <div>
+                      <p className="font-medium text-blue-800 dark:text-blue-200">Creating Audio...</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-300">Azure Speech Services is generating your podcast</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
