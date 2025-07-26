@@ -418,17 +418,7 @@ export default function Home() {
                       <FileText className="w-5 h-5" />
                       Document Content
                     </div>
-                    <Button 
-                      onClick={() => {
-                        setPodcastSelectedText("Algorithm: A fixed procedure for carrying out a task. The rules that we learn in grade school to multiply, add, etc., multi-digit numbers are algorithms. By formalizing inferences, logicians create algorithms for determining whether, given two statements, one of them follows from the other.");
-                        setShowPodcastGenerator(true);
-                      }}
-                      size="sm"
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-3 py-1 flex items-center gap-1"
-                    >
-                      <Mic className="w-3 h-3" />
-                      🎧 Test Podcast
-                    </Button>
+
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
