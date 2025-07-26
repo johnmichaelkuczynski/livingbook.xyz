@@ -130,7 +130,10 @@ Thank you for listening to this analysis.
       return URL.createObjectURL(audioBlob);
     },
     onSuccess: (url) => {
+      console.log('✅ AUDIO SUCCESS - Setting audio URL:', url);
+      console.log('✅ AUDIO SUCCESS - Blob URL created, length:', url.length);
       setAudioUrl(url);
+      console.log('✅ AUDIO SUCCESS - State should be updated');
       toast({
         title: "🎧 Complete Podcast Ready!",
         description: "Your podcast with AI script and Azure TTS audio is ready to play and download!"
@@ -331,6 +334,12 @@ Thank you for listening to this analysis.
                   <Volume2 className="w-4 h-4 mr-2" />
                   {generateAudioMutation.isPending ? 'Generating Audio...' : 'Generate Audio'}
                 </Button>
+              </div>
+
+              {/* Debug Audio URL Status */}
+              <div className="bg-red-100 p-2 rounded text-xs">
+                Audio URL Status: {audioUrl ? 'SET' : 'NOT SET'} | 
+                Audio URL: {audioUrl ? audioUrl.substring(0, 50) + '...' : 'None'}
               </div>
 
               {/* Audio Player */}
