@@ -68,7 +68,7 @@
     "microsoft-cognitiveservices-speech-sdk": "^1.45.0",
     "multer": "^2.0.1",
     "next-themes": "^0.4.6",
-    "openai": "^5.8.3",
+    "openai": "^5.10.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-parse": "^1.1.1",
