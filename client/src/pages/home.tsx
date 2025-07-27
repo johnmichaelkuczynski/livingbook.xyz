@@ -16,6 +16,7 @@ import RewritePanel from '@/components/RewritePanel';
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
 import TextSelectionHandler from '@/components/TextSelectionHandler';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
+import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -553,14 +554,11 @@ export default function Home() {
                   />
                 </TextSelectionHandler>
                 
-                {/* Study Guide Output */}
-                {(showStudyGuide || studyGuideContent) && (
-                  <StudyGuideOutput
-                    content={studyGuideContent}
-                    isVisible={true}
-                    isLoading={isGeneratingStudyGuide}
-                  />
-                )}
+                {/* SIMPLE STUDY GUIDE - ALWAYS VISIBLE */}
+                <SimpleStudyGuide
+                  content={studyGuideContent || "NO STUDY GUIDE CONTENT - Try selecting text and clicking Study Guide button"}
+                  isLoading={isGeneratingStudyGuide}
+                />
               </div>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
