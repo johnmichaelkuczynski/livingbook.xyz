@@ -352,6 +352,7 @@ export default function Home() {
       const data = await response.json();
       console.log('Study guide received:', data.studyGuide);
       setStudyGuideContent(data.studyGuide);
+      console.log('Study guide state updated - showStudyGuide:', true, 'content length:', data.studyGuide.length);
 
       toast({
         title: "Study Guide Generated",
