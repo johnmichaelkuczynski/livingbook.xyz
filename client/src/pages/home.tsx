@@ -372,8 +372,8 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="grid grid-cols-4 gap-0 h-[calc(100vh-120px)] pb-32">
-        {/* Left Side: Document Area - Takes 3/4 of the width */}
+      <div className="grid grid-cols-5 gap-0 h-[calc(100vh-120px)] pb-32">
+        {/* Left Side: Document Area - Takes 3/5 of the width */}
         <div className="col-span-3 flex flex-col p-8">
           {/* Hidden file input */}
           <input
@@ -526,8 +526,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right Side: AI Chat Messages - Takes 1/4 of the width */}
-        <div className="col-span-1 border-l border-gray-200 flex flex-col">
+        {/* Right Side: AI Chat Messages - Takes 2/5 of the width */}
+        <div className="col-span-2 border-l border-gray-200 flex flex-col">
           <ChatInterface 
             document={currentDocument} 
             showInputInline={false} 
