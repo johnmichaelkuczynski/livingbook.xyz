@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
-import KaTeXRenderer from './KaTeXRenderer';
 
-interface StudyGuideOutputProps {
+interface SimpleStudyGuideProps {
   content: string;
-  isVisible: boolean;
   isLoading?: boolean;
 }
 
-export default function StudyGuideOutput({ content, isVisible, isLoading = false }: StudyGuideOutputProps) {
+export default function SimpleStudyGuide({ content, isLoading = false }: SimpleStudyGuideProps) {
   const [copied, setCopied] = useState(false);
   
-  console.log('StudyGuideOutput props:', { content: content?.substring(0, 100), isVisible, isLoading });
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
@@ -24,99 +18,103 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
     }
   };
 
-  if (!isVisible) return null;
-
   return (
     <div 
-      id="study-guide-container"
+      id="simple-study-guide"
       style={{ 
         width: '100%',
-        marginTop: '16px',
-        border: '3px solid #3b82f6',
+        marginTop: '20px',
+        border: '3px solid #dc2626',
         borderRadius: '8px',
-        backgroundColor: '#eff6ff',
-        minHeight: '250px',
+        backgroundColor: '#fef2f2',
+        minHeight: '300px',
         display: 'block',
         position: 'relative',
         zIndex: 999,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
       }}
     >
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 16px',
-        backgroundColor: '#dbeafe',
-        borderBottom: '1px solid #93c5fd'
+        padding: '16px 20px',
+        backgroundColor: '#fee2e2',
+        borderBottom: '2px solid #dc2626'
       }}>
-        <h3 style={{
-          fontSize: '18px',
+        <h2 style={{
+          fontSize: '20px',
           fontWeight: 'bold',
-          color: '#1e40af',
+          color: '#dc2626',
           margin: 0
         }}>
-          📚 STUDY GUIDE GENERATED ✅
-        </h3>
+          📚 STUDY GUIDE IS HERE! ✅ VISIBLE NOW
+        </h2>
         <button
           onClick={handleCopy}
           style={{
-            backgroundColor: 'transparent',
+            backgroundColor: '#dc2626',
+            color: 'white',
             border: 'none',
-            color: '#2563eb',
+            borderRadius: '4px',
+            padding: '8px 12px',
             cursor: 'pointer',
-            padding: '4px'
+            fontSize: '14px',
+            fontWeight: 'bold'
           }}
           title="Copy study guide"
           disabled={isLoading}
         >
-          {copied ? '✓' : '📋'}
+          {copied ? 'COPIED!' : 'COPY'}
         </button>
       </div>
       
       <div style={{
-        padding: '16px',
-        maxHeight: '400px',
+        padding: '20px',
+        maxHeight: '500px',
         overflowY: 'auto',
         backgroundColor: 'white',
-        color: '#374151'
+        color: '#1f2937',
+        fontSize: '15px',
+        lineHeight: '1.7'
       }}>
         {isLoading ? (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '32px'
+            padding: '40px'
           }}>
             <div style={{
-              width: '32px',
-              height: '32px',
-              border: '3px solid #e5e7eb',
-              borderTop: '3px solid #3b82f6',
+              width: '40px',
+              height: '40px',
+              border: '4px solid #e5e7eb',
+              borderTop: '4px solid #dc2626',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }}></div>
-            <span style={{ marginLeft: '12px', color: '#3b82f6' }}>
-              Generating study guide...
+            <span style={{ marginLeft: '16px', color: '#dc2626', fontSize: '16px', fontWeight: 'bold' }}>
+              GENERATING STUDY GUIDE...
             </span>
           </div>
         ) : content ? (
           <div style={{ 
-            lineHeight: '1.6',
             whiteSpace: 'pre-wrap',
-            fontFamily: 'inherit',
-            fontSize: '14px'
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontSize: '15px',
+            lineHeight: '1.7'
           }}>
             {content}
           </div>
         ) : (
           <div style={{
-            color: '#ef4444',
-            padding: '16px',
+            color: '#dc2626',
+            padding: '20px',
             textAlign: 'center',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            fontSize: '16px'
           }}>
-            ERROR: No study guide content available
+            NO STUDY GUIDE CONTENT AVAILABLE - PLEASE TRY AGAIN
           </div>
         )}
       </div>
