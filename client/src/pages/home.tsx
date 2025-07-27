@@ -15,6 +15,7 @@ import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
 import TextSelectionHandler from '@/components/TextSelectionHandler';
+import StudyGuideOutput from '@/components/StudyGuideOutput';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -28,6 +29,9 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   // const [showSelectionPopup, setShowSelectionPopup] = useState(false); // REMOVED
   const [selectedText, setSelectedText] = useState('');
+  const [studyGuideContent, setStudyGuideContent] = useState('');
+  const [showStudyGuide, setShowStudyGuide] = useState(false);
+  const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -305,12 +309,55 @@ export default function Home() {
   };
 
   // Bottom toolbar handlers
-  const handleStudyGuide = () => {
-    toast({
-      title: "Study Guide",
-      description: "Generating comprehensive study guide for selected text...",
-    });
-    // TODO: Implement study guide generation
+  const handleStudyGuide = async () => {
+    if (!selectedText.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingStudyGuide(true);
+    setShowStudyGuide(true);
+
+    try {
+      const response = await fetch('/api/study-guide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: selectedText,
+          documentTitle: currentDocument?.originalName || 'Document',
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate study guide: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setStudyGuideContent(data.studyGuide);
+
+      toast({
+        title: "Study Guide Generated",
+        description: "Your personalized study guide is ready!",
+      });
+
+    } catch (error) {
+      console.error('Study guide generation error:', error);
+      toast({
+        title: "Failed to generate study guide",
+        description: "Please try again with a different text selection.",
+        variant: "destructive",
+      });
+      setShowStudyGuide(false);
+    } finally {
+      setIsGeneratingStudyGuide(false);
+    }
   };
 
   const handleTestMe = () => {
@@ -444,6 +491,9 @@ export default function Home() {
               <TextSelectionHandler
                 onDiscuss={(text) => {
                   setSelectedText(text);
+                  // Clear previous study guide when new text is selected  
+                  setShowStudyGuide(false);
+                  setStudyGuideContent('');
                   handleStudyGuide();
                 }}
                 onRewrite={(text) => {
@@ -452,6 +502,9 @@ export default function Home() {
                 }}
                 onStudyGuide={(text) => {
                   setSelectedText(text);
+                  // Clear previous study guide when new text is selected
+                  setShowStudyGuide(false);
+                  setStudyGuideContent('');
                   handleStudyGuide();
                 }}
                 onTestMe={(text) => {
@@ -489,6 +542,13 @@ export default function Home() {
                     setSelectedText(text);
                     // Removed the popup - we only want the floating toolbar now
                   }}
+                />
+                
+                {/* Study Guide Output */}
+                <StudyGuideOutput
+                  content={studyGuideContent}
+                  isVisible={showStudyGuide}
+                  isLoading={isGeneratingStudyGuide}
                 />
               </TextSelectionHandler>
             ) : (

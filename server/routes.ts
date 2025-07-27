@@ -538,6 +538,73 @@ Please rewrite the text according to the instructions. Return only the rewritten
     }
   });
 
+  // Generate study guide for selected text
+  app.post("/api/study-guide", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      const studyGuidePrompt = `Generate a study guide based on the selected passage. The study guide should include:
+
+A short summary of the main ideas.
+
+Key terms and definitions.
+
+Important questions a student should be able to answer after reading.
+
+Any relevant examples or analogies that help explain the content.
+
+Keep it clear, concise, and pedagogically useful.
+
+Selected passage from "${documentTitle}":
+"""
+${selectedText}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate study guide
+      const aiResponse = await generateChatResponse(
+        studyGuidePrompt,
+        selectedText,
+        []
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      res.json({
+        studyGuide: aiResponse.message
+      });
+      
+    } catch (error) {
+      console.error("Study guide generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate study guide" 
+      });
+    }
+  });
+
   // Send chat message about selected text
   app.post("/api/chat/selection", async (req, res) => {
     try {
