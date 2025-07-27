@@ -61,8 +61,8 @@ export default function PodcastGenerator({
       setPodcastScript(data.script);
       setIsRestricted(data.isRestricted);
       toast({
-        title: "Script generated - Creating audio...",
-        description: "Generating complete podcast with Azure Speech Services"
+        title: "Script Generated",
+        description: "Creating audio with Azure Speech Services..."
       });
       
       // Automatically generate audio for complete podcast experience
@@ -137,15 +137,16 @@ Thank you for listening to this analysis.
       console.log('✅ AUDIO SUCCESS - Setting audio URL:', url);
       console.log('✅ AUDIO SUCCESS - Blob URL created, length:', url.length);
       
-      // Force immediate state update
+      // Force immediate state update and re-render
       setAudioUrl(url);
+      console.log('🎧 STATE UPDATE - audioUrl set to:', url?.substring(0, 60) + '...');
       
-      // Force component re-render by updating a secondary state
-      setIsRestricted(current => current); // Trigger re-render
+      // Force re-render by triggering state change
+      setPodcastScript(current => ({ ...current! })); // Trigger re-render
       
       toast({
-        title: "🎧 Complete Podcast Ready!",
-        description: "Your podcast with AI script and Azure TTS audio is ready to play and download!"
+        title: "🎧 Podcast Audio Ready!",
+        description: "Your complete podcast is ready to play and download!"
       });
     },
     onError: (error: any) => {
@@ -409,9 +410,13 @@ Thank you for listening to this analysis.
                 </div>
               ) : null}
 
-              {/* Always Show Debug State */}
-              <div className="bg-yellow-50 p-2 rounded text-xs border">
-                <strong>Audio Status:</strong> {audioUrl ? `READY: ${audioUrl.substring(0, 50)}...` : 'NONE'}
+              {/* Debug: Always Show Audio URL State */}
+              <div className="bg-red-50 p-3 rounded border border-red-200">
+                <div className="text-xs font-mono">
+                  <div><strong>Audio URL:</strong> {audioUrl ? '✅ SET' : '❌ NOT SET'}</div>
+                  <div><strong>URL Length:</strong> {audioUrl?.length || 0}</div>
+                  <div><strong>Script Available:</strong> {podcastScript ? '✅ YES' : '❌ NO'}</div>
+                </div>
               </div>
             </div>
           )}
