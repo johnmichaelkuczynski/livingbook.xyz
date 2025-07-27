@@ -17,6 +17,7 @@ import RewritePanel from '@/components/RewritePanel';
 import TextSelectionHandler from '@/components/TextSelectionHandler';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
+import StudyGuideModal from '@/components/StudyGuideModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -33,6 +34,7 @@ export default function Home() {
   const [selectedText, setSelectedText] = useState('');
   const [studyGuideContent, setStudyGuideContent] = useState('');
   const [showStudyGuide, setShowStudyGuide] = useState(false);
+  const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
 
@@ -327,11 +329,11 @@ export default function Home() {
       return;
     }
 
-    // Clear previous content and show loading state
+    // Clear previous content and show modal immediately
     setStudyGuideContent('');
     setIsProcessingSelection(true);
     setIsGeneratingStudyGuide(true);
-    setShowStudyGuide(true);
+    setShowStudyGuideModal(true); // Open modal immediately with loading state
 
     try {
       const response = await fetch('/api/study-guide', {
@@ -353,6 +355,7 @@ export default function Home() {
       const data = await response.json();
       console.log('Study guide received:', data.studyGuide);
       setStudyGuideContent(data.studyGuide);
+      setShowStudyGuide(true);
       console.log('Study guide state updated - showStudyGuide:', true, 'content length:', data.studyGuide.length);
 
       toast({
@@ -367,7 +370,7 @@ export default function Home() {
         description: "Please try again with a different text selection.",
         variant: "destructive",
       });
-      setShowStudyGuide(false);
+      setShowStudyGuideModal(false); // Close modal on error
     } finally {
       setIsGeneratingStudyGuide(false);
       setIsProcessingSelection(false);
@@ -554,9 +557,11 @@ export default function Home() {
                   />
                 </TextSelectionHandler>
                 
-                {/* SIMPLE STUDY GUIDE - ALWAYS VISIBLE */}
-                <SimpleStudyGuide
-                  content={studyGuideContent || "NO STUDY GUIDE CONTENT - Try selecting text and clicking Study Guide button"}
+                {/* Study Guide Modal */}
+                <StudyGuideModal
+                  isOpen={showStudyGuideModal}
+                  onClose={() => setShowStudyGuideModal(false)}
+                  content={studyGuideContent}
                   isLoading={isGeneratingStudyGuide}
                 />
               </div>
