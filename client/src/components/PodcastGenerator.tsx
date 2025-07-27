@@ -136,14 +136,12 @@ Thank you for listening to this analysis.
     onSuccess: (url) => {
       console.log('✅ AUDIO SUCCESS - Setting audio URL:', url);
       console.log('✅ AUDIO SUCCESS - Blob URL created, length:', url.length);
-      console.log('✅ AUDIO SUCCESS - Current audioUrl state before:', audioUrl);
-      setAudioUrl(url);
-      console.log('✅ AUDIO SUCCESS - setAudioUrl called with:', url);
       
-      // Force immediate state update check
-      setTimeout(() => {
-        console.log('✅ AUDIO SUCCESS - State after timeout:', audioUrl);
-      }, 100);
+      // Force immediate state update
+      setAudioUrl(url);
+      
+      // Force component re-render by updating a secondary state
+      setIsRestricted(current => current); // Trigger re-render
       
       toast({
         title: "🎧 Complete Podcast Ready!",
@@ -351,13 +349,8 @@ Thank you for listening to this analysis.
                 </Button>
               </div>
 
-              {/* DEBUG: Show current audioUrl state */}
-              <div className="bg-red-100 p-2 rounded text-xs border border-red-300">
-                <strong>DEBUG:</strong> audioUrl = {audioUrl ? `SET: ${audioUrl.substring(0, 60)}...` : 'NOT SET'}
-              </div>
-
-              {/* Audio Player */}
-              {audioUrl && (
+              {/* Audio Player - Force Show When URL Exists */}
+              {audioUrl ? (
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                   <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3 flex items-center">
                     <Volume2 className="w-4 h-4 mr-2" />
@@ -404,10 +397,7 @@ Thank you for listening to this analysis.
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Audio Generation Status */}
-              {generateAudioMutation.isPending && (
+              ) : generateAudioMutation.isPending ? (
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center space-x-3">
                     <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
@@ -417,7 +407,12 @@ Thank you for listening to this analysis.
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
+
+              {/* Always Show Debug State */}
+              <div className="bg-yellow-50 p-2 rounded text-xs border">
+                <strong>Audio Status:</strong> {audioUrl ? `READY: ${audioUrl.substring(0, 50)}...` : 'NONE'}
+              </div>
             </div>
           )}
         </CardContent>
