@@ -13,7 +13,7 @@ import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
-import TextSelectionPopup from '@/components/TextSelectionPopup';
+// import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
 import TextSelectionHandler from '@/components/TextSelectionHandler';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -26,7 +26,7 @@ export default function Home() {
   const [isRewritePanelOpen, setIsRewritePanelOpen] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
-  const [showSelectionPopup, setShowSelectionPopup] = useState(false);
+  // const [showSelectionPopup, setShowSelectionPopup] = useState(false); // REMOVED
   const [selectedText, setSelectedText] = useState('');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -487,7 +487,7 @@ export default function Home() {
                   onFileDrop={handleFile}
                   onTextSelection={(text) => {
                     setSelectedText(text);
-                    setShowSelectionPopup(true);
+                    // Removed the popup - we only want the floating toolbar now
                   }}
                 />
               </TextSelectionHandler>
@@ -697,13 +697,7 @@ export default function Home() {
         }}
       />
 
-      {/* Text Selection Popup */}
-      <TextSelectionPopup
-        isOpen={showSelectionPopup}
-        onClose={() => setShowSelectionPopup(false)}
-        selectedText={selectedText}
-        documentTitle={currentDocument?.originalName || "Document"}
-      />
+      {/* Text Selection Popup - REMOVED per user request */}
 
 
 
