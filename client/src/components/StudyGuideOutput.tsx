@@ -27,7 +27,7 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
   if (!isVisible) return null;
 
   return (
-    <div className="mt-4 border border-blue-200 rounded-lg bg-blue-50 shadow-sm">
+    <div className="mt-4 border border-blue-200 rounded-lg bg-blue-50 shadow-lg z-10 relative">
       <div className="flex items-center justify-between p-3 border-b border-blue-200 bg-blue-100">
         <h3 className="text-sm font-semibold text-blue-800 flex items-center">
           📚 Study Guide
@@ -44,7 +44,7 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
         </Button>
       </div>
       
-      <div className="p-4 max-h-96 overflow-y-auto">
+      <div className="p-4 max-h-96 overflow-y-auto bg-white">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
