@@ -16,6 +16,7 @@ import RewritePanel from '@/components/RewritePanel';
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
 import TextSelectionHandler from '@/components/TextSelectionHandler';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
+import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -325,6 +326,8 @@ export default function Home() {
       return;
     }
 
+    // Clear previous content and show loading state
+    setStudyGuideContent('');
     setIsProcessingSelection(true);
     setIsGeneratingStudyGuide(true);
     setShowStudyGuide(true);
@@ -347,6 +350,7 @@ export default function Home() {
       }
 
       const data = await response.json();
+      console.log('Study guide received:', data.studyGuide);
       setStudyGuideContent(data.studyGuide);
 
       toast({
@@ -499,9 +503,6 @@ export default function Home() {
               <TextSelectionHandler
                 onDiscuss={(text) => {
                   setSelectedText(text);
-                  // Clear previous study guide when new text is selected  
-                  setShowStudyGuide(false);
-                  setStudyGuideContent('');
                   handleStudyGuide();
                 }}
                 onRewrite={(text) => {
@@ -510,9 +511,6 @@ export default function Home() {
                 }}
                 onStudyGuide={(text) => {
                   setSelectedText(text);
-                  // Clear previous study guide when new text is selected
-                  setShowStudyGuide(false);
-                  setStudyGuideContent('');
                   handleStudyGuide();
                 }}
                 onTestMe={(text) => {
@@ -766,6 +764,12 @@ export default function Home() {
       />
 
       {/* Text Selection Popup - REMOVED per user request */}
+      
+      {/* Loading Indicator */}
+      <LoadingIndicator
+        message="Generating study guide"
+        isVisible={isGeneratingStudyGuide}
+      />
 
 
 
