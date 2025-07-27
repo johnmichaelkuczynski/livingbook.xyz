@@ -14,6 +14,7 @@ import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 import TextSelectionPopup from '@/components/TextSelectionPopup';
+import BottomToolbar from '@/components/BottomToolbar';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
   const [selectedText, setSelectedText] = useState('');
+  const [showBottomToolbar, setShowBottomToolbar] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -302,6 +304,63 @@ export default function Home() {
     createDocumentMutation.mutate({ title, content });
   };
 
+  // Bottom toolbar handlers
+  const handleStudyGuide = () => {
+    toast({
+      title: "Study Guide",
+      description: "Generating comprehensive study guide for selected text...",
+    });
+    // TODO: Implement study guide generation
+  };
+
+  const handleTestMe = () => {
+    toast({
+      title: "Test Me",
+      description: "Creating practice questions and quiz...",
+    });
+    // TODO: Implement test generation
+  };
+
+  const handlePodcast = () => {
+    toast({
+      title: "Podcast",
+      description: "Converting to audio podcast format...",
+    });
+    // TODO: Implement podcast generation
+  };
+
+  const handleCognitiveMap = () => {
+    toast({
+      title: "Cognitive Map", 
+      description: "Creating visual concept map...",
+    });
+    // TODO: Implement cognitive mapping
+  };
+
+  const handleSummaryThesis = () => {
+    toast({
+      title: "Summary+Thesis",
+      description: "Extracting key summary and thesis...",
+    });
+    // TODO: Implement summary and thesis extraction
+  };
+
+  const handleThesisDeepDive = () => {
+    toast({
+      title: "Thesis Deep-Dive",
+      description: "Performing detailed thesis analysis...",
+    });
+    // TODO: Implement thesis deep dive
+  };
+
+  const handleSuggestedReadings = () => {
+    toast({
+      title: "Suggested Readings",
+      description: "Finding related reading materials...",
+    });
+    // TODO: Implement suggested readings
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -389,8 +448,17 @@ export default function Home() {
                   onRewriteClick={handleRewriteClick}
                   onFileDrop={handleFile}
                   onTextSelection={(text) => {
-                    setSelectedText(text);
-                    setShowSelectionPopup(true);
+                    if (text && text.trim().length > 0) {
+                      setSelectedText(text);
+                      setShowBottomToolbar(true);
+                      // Also keep the original popup for backward compatibility
+                      setShowSelectionPopup(true);
+                    } else {
+                      // Clear selection when no text selected
+                      setSelectedText('');
+                      setShowBottomToolbar(false);
+                      setShowSelectionPopup(false);
+                    }
                   }}
                 />
             ) : (
@@ -610,6 +678,23 @@ export default function Home() {
 
 
 
+
+      {/* Bottom Toolbar */}
+      <BottomToolbar
+        selectedText={selectedText}
+        documentTitle={currentDocument?.originalName || "Document"}
+        onStudyGuide={handleStudyGuide}
+        onTestMe={handleTestMe}
+        onPodcast={handlePodcast}
+        onCognitiveMap={handleCognitiveMap}
+        onSummaryThesis={handleSummaryThesis}
+        onThesisDeepDive={handleThesisDeepDive}
+        onSuggestedReadings={handleSuggestedReadings}
+        onClose={() => {
+          setSelectedText('');
+          setShowBottomToolbar(false);
+        }}
+      />
 
     </div>
   );
