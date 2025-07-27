@@ -553,15 +553,13 @@ export default function Home() {
                   />
                 </TextSelectionHandler>
                 
-                {/* Study Guide Output - FORCED VISIBLE */}
-                {showStudyGuide && (
-                  <div className="w-full mt-4" style={{ display: 'block', position: 'relative', zIndex: 100 }}>
-                    <StudyGuideOutput
-                      content={studyGuideContent}
-                      isVisible={true}
-                      isLoading={isGeneratingStudyGuide}
-                    />
-                  </div>
+                {/* Study Guide Output */}
+                {(showStudyGuide || studyGuideContent) && (
+                  <StudyGuideOutput
+                    content={studyGuideContent}
+                    isVisible={true}
+                    isLoading={isGeneratingStudyGuide}
+                  />
                 )}
               </div>
             ) : (

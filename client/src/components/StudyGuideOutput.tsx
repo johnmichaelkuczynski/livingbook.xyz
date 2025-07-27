@@ -28,43 +28,89 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
 
   return (
     <div 
-      className="mt-4 border-2 border-blue-500 rounded-lg bg-blue-50 shadow-lg z-50 relative"
+      id="study-guide-container"
       style={{ 
-        minHeight: '200px',
+        width: '100%',
+        marginTop: '16px',
+        border: '3px solid #3b82f6',
+        borderRadius: '8px',
+        backgroundColor: '#eff6ff',
+        minHeight: '250px',
         display: 'block',
         position: 'relative',
-        backgroundColor: '#eff6ff',
-        border: '2px solid #3b82f6'
+        zIndex: 999,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
       }}
     >
-      <div className="flex items-center justify-between p-3 border-b border-blue-200 bg-blue-100">
-        <h3 className="text-lg font-bold text-blue-800 flex items-center">
-          📚 STUDY GUIDE GENERATED
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        backgroundColor: '#dbeafe',
+        borderBottom: '1px solid #93c5fd'
+      }}>
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: 'bold',
+          color: '#1e40af',
+          margin: 0
+        }}>
+          📚 STUDY GUIDE GENERATED ✅
         </h3>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={handleCopy}
-          className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 h-8 w-8 p-0"
+          style={{
+            backgroundColor: 'transparent',
+            border: 'none',
+            color: '#2563eb',
+            cursor: 'pointer',
+            padding: '4px'
+          }}
           title="Copy study guide"
           disabled={isLoading}
         >
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-        </Button>
+          {copied ? '✓' : '📋'}
+        </button>
       </div>
       
-      <div className="p-4 max-h-96 overflow-y-auto bg-white" style={{ backgroundColor: 'white' }}>
+      <div style={{
+        padding: '16px',
+        maxHeight: '400px',
+        overflowY: 'auto',
+        backgroundColor: 'white',
+        color: '#374151'
+      }}>
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-blue-600">Generating study guide...</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '32px'
+          }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              border: '3px solid #e5e7eb',
+              borderTop: '3px solid #3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <span style={{ marginLeft: '12px', color: '#3b82f6' }}>
+              Generating study guide...
+            </span>
           </div>
         ) : content ? (
-          <div className="prose prose-sm max-w-none text-gray-700" style={{ color: '#374151' }}>
+          <div style={{ lineHeight: '1.6' }}>
             <KaTeXRenderer content={content} />
           </div>
         ) : (
-          <div className="text-red-500 py-4 text-center font-bold" style={{ color: 'red' }}>
+          <div style={{
+            color: '#ef4444',
+            padding: '16px',
+            textAlign: 'center',
+            fontWeight: 'bold'
+          }}>
             ERROR: No study guide content available
           </div>
         )}
