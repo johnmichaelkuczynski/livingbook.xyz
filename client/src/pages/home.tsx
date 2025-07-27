@@ -14,8 +14,6 @@ import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 import TextSelectionPopup from '@/components/TextSelectionPopup';
-import PodcastGenerator from '@/components/PodcastGenerator';
-import TextSelectionHandler from '@/components/TextSelectionHandler';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -29,8 +27,6 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
   const [selectedText, setSelectedText] = useState('');
-  const [showPodcastGenerator, setShowPodcastGenerator] = useState(false);
-  const [podcastSelectedText, setPodcastSelectedText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -386,13 +382,6 @@ export default function Home() {
           
           <div className="flex-1">
             {currentDocument ? (
-              <TextSelectionHandler
-                onTextSelect={(text) => {
-                  setPodcastSelectedText(text);
-                  setShowPodcastGenerator(true);
-                }}
-                documentTitle={currentDocument?.originalName}
-              >
                 <DocumentViewer 
                   document={currentDocument}
                   isLoading={isUploading}
@@ -400,16 +389,10 @@ export default function Home() {
                   onRewriteClick={handleRewriteClick}
                   onFileDrop={handleFile}
                   onTextSelection={(text) => {
-                    console.log('🎙️ DOCUMENT VIEWER - Text selected:', text.substring(0, 100) + '...');
-                    // For regular text selection popup
                     setSelectedText(text);
                     setShowSelectionPopup(true);
-                    
-                    // ALSO set for podcast generation
-                    setPodcastSelectedText(text);
                   }}
                 />
-              </TextSelectionHandler>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
                 <CardHeader>
@@ -624,14 +607,7 @@ export default function Home() {
         documentTitle={currentDocument?.originalName || "Document"}
       />
 
-      {/* Podcast Generator */}
-      <PodcastGenerator
-        isOpen={showPodcastGenerator}
-        onClose={() => setShowPodcastGenerator(false)}
-        selectedText={podcastSelectedText}
-        documentTitle={currentDocument?.originalName || "Document"}
-        isRegistered={false}
-      />
+
 
 
 
