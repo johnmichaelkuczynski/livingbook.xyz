@@ -499,65 +499,71 @@ export default function Home() {
             className="hidden"
           />
           
-          <div className="flex-1">
+          <div className="flex-1 relative">
             {currentDocument ? (
-              <TextSelectionHandler
-                onDiscuss={(text) => {
-                  setSelectedText(text);
-                  handleStudyGuide();
-                }}
-                onRewrite={(text) => {
-                  setSelectedText(text);
-                  handleSummaryThesis();
-                }}
-                onStudyGuide={(text) => {
-                  setSelectedText(text);
-                  handleStudyGuide();
-                }}
-                onTestMe={(text) => {
-                  setSelectedText(text);
-                  handleTestMe();
-                }}
-                onPodcast={(text) => {
-                  setSelectedText(text);
-                  handlePodcast();
-                }}
-                onCognitiveMap={(text) => {
-                  setSelectedText(text);
-                  handleCognitiveMap();
-                }}
-                onSummaryThesis={(text) => {
-                  setSelectedText(text);
-                  handleSummaryThesis();
-                }}
-                onThesisDeepDive={(text) => {
-                  setSelectedText(text);
-                  handleThesisDeepDive();
-                }}
-                onSuggestedReadings={(text) => {
-                  setSelectedText(text);
-                  handleSuggestedReadings();
-                }}
-              >
-                <DocumentViewer 
-                  document={currentDocument}
-                  isLoading={isUploading}
-                  onUploadClick={() => fileInputRef.current?.click()}
-                  onRewriteClick={handleRewriteClick}
-                  onFileDrop={handleFile}
-                  onTextSelection={(text) => {
+              <div>
+                <TextSelectionHandler
+                  onDiscuss={(text) => {
                     setSelectedText(text);
-                    // Removed the popup - we only want the floating toolbar now
+                    handleStudyGuide();
                   }}
-                />
+                  onRewrite={(text) => {
+                    setSelectedText(text);
+                    handleSummaryThesis();
+                  }}
+                  onStudyGuide={(text) => {
+                    setSelectedText(text);
+                    handleStudyGuide();
+                  }}
+                  onTestMe={(text) => {
+                    setSelectedText(text);
+                    handleTestMe();
+                  }}
+                  onPodcast={(text) => {
+                    setSelectedText(text);
+                    handlePodcast();
+                  }}
+                  onCognitiveMap={(text) => {
+                    setSelectedText(text);
+                    handleCognitiveMap();
+                  }}
+                  onSummaryThesis={(text) => {
+                    setSelectedText(text);
+                    handleSummaryThesis();
+                  }}
+                  onThesisDeepDive={(text) => {
+                    setSelectedText(text);
+                    handleThesisDeepDive();
+                  }}
+                  onSuggestedReadings={(text) => {
+                    setSelectedText(text);
+                    handleSuggestedReadings();
+                  }}
+                >
+                  <DocumentViewer 
+                    document={currentDocument}
+                    isLoading={isUploading}
+                    onUploadClick={() => fileInputRef.current?.click()}
+                    onRewriteClick={handleRewriteClick}
+                    onFileDrop={handleFile}
+                    onTextSelection={(text) => {
+                      setSelectedText(text);
+                      // Removed the popup - we only want the floating toolbar now
+                    }}
+                  />
+                </TextSelectionHandler>
                 
-                {/* Study Guide Output */}
-                <StudyGuideOutput
-                  content={studyGuideContent}
-                  isVisible={showStudyGuide}
-                  isLoading={isGeneratingStudyGuide}
-                />
-              </TextSelectionHandler>
+                {/* Study Guide Output - FORCED VISIBLE */}
+                {showStudyGuide && (
+                  <div className="w-full mt-4" style={{ display: 'block', position: 'relative', zIndex: 100 }}>
+                    <StudyGuideOutput
+                      content={studyGuideContent}
+                      isVisible={true}
+                      isLoading={isGeneratingStudyGuide}
+                    />
+                  </div>
+                )}
+              </div>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
                 <CardHeader>
