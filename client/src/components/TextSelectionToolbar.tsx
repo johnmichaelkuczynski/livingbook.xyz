@@ -45,29 +45,32 @@ export default function TextSelectionToolbar({
 
   useEffect(() => {
     if (selectionRect) {
-      const toolbar = document.getElementById('text-selection-toolbar');
-      if (toolbar) {
-        const toolbarRect = toolbar.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        // Position above the selection
-        let top = selectionRect.top - toolbarRect.height - 10;
-        let left = selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
-        
-        // Keep within viewport bounds
-        if (left < 10) left = 10;
-        if (left + toolbarRect.width > viewportWidth - 10) {
-          left = viewportWidth - toolbarRect.width - 10;
+      // Use a timeout to ensure the toolbar is rendered first
+      setTimeout(() => {
+        const toolbar = document.getElementById('text-selection-toolbar');
+        if (toolbar) {
+          const toolbarRect = toolbar.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          
+          // Expanded toolbar is larger, so adjust positioning
+          let top = selectionRect.top - 140; // More space for 2-row toolbar
+          let left = selectionRect.left + (selectionRect.width / 2) - 300; // Center the wider toolbar
+          
+          // Keep within viewport bounds
+          if (left < 10) left = 10;
+          if (left + 600 > viewportWidth - 10) { // Account for expanded width
+            left = viewportWidth - 610;
+          }
+          
+          // If not enough space above, position below
+          if (top < 10) {
+            top = selectionRect.bottom + 10;
+          }
+          
+          setPosition({ top, left });
         }
-        
-        // If not enough space above, position below
-        if (top < 10) {
-          top = selectionRect.bottom + 10;
-        }
-        
-        setPosition({ top, left });
-      }
+      }, 10);
     }
   }, [selectionRect]);
 
@@ -133,38 +136,61 @@ export default function TextSelectionToolbar({
   return (
     <div
       id="text-selection-toolbar"
-      className="fixed z-[9999] bg-white rounded-lg shadow-xl border border-gray-200 p-2"
+      className="fixed z-[9999] bg-white rounded-lg shadow-xl border border-gray-200 p-3"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
         transform: position.top === 0 ? 'translateY(-100%)' : 'none'
       }}
     >
-      <div className="flex items-center space-x-1">
-        {toolbarButtons.map((button, index) => {
-          const IconComponent = button.icon;
-          return (
-            <Button
-              key={index}
-              onClick={button.onClick}
-              size="sm"
-              className={`${button.color} text-white p-2 h-8 w-8 rounded transition-all duration-200 hover:scale-105 shadow-sm`}
-              title={button.label}
-            >
-              <IconComponent className="w-4 h-4" />
-            </Button>
-          );
-        })}
-        <div className="w-px h-6 bg-gray-300 mx-1" />
-        <Button
-          onClick={onClose}
-          size="sm"
-          variant="ghost"
-          className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 h-8 w-8 rounded"
-          title="Close"
-        >
-          <X className="w-4 h-4" />
-        </Button>
+      <div className="flex flex-col space-y-2">
+        {/* Top row buttons */}
+        <div className="flex items-center space-x-2">
+          {toolbarButtons.slice(0, 5).map((button, index) => {
+            const IconComponent = button.icon;
+            return (
+              <Button
+                key={index}
+                onClick={button.onClick}
+                size="sm"
+                className={`${button.color} text-white px-3 py-2 h-9 rounded transition-all duration-200 hover:scale-105 shadow-sm flex items-center space-x-1`}
+              >
+                <IconComponent className="w-4 h-4" />
+                <span className="text-xs font-medium">{button.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+        
+        {/* Bottom row buttons */}
+        <div className="flex items-center justify-between space-x-2">
+          <div className="flex items-center space-x-2">
+            {toolbarButtons.slice(5).map((button, index) => {
+              const IconComponent = button.icon;
+              return (
+                <Button
+                  key={index + 5}
+                  onClick={button.onClick}
+                  size="sm"
+                  className={`${button.color} text-white px-3 py-2 h-9 rounded transition-all duration-200 hover:scale-105 shadow-sm flex items-center space-x-1`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="text-xs font-medium">{button.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+          
+          <Button
+            onClick={onClose}
+            size="sm"
+            variant="ghost"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-2 py-2 h-9 rounded flex items-center"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

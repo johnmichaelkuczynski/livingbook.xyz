@@ -32,6 +32,7 @@ export default function Home() {
   const [studyGuideContent, setStudyGuideContent] = useState('');
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
+  const [isProcessingSelection, setIsProcessingSelection] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -319,6 +320,12 @@ export default function Home() {
       return;
     }
 
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    setIsProcessingSelection(true);
     setIsGeneratingStudyGuide(true);
     setShowStudyGuide(true);
 
@@ -357,6 +364,7 @@ export default function Home() {
       setShowStudyGuide(false);
     } finally {
       setIsGeneratingStudyGuide(false);
+      setIsProcessingSelection(false);
     }
   };
 
