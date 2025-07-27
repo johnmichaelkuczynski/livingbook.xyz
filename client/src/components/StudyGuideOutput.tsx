@@ -11,6 +11,8 @@ interface StudyGuideOutputProps {
 
 export default function StudyGuideOutput({ content, isVisible, isLoading = false }: StudyGuideOutputProps) {
   const [copied, setCopied] = useState(false);
+  
+  console.log('StudyGuideOutput props:', { content: content?.substring(0, 100), isVisible, isLoading });
 
   const handleCopy = async () => {
     try {
@@ -22,7 +24,7 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
     }
   };
 
-  if (!isVisible && !isLoading) return null;
+  if (!isVisible) return null;
 
   return (
     <div className="mt-4 border border-blue-200 rounded-lg bg-blue-50 shadow-sm">
@@ -48,9 +50,13 @@ export default function StudyGuideOutput({ content, isVisible, isLoading = false
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-3 text-blue-600">Generating study guide...</span>
           </div>
-        ) : (
+        ) : content ? (
           <div className="prose prose-sm max-w-none text-gray-700">
             <KaTeXRenderer content={content} />
+          </div>
+        ) : (
+          <div className="text-gray-500 py-4 text-center">
+            No study guide content available
           </div>
         )}
       </div>
