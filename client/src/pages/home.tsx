@@ -14,7 +14,7 @@ import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 import TextSelectionPopup from '@/components/TextSelectionPopup';
-import BottomToolbar from '@/components/BottomToolbar';
+import TextSelectionHandler from '@/components/TextSelectionHandler';
 // Import chunkDocument function - we'll implement a client-side version
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<'upload' | 'text'>('upload');
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
   const [selectedText, setSelectedText] = useState('');
-  const [showBottomToolbar, setShowBottomToolbar] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -441,6 +441,44 @@ export default function Home() {
           
           <div className="flex-1">
             {currentDocument ? (
+              <TextSelectionHandler
+                onDiscuss={(text) => {
+                  setSelectedText(text);
+                  handleStudyGuide();
+                }}
+                onRewrite={(text) => {
+                  setSelectedText(text);
+                  handleSummaryThesis();
+                }}
+                onStudyGuide={(text) => {
+                  setSelectedText(text);
+                  handleStudyGuide();
+                }}
+                onTestMe={(text) => {
+                  setSelectedText(text);
+                  handleTestMe();
+                }}
+                onPodcast={(text) => {
+                  setSelectedText(text);
+                  handlePodcast();
+                }}
+                onCognitiveMap={(text) => {
+                  setSelectedText(text);
+                  handleCognitiveMap();
+                }}
+                onSummaryThesis={(text) => {
+                  setSelectedText(text);
+                  handleSummaryThesis();
+                }}
+                onThesisDeepDive={(text) => {
+                  setSelectedText(text);
+                  handleThesisDeepDive();
+                }}
+                onSuggestedReadings={(text) => {
+                  setSelectedText(text);
+                  handleSuggestedReadings();
+                }}
+              >
                 <DocumentViewer 
                   document={currentDocument}
                   isLoading={isUploading}
@@ -448,19 +486,11 @@ export default function Home() {
                   onRewriteClick={handleRewriteClick}
                   onFileDrop={handleFile}
                   onTextSelection={(text) => {
-                    if (text && text.trim().length > 0) {
-                      setSelectedText(text);
-                      setShowBottomToolbar(true);
-                      // Also keep the original popup for backward compatibility
-                      setShowSelectionPopup(true);
-                    } else {
-                      // Clear selection when no text selected
-                      setSelectedText('');
-                      setShowBottomToolbar(false);
-                      setShowSelectionPopup(false);
-                    }
+                    setSelectedText(text);
+                    setShowSelectionPopup(true);
                   }}
                 />
+              </TextSelectionHandler>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
                 <CardHeader>
@@ -679,22 +709,7 @@ export default function Home() {
 
 
 
-      {/* Bottom Toolbar */}
-      <BottomToolbar
-        selectedText={selectedText}
-        documentTitle={currentDocument?.originalName || "Document"}
-        onStudyGuide={handleStudyGuide}
-        onTestMe={handleTestMe}
-        onPodcast={handlePodcast}
-        onCognitiveMap={handleCognitiveMap}
-        onSummaryThesis={handleSummaryThesis}
-        onThesisDeepDive={handleThesisDeepDive}
-        onSuggestedReadings={handleSuggestedReadings}
-        onClose={() => {
-          setSelectedText('');
-          setShowBottomToolbar(false);
-        }}
-      />
+
 
     </div>
   );
