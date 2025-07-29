@@ -424,6 +424,8 @@ export default function Home() {
       const data = await response.json();
       console.log('Test received:', data.test);
       setTestContent(data.test);
+      // Store selected text for grading
+      (window as any).selectedTextForTest = textToUse;
 
       toast({
         title: "Test Generated",
