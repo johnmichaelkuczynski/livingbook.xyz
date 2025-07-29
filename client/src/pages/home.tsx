@@ -669,9 +669,9 @@ Speaker 1: [dialogue]
                     setSelectedText(text);
                     handleTestMe();
                   }}
-                  onPodcast={(text) => {
+                  onPodcast={(text, type) => {
                     setSelectedText(text);
-                    handlePodcast();
+                    handlePodcast(type);
                   }}
                   onCognitiveMap={(text) => {
                     setSelectedText(text);
@@ -945,7 +945,6 @@ Speaker 1: [dialogue]
           isOpen={showStudyGuideModal}
           onClose={() => setShowStudyGuideModal(false)}
           content={studyGuideContent}
-          title="Study Guide"
         />
       )}
 
@@ -955,8 +954,6 @@ Speaker 1: [dialogue]
           isOpen={showTestModal}
           onClose={() => setShowTestModal(false)}
           content={testContent}
-          title="Practice Test"
-          selectedText={selectedText}
         />
       )}
 
