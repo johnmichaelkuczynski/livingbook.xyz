@@ -23,6 +23,7 @@ import PodcastModal from '@/components/PodcastModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
 import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
+import SuggestedReadingsModal from '@/components/SuggestedReadingsModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -57,6 +58,9 @@ export default function Home() {
   const [thesisDeepDiveContent, setThesisDeepDiveContent] = useState('');
   const [showThesisDeepDive, setShowThesisDeepDive] = useState(false);
   const [isGeneratingThesisDeepDive, setIsGeneratingThesisDeepDive] = useState(false);
+  const [suggestedReadingsContent, setSuggestedReadingsContent] = useState('');
+  const [showSuggestedReadings, setShowSuggestedReadings] = useState(false);
+  const [isGeneratingSuggestedReadings, setIsGeneratingSuggestedReadings] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -725,12 +729,63 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleSuggestedReadings = () => {
-    toast({
-      title: "Suggested Readings",
-      description: "Finding related reading materials...",
-    });
-    // TODO: Implement suggested readings
+  const handleSuggestedReadings = async () => {
+    if (!selectedText.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    // Clear previous content and show modal immediately
+    setSuggestedReadingsContent('');
+    setIsProcessingSelection(true);
+    setIsGeneratingSuggestedReadings(true);
+    setShowSuggestedReadings(true); // Open modal immediately with loading state
+
+    try {
+      const response = await fetch('/api/generate-suggested-readings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: selectedText,
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate suggested readings: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setSuggestedReadingsContent(data.suggestedReadings);
+      
+      toast({
+        title: "Suggested Readings Generated",
+        description: "Relevant academic works ready for review!",
+      });
+      
+    } catch (error) {
+      console.error('Suggested Readings generation error:', error);
+      toast({
+        title: "Error generating suggested readings",
+        description: "Failed to generate reading list. Please try again.",
+        variant: "destructive",
+      });
+      setShowSuggestedReadings(false); // Close modal on error
+    } finally {
+      setIsGeneratingSuggestedReadings(false);
+      setIsProcessingSelection(false);
+    }
   };
 
   return (
@@ -907,6 +962,15 @@ Speaker 1: [dialogue]
                   isLoading={isGeneratingThesisDeepDive}
                   selectedText={selectedText}
                   onRegenerate={(comparisonTarget) => handleThesisDeepDive(comparisonTarget)}
+                />
+
+                {/* Suggested Readings Modal */}
+                <SuggestedReadingsModal
+                  isOpen={showSuggestedReadings}
+                  onClose={() => setShowSuggestedReadings(false)}
+                  content={suggestedReadingsContent}
+                  isLoading={isGeneratingSuggestedReadings}
+                  selectedText={selectedText}
                 />
               </div>
             ) : (

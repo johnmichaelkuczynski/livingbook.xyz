@@ -1846,6 +1846,74 @@ ${selectedText}
     }
   });
 
+  // Suggested Readings generation endpoint
+  app.post("/api/generate-suggested-readings", async (req, res) => {
+    try {
+      const { selectedText, provider = 'deepseek' } = req.body;
+      
+      if (!selectedText || selectedText.trim().length === 0) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log(`📚 GENERATING SUGGESTED READINGS - Provider: ${provider}, Text length: ${selectedText.length}`);
+
+      const prompt = `Based on the themes, concepts, and subject matter in the selected passage, generate a list of relevant academic or intellectual works (books, articles, or essays). Include both historical and contemporary sources. For each item, provide:
+(a) Full title
+(b) Author
+(c) A one-sentence explanation of its relevance.
+
+Return a list of 5–10 entries. Each entry should have this format:
+
+Title by Author — [1-sentence relevance summary]
+
+Focus on well-known, influential works that are genuinely relevant to the themes and concepts in the passage. Include both foundational historical texts and important contemporary scholarship. Be specific and accurate with titles and authors.
+
+Selected passage:
+"""
+${selectedText}
+"""
+
+Important: Format each entry exactly as specified: "Title by Author — [relevance summary]". Provide 7-10 high-quality, genuinely relevant academic works.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, selectedText, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      // Clean any markdown formatting
+      const cleanedContent = removeMarkupSymbols(response.message);
+      
+      console.log(`✅ SUGGESTED READINGS GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
+      
+      res.json({ suggestedReadings: cleanedContent });
+      
+    } catch (error) {
+      console.error("Suggested Readings generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate suggested readings"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

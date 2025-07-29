@@ -110,6 +110,23 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 29, 2025: SUGGESTED READINGS FUNCTIONALITY FULLY IMPLEMENTED - ACADEMIC BIBLIOGRAPHY GENERATION COMPLETE
+  - **COMPREHENSIVE READING LISTS**: AI generates 5-10 relevant academic works based on selected text themes and concepts
+  - **DUAL SOURCE COVERAGE**: Includes both historical foundational texts and contemporary scholarship
+  - **STRUCTURED FORMATTING**: Each entry shows "Title by Author — [1-sentence relevance summary]"
+  - **PROFESSIONAL MODAL INTERFACE**: Three-panel layout with selected text, reading recommendations, and formatted display
+  - **BACKEND API ENDPOINT**: `/api/generate-suggested-readings` with academic focus prompting
+  - **DOWNLOAD & COPY OPTIONS**: PDF, TXT downloads and clipboard copying for complete reading lists
+  - **INTELLIGENT PARSING**: Modal parses and formats entries with book icons and structured display
+  - Complete workflow: select text → click Suggested Readings → view formatted bibliography → download/copy
+- July 29, 2025: MODAL DRAG & RESIZE FUNCTIONALITY IMPLEMENTED - ENHANCED USER INTERFACE CONTROL
+  - **DRAGGABLE MODALS**: All analysis modals (Thesis Deep-Dive, Summary+Thesis, Cognitive Map, Suggested Readings) are fully draggable
+  - **RESIZABLE INTERFACE**: Users can resize modals with corner drag handles for optimal viewing
+  - **POSITION PERSISTENCE**: Modals maintain position and size during use session
+  - **VISUAL FEEDBACK**: Cursor changes and drag handles provide clear interaction cues
+  - **CONSTRAINED MOVEMENT**: Drag and resize operations constrained to viewport boundaries
+  - **RESPONSIVE DESIGN**: Minimum size constraints ensure usability across different screen sizes
+  - Enhanced user experience with complete modal control for analysis review and comparison
 - July 29, 2025: THESIS DEEP-DIVE FUNCTIONALITY FULLY IMPLEMENTED - COMPREHENSIVE SCHOLARLY ANALYSIS COMPLETE
   - **CORE THESIS EXTRACTION**: AI identifies and clearly states the central argument from selected passages
   - **ORIGINAL WORDING QUOTATION**: Direct quotes from author's exact phrasing preserved and highlighted
