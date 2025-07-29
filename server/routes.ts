@@ -697,18 +697,18 @@ Return ONLY the JSON object, no other text.`;
     }
   });
 
-  // Podcast dialogue endpoint
-  app.post("/api/podcast-dialogue", async (req, res) => {
+  // Complete podcast generation endpoint - generates dialogue AND audio in one call
+  app.post("/api/generate-podcast", async (req, res) => {
     try {
-      const { selectedText, documentTitle, provider = 'deepseek', type, prompt } = req.body;
+      const { selectedText, documentTitle, provider = 'deepseek', type, prompt, voiceOptions } = req.body;
 
       if (!selectedText?.trim()) {
         return res.status(400).json({ error: 'Selected text is required' });
       }
 
-      console.log(`🎙️ GENERATING PODCAST DIALOGUE - Type: ${type}, Provider: ${provider}`);
+      console.log(`🎙️ GENERATING COMPLETE PODCAST - Type: ${type}, Provider: ${provider}`);
 
-      // Generate dialogue using the appropriate AI service
+      // Step 1: Generate dialogue using the appropriate AI service
       let chatResponse;
       switch (provider) {
         case 'openai':
@@ -732,18 +732,31 @@ Return ONLY the JSON object, no other text.`;
       }
 
       const dialogue = chatResponse.message;
-      
       console.log(`✅ PODCAST DIALOGUE GENERATED - Type: ${type}, Length: ${dialogue.length} chars`);
 
-      res.json({
-        dialogue,
-        type,
-        selectedText
+      // Step 2: Generate audio using Azure Speech Services
+      const speakerVoices = {
+        speaker1: voiceOptions?.speaker1 || 'en-US-DavisNeural',
+        speaker2: voiceOptions?.speaker2 || 'en-US-JennyNeural'
+      };
+
+      console.log(`🎤 GENERATING PODCAST AUDIO - Voices: ${speakerVoices.speaker1}, ${speakerVoices.speaker2}`);
+      
+      const audioBuffer = await azureSpeechService.generatePodcastAudio(dialogue, speakerVoices);
+      console.log(`✅ PODCAST AUDIO GENERATED - Size: ${audioBuffer.length} bytes`);
+
+      // Set appropriate headers for MP3 audio download
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': audioBuffer.length.toString(),
+        'Content-Disposition': `attachment; filename="podcast-${type}-${Date.now()}.mp3"`
       });
 
+      res.send(audioBuffer);
+
     } catch (error) {
-      console.error('Error generating podcast dialogue:', error);
-      res.status(500).json({ error: 'Failed to generate podcast dialogue' });
+      console.error('Error generating complete podcast:', error);
+      res.status(500).json({ error: 'Failed to generate podcast' });
     }
   });
 

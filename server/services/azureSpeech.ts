@@ -31,16 +31,27 @@ export async function synthesizeSpeech(
   speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
   speechConfig.speechSynthesisVoiceName = voiceName;
 
+  // Clean text for SSML - remove problematic characters and format properly
+  const cleanText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+    .replace(/\*/g, '')
+    .replace(/#{1,6}\s?/g, '')
+    .replace(/\[([^\]]+)\]/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
   // Create SSML for better speech synthesis
-  const ssml = `
-    <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
-      <voice name="${voiceName}">
-        <prosody rate="0.9" pitch="0st">
-          ${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
-        </prosody>
-      </voice>
-    </speak>
-  `;
+  const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+<voice name="${voiceName}">
+<prosody rate="0.9" pitch="0st">
+${cleanText}
+</prosody>
+</voice>
+</speak>`;
 
   return new Promise((resolve, reject) => {
     const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
