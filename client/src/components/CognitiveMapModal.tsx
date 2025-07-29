@@ -25,11 +25,21 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
+      themeVariables: {
+        primaryColor: '#f3f4f6',
+        primaryTextColor: '#1f2937',
+        primaryBorderColor: '#6b7280',
+        lineColor: '#6b7280',
+        secondaryColor: '#e5e7eb',
+        tertiaryColor: '#f9fafb'
+      },
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'basis'
-      }
+        curve: 'basis',
+        padding: 20
+      },
+      fontFamily: 'Inter, system-ui, sans-serif'
     });
   }, []);
 
@@ -43,9 +53,19 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
       const mermaidMatch = content.match(/MERMAID DIAGRAM:([\s\S]*?)$/i);
 
       if (textMatch && mermaidMatch) {
+        let mermaidCode = mermaidMatch[1].trim();
+        
+        // Clean up the mermaid code to remove problematic syntax
+        mermaidCode = mermaidCode
+          .replace(/```mermaid\n?|\n?```/g, '') // Remove code blocks
+          .replace(/^\s*-\s+/gm, '') // Remove markdown list items
+          .replace(/\*\*/g, '') // Remove bold markdown
+          .replace(/\*/g, '') // Remove italic markdown
+          .replace(/#{1,6}\s?/g, ''); // Remove headers
+        
         setParsedContent({
           textStructure: textMatch[1].trim(),
-          mermaidCode: mermaidMatch[1].trim()
+          mermaidCode: mermaidCode
         });
       } else {
         // Fallback: treat entire content as text structure
@@ -58,7 +78,7 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
       console.error('Error parsing cognitive map content:', error);
       setParsedContent({
         textStructure: content,
-        mermaidCode: 'graph TD\nA[Content Processing Error]'
+        mermaidCode: generateFallbackMermaid(content)
       });
     }
   }, [content]);
@@ -71,16 +91,49 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
           const id = `mermaid-${Date.now()}`;
           mermaidRef.current!.innerHTML = '';
           
-          const { svg } = await mermaid.render(id, parsedContent.mermaidCode);
+          // Validate mermaid code before rendering
+          let cleanCode = parsedContent.mermaidCode
+            .replace(/```mermaid\n?|\n?```/g, '')
+            .replace(/^\s*-\s+/gm, '')
+            .replace(/\*\*/g, '')
+            .replace(/\*/g, '')
+            .trim();
+          
+          // Ensure it starts with graph declaration
+          if (!cleanCode.startsWith('graph ')) {
+            cleanCode = 'graph TD\n' + cleanCode;
+          }
+          
+          console.log('Rendering Mermaid code:', cleanCode);
+          
+          const { svg } = await mermaid.render(id, cleanCode);
           mermaidRef.current!.innerHTML = svg;
+          
+          // Style the rendered SVG
+          const svgElement = mermaidRef.current!.querySelector('svg');
+          if (svgElement) {
+            svgElement.style.maxWidth = '100%';
+            svgElement.style.height = 'auto';
+          }
+          
         } catch (error) {
           console.error('Mermaid rendering error:', error);
-          mermaidRef.current!.innerHTML = `
-            <div class="p-4 text-center text-gray-500">
-              <p>Unable to render diagram</p>
-              <p class="text-sm">Switch to text view to see the structure</p>
-            </div>
-          `;
+          console.error('Failed code:', parsedContent.mermaidCode);
+          
+          // Try fallback diagram
+          try {
+            const fallbackCode = generateFallbackMermaid(parsedContent.textStructure || 'Analysis failed');
+            const { svg } = await mermaid.render(`fallback-${Date.now()}`, fallbackCode);
+            mermaidRef.current!.innerHTML = svg;
+          } catch (fallbackError) {
+            mermaidRef.current!.innerHTML = `
+              <div class="p-8 text-center text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
+                <div class="text-lg font-medium text-gray-700 mb-2">Diagram Unavailable</div>
+                <p class="text-sm">The visual diagram could not be generated.</p>
+                <p class="text-sm">Please use the "Text View" to see the logical structure.</p>
+              </div>
+            `;
+          }
         }
       };
       
@@ -89,21 +142,34 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
   }, [viewMode, parsedContent.mermaidCode]);
 
   const generateFallbackMermaid = (text: string): string => {
-    // Simple fallback: create a basic flowchart from text structure
-    const lines = text.split('\n').filter(line => line.trim());
-    let mermaidCode = 'graph TD\n';
+    // Extract key concepts and create a simple hierarchy
+    const lines = text.split('\n').filter(line => line.trim() && !line.includes('LOGICAL STRUCTURE') && !line.includes('MERMAID DIAGRAM'));
     
-    lines.forEach((line, index) => {
-      const sanitized = line.replace(/[^\w\s-]/g, '').slice(0, 50);
-      if (sanitized.trim()) {
-        mermaidCode += `    ${index}["${sanitized.trim()}"]\n`;
-        if (index > 0) {
-          mermaidCode += `    ${index - 1} --> ${index}\n`;
+    let mermaidCode = 'graph TD\n';
+    let nodeCount = 0;
+    const nodes: string[] = [];
+    
+    lines.slice(0, 8).forEach((line) => {
+      // Clean and truncate the line for node labels
+      let cleanLine = line
+        .replace(/^[-•→├└│\s]*/, '') // Remove tree symbols
+        .replace(/[^\w\s:.,]/g, '') // Remove special chars except basic punctuation
+        .slice(0, 40); // Limit length
+      
+      if (cleanLine.trim()) {
+        const nodeId = `N${nodeCount}`;
+        nodes.push(nodeId);
+        mermaidCode += `    ${nodeId}["${cleanLine.trim()}"]\n`;
+        
+        // Connect to previous node if not the first
+        if (nodeCount > 0) {
+          mermaidCode += `    ${nodes[Math.max(0, nodeCount - 1)]} --> ${nodeId}\n`;
         }
+        nodeCount++;
       }
     });
     
-    return mermaidCode;
+    return mermaidCode || 'graph TD\n    A["Content Analysis"]';
   };
 
   if (!isOpen) return null;

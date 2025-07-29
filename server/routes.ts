@@ -1627,38 +1627,46 @@ Instructions: ${instructions}
 
       console.log(`🧠 GENERATING COGNITIVE MAP - Provider: ${provider}, Text length: ${selectedText.length}`);
 
-      const prompt = `Analyze the selected text and output a structured cognitive map. Identify the main thesis, key claims, logical dependencies, and conceptual relationships.
+      const prompt = `Analyze the selected text and create a structured cognitive map. Identify the main thesis, key claims, logical dependencies, and conceptual relationships.
 
 Selected passage:
 """
 ${selectedText}
 """
 
-Provide your analysis in two parts:
+Provide your analysis in EXACTLY this format:
 
 LOGICAL STRUCTURE:
-Present the structure as a hierarchy or dependency tree using indentation and arrows:
-- Main Thesis: [identify the central argument]
-  → Key Claim 1: [supporting argument]
-    → Sub-claim 1a: [detail]
-    → Sub-claim 1b: [detail]
-  → Key Claim 2: [supporting argument]
-    → Evidence/Example: [supporting detail]
-  → Definitions: [key terms defined]
-  → Assumptions: [underlying assumptions]
+Main Thesis: [state the central argument in one clear sentence]
+├── Key Claim 1: [first supporting argument]
+│   ├── Sub-claim 1a: [specific detail or evidence]
+│   └── Sub-claim 1b: [specific detail or evidence]
+├── Key Claim 2: [second supporting argument]
+│   ├── Evidence: [supporting detail]
+│   └── Example: [specific instance]
+├── Definitions: [key terms that need defining]
+└── Assumptions: [underlying premises]
 
 MERMAID DIAGRAM:
-Generate a Mermaid.js flowchart code to visualize the relationships:
 graph TD
-    A["Main Thesis"] --> B["Key Claim 1"]
-    A --> C["Key Claim 2"] 
-    B --> D["Sub-claim 1a"]
-    B --> E["Sub-claim 1b"]
-    C --> F["Evidence"]
-    G["Definitions"] --> A
-    H["Assumptions"] --> A
+    THESIS["Main Thesis:<br/>Brief statement"]
+    CLAIM1["Key Claim 1:<br/>Brief description"]
+    CLAIM2["Key Claim 2:<br/>Brief description"]
+    SUB1A["Sub-claim 1a:<br/>Detail"]
+    SUB1B["Sub-claim 1b:<br/>Detail"]
+    EVIDENCE["Evidence:<br/>Supporting detail"]
+    DEFS["Definitions:<br/>Key terms"]
+    ASSUME["Assumptions:<br/>Premises"]
+    
+    THESIS --> CLAIM1
+    THESIS --> CLAIM2
+    CLAIM1 --> SUB1A
+    CLAIM1 --> SUB1B
+    CLAIM2 --> EVIDENCE
+    DEFS --> THESIS
+    ASSUME --> THESIS
 
-Make the diagram clear and readable with proper node connections.`;
+CRITICAL: Use only simple node labels with <br/> for line breaks. No markdown, no lists, no special characters in the Mermaid code.`;
 
       // Select AI service based on provider
       let generateChatResponse;
