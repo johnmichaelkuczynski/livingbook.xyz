@@ -110,6 +110,18 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 29, 2025: THESIS DEEP-DIVE FUNCTIONALITY FULLY IMPLEMENTED - COMPREHENSIVE SCHOLARLY ANALYSIS COMPLETE
+  - **CORE THESIS EXTRACTION**: AI identifies and clearly states the central argument from selected passages
+  - **ORIGINAL WORDING QUOTATION**: Direct quotes from author's exact phrasing preserved and highlighted
+  - **MODERN APPLICATIONS**: Contemporary relevance and practical implications explained in current context
+  - **CROSS-COMPARISON ANALYSIS**: Systematic comparison with modern thinkers, neuroscience, philosophy of mind, AI, cognitive science
+  - **OPTIONAL COMPARISON TARGETING**: Users can specify particular authors/fields for focused comparative analysis
+  - **FOUR-SECTION FORMATTING**: Professional structure with Extracted Thesis, Original Wording, Modern Applications, Cross-Comparison
+  - **COMPREHENSIVE MODAL INTERFACE**: Three-panel layout with selected text, analysis, and comparison target input
+  - **BACKEND API ENDPOINT**: `/api/generate-thesis-deep-dive` with scholarly prompting for dense, analytical output
+  - **DOWNLOAD & COPY OPTIONS**: PDF, TXT downloads and clipboard copying for complete scholarly analysis
+  - **REGENERATION CAPABILITY**: Users can regenerate analysis with different comparison targets without reselecting text
+  - Complete workflow: select text → click Thesis Deep-Dive → optionally specify comparison → view comprehensive scholarly analysis
 - July 29, 2025: SUMMARY+THESIS FUNCTIONALITY FULLY IMPLEMENTED - STRUCTURED TEXT ANALYSIS COMPLETE
   - **CONCISE THESIS EXTRACTION**: AI generates 1-2 sentence main claims from selected text passages
   - **STRUCTURED SUMMARY**: 3-6 sentence explanations covering logic, background, and implications

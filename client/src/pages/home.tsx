@@ -22,6 +22,7 @@ import TestModal from '@/components/TestModal';
 import PodcastModal from '@/components/PodcastModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
+import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -53,6 +54,9 @@ export default function Home() {
   const [summaryThesisContent, setSummaryThesisContent] = useState('');
   const [showSummaryThesis, setShowSummaryThesis] = useState(false);
   const [isGeneratingSummaryThesis, setIsGeneratingSummaryThesis] = useState(false);
+  const [thesisDeepDiveContent, setThesisDeepDiveContent] = useState('');
+  const [showThesisDeepDive, setShowThesisDeepDive] = useState(false);
+  const [isGeneratingThesisDeepDive, setIsGeneratingThesisDeepDive] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -659,12 +663,66 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleThesisDeepDive = () => {
-    toast({
-      title: "Thesis Deep-Dive",
-      description: "Performing detailed thesis analysis...",
-    });
-    // TODO: Implement thesis deep dive
+  const handleThesisDeepDive = async (comparisonTarget?: string) => {
+    if (!selectedText.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    // Clear previous content and show modal immediately
+    setThesisDeepDiveContent('');
+    setIsProcessingSelection(true);
+    setIsGeneratingThesisDeepDive(true);
+    setShowThesisDeepDive(true); // Open modal immediately with loading state
+
+    try {
+      const response = await fetch('/api/generate-thesis-deep-dive', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: selectedText,
+          provider: selectedProvider,
+          comparisonTarget: comparisonTarget
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate thesis deep-dive: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setThesisDeepDiveContent(data.thesisDeepDive);
+      
+      toast({
+        title: "Thesis Deep-Dive Generated",
+        description: comparisonTarget 
+          ? `Comprehensive analysis with ${comparisonTarget} comparison ready!`
+          : "Comprehensive thesis analysis ready!",
+      });
+      
+    } catch (error) {
+      console.error('Thesis Deep-Dive generation error:', error);
+      toast({
+        title: "Error generating thesis deep-dive",
+        description: "Failed to generate analysis. Please try again.",
+        variant: "destructive",
+      });
+      setShowThesisDeepDive(false); // Close modal on error
+    } finally {
+      setIsGeneratingThesisDeepDive(false);
+      setIsProcessingSelection(false);
+    }
   };
 
   const handleSuggestedReadings = () => {
@@ -839,6 +897,16 @@ Speaker 1: [dialogue]
                   content={summaryThesisContent}
                   isLoading={isGeneratingSummaryThesis}
                   selectedText={selectedText}
+                />
+
+                {/* Thesis Deep-Dive Modal */}
+                <ThesisDeepDiveModal
+                  isOpen={showThesisDeepDive}
+                  onClose={() => setShowThesisDeepDive(false)}
+                  content={thesisDeepDiveContent}
+                  isLoading={isGeneratingThesisDeepDive}
+                  selectedText={selectedText}
+                  onRegenerate={(comparisonTarget) => handleThesisDeepDive(comparisonTarget)}
                 />
               </div>
             ) : (
