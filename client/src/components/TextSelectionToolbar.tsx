@@ -44,6 +44,11 @@ export default function TextSelectionToolbar({
 }: TextSelectionToolbarProps) {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showPodcastDropdown, setShowPodcastDropdown] = useState(false);
+  const [podcastProgress, setPodcastProgress] = useState<{
+    isVisible: boolean;
+    message: string;
+    type: 'loading' | 'success' | 'error';
+  }>({ isVisible: false, message: '', type: 'loading' });
   const podcastButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +134,13 @@ Speaker 1: [dialogue]
 
       console.log(`🎙️ Starting podcast generation: ${podcastType}`);
 
+      // Show loading state
+      setPodcastProgress({
+        isVisible: true,
+        message: `Generating ${podcastType}...`,
+        type: 'loading'
+      });
+
       const response = await fetch('/api/generate-podcast', {
         method: 'POST',
         headers: {
@@ -165,9 +177,32 @@ Speaker 1: [dialogue]
 
       console.log(`✅ Podcast generated and downloaded: ${podcastType}`);
 
+      // Show success message
+      setPodcastProgress({
+        isVisible: true,
+        message: `${podcastType} downloaded!`,
+        type: 'success'
+      });
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setPodcastProgress(prev => ({ ...prev, isVisible: false }));
+      }, 3000);
+
     } catch (error) {
       console.error('Podcast generation error:', error);
-      alert('Failed to generate podcast. Please try again.');
+      
+      // Show error message
+      setPodcastProgress({
+        isVisible: true,
+        message: 'Failed to generate podcast. Please try again.',
+        type: 'error'
+      });
+
+      // Hide error message after 5 seconds
+      setTimeout(() => {
+        setPodcastProgress(prev => ({ ...prev, isVisible: false }));
+      }, 5000);
     }
   };
 
@@ -376,6 +411,23 @@ Speaker 1: [dialogue]
           </Button>
         </div>
       </div>
+
+      {/* Progress Indicator */}
+      {podcastProgress.isVisible && (
+        <div className={`fixed top-4 right-4 ${
+          podcastProgress.type === 'loading' ? 'bg-blue-500' :
+          podcastProgress.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300`}>
+          <div className="flex items-center space-x-2">
+            {podcastProgress.type === 'loading' && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            {podcastProgress.type === 'success' && <span>✅</span>}
+            {podcastProgress.type === 'error' && <span>❌</span>}
+            <span>{podcastProgress.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

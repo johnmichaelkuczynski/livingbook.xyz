@@ -1,0 +1,20 @@
+Podcast Type: standard
+
+Dialogue:
+Here is a simple dialogue following your example:  
+
+DIALOGUE EXAMPLE  
+
+Speaker 1: Hello and welcome.  
+
+Speaker 2: Thank you for having me.  
+
+Speaker 1: How has your day been so far?  
+
+Speaker 2: It’s been good, thank you. How about yours?  
+
+Speaker 1: Not too bad. I’m glad we could meet today.  
+
+Speaker 2: Yes, me too. What would you like to discuss?  
+
+This format keeps the conversation clear and easy to follow while maintaining proper spacing and structure. Let me know if you'd like any adjustments or additional details!

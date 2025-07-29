@@ -735,24 +735,39 @@ Return ONLY the JSON object, no other text.`;
       console.log(`✅ PODCAST DIALOGUE GENERATED - Type: ${type}, Length: ${dialogue.length} chars`);
 
       // Step 2: Generate audio using Azure Speech Services
-      const speakerVoices = {
-        speaker1: voiceOptions?.speaker1 || 'en-US-DavisNeural',
-        speaker2: voiceOptions?.speaker2 || 'en-US-JennyNeural'
-      };
-
-      console.log(`🎤 GENERATING PODCAST AUDIO - Voices: ${speakerVoices.speaker1}, ${speakerVoices.speaker2}`);
+      console.log(`🎤 GENERATING REAL PODCAST AUDIO - Type: ${type}`);
       
-      const audioBuffer = await azureSpeechService.generatePodcastAudio(dialogue, speakerVoices);
-      console.log(`✅ PODCAST AUDIO GENERATED - Size: ${audioBuffer.length} bytes`);
+      try {
+        const azureTTSSimple = await import('./services/azureTTSSimple');
+        console.log('📦 Azure TTS module imported successfully');
+        
+        const audioBuffer = await azureTTSSimple.generateDialogueAudio(dialogue);
+        console.log(`🎵 REAL PODCAST AUDIO GENERATED - Size: ${audioBuffer.length} bytes`);
 
-      // Set appropriate headers for MP3 audio download
-      res.set({
-        'Content-Type': 'audio/mpeg',
-        'Content-Length': audioBuffer.length.toString(),
-        'Content-Disposition': `attachment; filename="podcast-${type}-${Date.now()}.mp3"`
-      });
+        // Set appropriate headers for MP3 audio download
+        res.set({
+          'Content-Type': 'audio/mpeg',
+          'Content-Length': audioBuffer.length.toString(),
+          'Content-Disposition': `attachment; filename="podcast-${type}-${Date.now()}.mp3"`
+        });
 
-      res.send(audioBuffer);
+        res.send(audioBuffer);
+        return; // Important: return here to prevent fallback
+        
+      } catch (audioError: any) {
+        console.error('❌ Audio generation failed:', audioError);
+        console.error('❌ Error details:', audioError?.message || 'Unknown error');
+        
+        // Fallback to text script if audio fails
+        const podcastScript = `Podcast Type: ${type}\n\nDialogue:\n${dialogue}\n\n[Audio generation failed: ${audioError?.message || 'Unknown error'}]`;
+        
+        res.set({
+          'Content-Type': 'text/plain',
+          'Content-Disposition': `attachment; filename="podcast-script-${type}-${Date.now()}.txt"`
+        });
+
+        res.send(podcastScript);
+      }
 
     } catch (error) {
       console.error('Error generating complete podcast:', error);
