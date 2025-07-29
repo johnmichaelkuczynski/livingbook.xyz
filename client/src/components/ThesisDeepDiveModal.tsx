@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Copy, Download, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Copy, Download, Search, Move, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,14 @@ export default function ThesisDeepDiveModal({
 }: ThesisDeepDiveModalProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [comparisonTarget, setComparisonTarget] = useState('');
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [size, setSize] = useState({ width: 80, height: 90 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async () => {
     try {
@@ -114,6 +122,76 @@ export default function ThesisDeepDiveModal({
     }
   };
 
+  // Mouse event handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.drag-handle')) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - (position.x * window.innerWidth / 100),
+        y: e.clientY - (position.y * window.innerHeight / 100)
+      });
+    }
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height
+    });
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const newX = ((e.clientX - dragStart.x) / window.innerWidth) * 100;
+        const newY = ((e.clientY - dragStart.y) / window.innerHeight) * 100;
+        
+        // Constrain to viewport
+        setPosition({
+          x: Math.max(0, Math.min(100 - size.width, newX)),
+          y: Math.max(0, Math.min(100 - size.height, newY))
+        });
+      }
+      
+      if (isResizing) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        
+        const newWidth = Math.max(40, Math.min(95, resizeStart.width + (deltaX / window.innerWidth) * 100));
+        const newHeight = Math.max(40, Math.min(95, resizeStart.height + (deltaY / window.innerHeight) * 100));
+        
+        setSize({ width: newWidth, height: newHeight });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    if (isDragging || isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, isResizing, dragStart, resizeStart, size]);
+
+  // Reset position and size when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPosition({ x: 10, y: 5 });
+      setSize({ width: 80, height: 90 });
+    }
+  }, [isOpen]);
+
   const renderFormattedContent = (text: string) => {
     const sections = text.split('\n\n');
     
@@ -178,12 +256,28 @@ export default function ThesisDeepDiveModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Thesis Deep-Dive</h2>
-            <p className="text-sm text-gray-600 mt-1">Comprehensive thesis analysis with modern context</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+      <div 
+        ref={modalRef}
+        className="absolute bg-white rounded-lg shadow-xl flex flex-col cursor-move"
+        style={{
+          left: `${position.x}%`,
+          top: `${position.y}%`,
+          width: `${size.width}%`,
+          height: `${size.height}%`,
+          minWidth: '400px',
+          minHeight: '300px',
+          cursor: isDragging ? 'grabbing' : 'grab'
+        }}
+        onMouseDown={handleMouseDown}
+      >
+        <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg drag-handle">
+          <div className="flex items-center space-x-3">
+            <Move className="w-4 h-4 text-gray-400" />
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Thesis Deep-Dive</h2>
+              <p className="text-xs text-gray-600">Comprehensive thesis analysis with modern context</p>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -223,7 +317,7 @@ export default function ThesisDeepDiveModal({
         </div>
 
         {/* Comparison Target Input */}
-        <div className="px-6 py-3 bg-gray-50 border-b">
+        <div className="px-4 py-2 bg-gray-50 border-b flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="flex-1">
               <Input
@@ -246,34 +340,51 @@ export default function ThesisDeepDiveModal({
           </div>
         </div>
 
-        <div className="flex-1 p-6 flex gap-6 overflow-hidden">
+        <div className="flex-1 flex gap-4 overflow-hidden relative">
           {/* Selected Text Panel */}
-          <div className="w-1/3 flex flex-col">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Selected Passage</h3>
-            <ScrollArea className="flex-1 bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {selectedText}
-              </div>
-            </ScrollArea>
+          <div className="w-1/3 flex flex-col p-4 pr-2">
+            <h3 className="text-sm font-medium text-gray-900 mb-2 flex-shrink-0">Selected Passage</h3>
+            <div className="flex-1 bg-gray-50 rounded-lg overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-3 text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {selectedText}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
 
           {/* Analysis Panel */}
-          <div className="w-2/3 flex flex-col">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Deep-Dive Analysis</h3>
-            <ScrollArea className="flex-1 bg-white border border-gray-200 p-6 rounded-lg">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Generating comprehensive thesis analysis...</p>
-                  </div>
+          <div className="w-2/3 flex flex-col p-4 pl-2">
+            <h3 className="text-sm font-medium text-gray-900 mb-2 flex-shrink-0">Deep-Dive Analysis</h3>
+            <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-4">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                        <p className="text-gray-600 text-sm">Generating comprehensive thesis analysis...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pb-8">
+                      {renderFormattedContent(content)}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {renderFormattedContent(content)}
-                </div>
-              )}
-            </ScrollArea>
+              </ScrollArea>
+            </div>
+          </div>
+
+          {/* Resize Handle */}
+          <div 
+            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-300 hover:bg-gray-400 transition-colors"
+            style={{
+              clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)'
+            }}
+            onMouseDown={handleResizeMouseDown}
+          >
+            <Maximize2 className="w-3 h-3 text-gray-600 absolute bottom-0.5 right-0.5" />
           </div>
         </div>
       </div>
