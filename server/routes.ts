@@ -696,6 +696,56 @@ Return ONLY the JSON object, no other text.`;
     }
   });
 
+  // Podcast dialogue endpoint
+  app.post("/api/podcast-dialogue", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'deepseek', type, prompt } = req.body;
+
+      if (!selectedText?.trim()) {
+        return res.status(400).json({ error: 'Selected text is required' });
+      }
+
+      console.log(`🎙️ GENERATING PODCAST DIALOGUE - Type: ${type}, Provider: ${provider}`);
+
+      // Generate dialogue using the appropriate AI service
+      let chatResponse;
+      switch (provider) {
+        case 'openai':
+          chatResponse = await openaiService.generateChatResponse(prompt, selectedText, []);
+          break;
+        case 'deepseek':
+          chatResponse = await deepseekService.generateChatResponse(prompt, selectedText, []);
+          break;
+        case 'anthropic':
+          chatResponse = await anthropicService.generateChatResponse(prompt, selectedText, []);
+          break;
+        case 'perplexity':
+          chatResponse = await perplexityService.generateChatResponse(prompt, selectedText, []);
+          break;
+        default:
+          chatResponse = await deepseekService.generateChatResponse(prompt, selectedText, []);
+      }
+      
+      if (chatResponse.error) {
+        return res.status(500).json({ error: chatResponse.error });
+      }
+
+      const dialogue = chatResponse.message;
+      
+      console.log(`✅ PODCAST DIALOGUE GENERATED - Type: ${type}, Length: ${dialogue.length} chars`);
+
+      res.json({
+        dialogue,
+        type,
+        selectedText
+      });
+
+    } catch (error) {
+      console.error('Error generating podcast dialogue:', error);
+      res.status(500).json({ error: 'Failed to generate podcast dialogue' });
+    }
+  });
+
   // Grade test submission
   app.post("/api/grade-test", async (req, res) => {
     try {

@@ -19,6 +19,7 @@ import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
 import TestModal from '@/components/TestModal';
+import PodcastModal from '@/components/PodcastModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -41,6 +42,9 @@ export default function Home() {
   const [showTestModal, setShowTestModal] = useState(false);
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
+  const [podcastDialogue, setPodcastDialogue] = useState('');
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
+  const [podcastType, setPodcastType] = useState<'standard' | 'modern'>('standard');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -446,12 +450,93 @@ export default function Home() {
     }
   };
 
-  const handlePodcast = () => {
-    toast({
-      title: "Podcast",
-      description: "Converting to audio podcast format...",
-    });
-    // TODO: Implement podcast generation
+  const handlePodcast = async (type: 'standard' | 'modern', text?: string) => {
+    const textToUse = text || selectedText;
+    
+    if (!textToUse.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    setIsProcessingSelection(true);
+
+    try {
+      const prompt = type === 'standard' 
+        ? `Create a podcast-style dialogue between two speakers discussing the ideas in the selected passage. One speaker should summarize the main points; the other should ask clarifying or challenging questions. Keep the tone intelligent, focused, and conversational. Duration: approx. 5 minutes of dialogue.
+
+Selected passage:
+"""
+${textToUse}
+"""
+
+Format the response as alternating speakers:
+Speaker 1: [dialogue]
+Speaker 2: [dialogue]
+Speaker 1: [dialogue]
+...`
+        : `Create a 5-minute podcast-style dialogue. One speaker reconstructs the author's position based on the selected text; the other evaluates or updates that position using modern cognitive science, philosophy of mind, or adjacent fields. Avoid fluff. Focus on structure, function, and explanatory power.
+
+Selected passage:
+"""
+${textToUse}
+"""
+
+Format the response as alternating speakers:
+Speaker 1: [dialogue]
+Speaker 2: [dialogue]
+Speaker 1: [dialogue]
+...`;
+
+      const response = await fetch('/api/podcast-dialogue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: textToUse,
+          documentTitle: currentDocument?.originalName || 'Document',
+          provider: selectedProvider,
+          type: type,
+          prompt: prompt
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate podcast: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Podcast dialogue received:', data.dialogue);
+      
+      // Store dialogue and show it
+      setPodcastDialogue(data.dialogue);
+      setPodcastType(type);
+      setShowPodcastModal(true);
+      
+      toast({
+        title: "Podcast Generated",
+        description: `${type === 'standard' ? 'Standard Summary' : 'Modern Reconstruction'} dialogue is ready!`,
+      });
+
+    } catch (error) {
+      console.error('Podcast generation error:', error);
+      toast({
+        title: "Failed to generate podcast",
+        description: "Please try again with a different text selection.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingSelection(false);
+    }
   };
 
   const handleCognitiveMap = () => {
@@ -853,6 +938,38 @@ export default function Home() {
 
 
 
+
+      {/* Study Guide Modal */}
+      {showStudyGuideModal && (
+        <StudyGuideModal
+          isOpen={showStudyGuideModal}
+          onClose={() => setShowStudyGuideModal(false)}
+          content={studyGuideContent}
+          title="Study Guide"
+        />
+      )}
+
+      {/* Test Modal */}
+      {showTestModal && (
+        <TestModal
+          isOpen={showTestModal}
+          onClose={() => setShowTestModal(false)}
+          content={testContent}
+          title="Practice Test"
+          selectedText={selectedText}
+        />
+      )}
+
+      {/* Podcast Modal */}
+      {showPodcastModal && (
+        <PodcastModal
+          isOpen={showPodcastModal}
+          onClose={() => setShowPodcastModal(false)}
+          dialogue={podcastDialogue}
+          type={podcastType}
+          selectedText={selectedText}
+        />
+      )}
 
     </div>
   );
