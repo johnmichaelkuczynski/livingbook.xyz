@@ -11,6 +11,7 @@ import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
+import * as azureSpeechService from "./services/azureSpeech";
 
 import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema } from "@shared/schema";
 
@@ -743,6 +744,43 @@ Return ONLY the JSON object, no other text.`;
     } catch (error) {
       console.error('Error generating podcast dialogue:', error);
       res.status(500).json({ error: 'Failed to generate podcast dialogue' });
+    }
+  });
+
+  // Generate podcast audio using Azure Speech Services
+  app.post("/api/podcast-audio", async (req, res) => {
+    try {
+      const { dialogue, voiceOptions } = req.body;
+
+      if (!dialogue?.trim()) {
+        return res.status(400).json({ error: 'Dialogue text is required' });
+      }
+
+      console.log(`🎤 GENERATING PODCAST AUDIO - Length: ${dialogue.length} chars`);
+
+      // Default voice configuration
+      const speakerVoices = {
+        speaker1: voiceOptions?.speaker1 || 'en-US-DavisNeural',
+        speaker2: voiceOptions?.speaker2 || 'en-US-JennyNeural'
+      };
+
+      // Generate audio using Azure Speech Services
+      const audioBuffer = await azureSpeechService.generatePodcastAudio(dialogue, speakerVoices);
+      
+      console.log(`✅ PODCAST AUDIO GENERATED - Size: ${audioBuffer.length} bytes`);
+
+      // Set appropriate headers for MP3 audio
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': audioBuffer.length.toString(),
+        'Content-Disposition': 'attachment; filename="podcast.mp3"'
+      });
+
+      res.send(audioBuffer);
+
+    } catch (error) {
+      console.error('Error generating podcast audio:', error);
+      res.status(500).json({ error: 'Failed to generate podcast audio' });
     }
   });
 

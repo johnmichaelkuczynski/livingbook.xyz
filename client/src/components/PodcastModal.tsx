@@ -1,5 +1,18 @@
-import React from 'react';
-import { X, Copy } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Copy, Play, Pause, Download, Volume2 } from 'lucide-react';
+
+interface VoiceOption {
+  name: string;
+  displayName: string;
+}
+
+const VOICE_OPTIONS: VoiceOption[] = [
+  { name: 'en-US-JennyNeural', displayName: 'Jenny (Female, Clear)' },
+  { name: 'en-US-DavisNeural', displayName: 'Davis (Male, Professional)' },
+  { name: 'en-US-AriaNeural', displayName: 'Aria (Female, Natural)' },
+  { name: 'en-US-GuyNeural', displayName: 'Guy (Male, Casual)' },
+  { name: 'en-US-AmberNeural', displayName: 'Amber (Female, Warm)' }
+];
 
 interface PodcastModalProps {
   isOpen: boolean;
@@ -16,6 +29,13 @@ export default function PodcastModal({
   type,
   selectedText
 }: PodcastModalProps) {
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [speaker1Voice, setSpeaker1Voice] = useState('en-US-DavisNeural');
+  const [speaker2Voice, setSpeaker2Voice] = useState('en-US-JennyNeural');
+  const audioRef = useRef<HTMLAudioElement>(null);
+
   if (!isOpen) return null;
 
   const handleCopy = () => {
@@ -23,11 +43,70 @@ export default function PodcastModal({
     // Could add a toast notification here
   };
 
+  const handleGenerateAudio = async () => {
+    setIsGeneratingAudio(true);
+    try {
+      const response = await fetch('/api/podcast-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dialogue,
+          voiceOptions: {
+            speaker1: speaker1Voice,
+            speaker2: speaker2Voice
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
+      }
+
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+
+    } catch (error) {
+      console.error('Error generating audio:', error);
+      // Could add toast notification for error
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+  };
+
+  const handleDownloadAudio = () => {
+    if (audioUrl) {
+      const a = document.createElement('a');
+      a.href = audioUrl;
+      a.download = `podcast-${type}-${Date.now()}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   const formatDialogue = (text: string) => {
     // Split by speaker lines and format
     const lines = text.split('\n').filter(line => line.trim());
     return lines.map((line, index) => {
-      if (line.startsWith('Speaker 1:')) {
+      if (line.startsWith('Speaker 1:') || line.startsWith('Host:')) {
         return (
           <div key={index} style={{ marginBottom: '16px' }}>
             <div style={{ 
@@ -35,18 +114,18 @@ export default function PodcastModal({
               color: '#1d4ed8', 
               marginBottom: '4px' 
             }}>
-              Speaker 1:
+              {line.startsWith('Host:') ? 'Host:' : 'Speaker 1:'}
             </div>
             <div style={{ 
               color: '#374151', 
               lineHeight: '1.6',
               paddingLeft: '16px'
             }}>
-              {line.replace('Speaker 1:', '').trim()}
+              {line.replace(/^(Speaker 1:|Host:)\s*/, '').trim()}
             </div>
           </div>
         );
-      } else if (line.startsWith('Speaker 2:')) {
+      } else if (line.startsWith('Speaker 2:') || line.startsWith('Guest:')) {
         return (
           <div key={index} style={{ marginBottom: '16px' }}>
             <div style={{ 
@@ -54,18 +133,30 @@ export default function PodcastModal({
               color: '#dc2626', 
               marginBottom: '4px' 
             }}>
-              Speaker 2:
+              {line.startsWith('Guest:') ? 'Guest:' : 'Speaker 2:'}
             </div>
             <div style={{ 
               color: '#374151', 
               lineHeight: '1.6',
               paddingLeft: '16px'
             }}>
-              {line.replace('Speaker 2:', '').trim()}
+              {line.replace(/^(Speaker 2:|Guest:)\s*/, '').trim()}
             </div>
           </div>
         );
-      } else {
+      } else if (line.startsWith('**') || line.startsWith('#')) {
+        // Handle titles and headers
+        return (
+          <div key={index} style={{ 
+            fontWeight: 'bold',
+            color: '#111827',
+            marginBottom: '12px',
+            fontSize: '18px'
+          }}>
+            {line.replace(/\*\*/g, '').replace(/#{1,6}\s?/, '')}
+          </div>
+        );
+      } else if (line.trim()) {
         // Handle non-speaker lines
         return (
           <div key={index} style={{ 
@@ -77,6 +168,7 @@ export default function PodcastModal({
           </div>
         );
       }
+      return null;
     });
   };
 
@@ -166,6 +258,163 @@ export default function PodcastModal({
               <X size={20} color="#6b7280" />
             </button>
           </div>
+        </div>
+
+        {/* Voice Selection and Audio Controls */}
+        <div style={{
+          padding: '20px 24px',
+          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          {/* Voice Selection */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '16px',
+            marginBottom: '16px'
+          }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                fontWeight: '600', 
+                marginBottom: '6px', 
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                Speaker 1 Voice
+              </label>
+              <select
+                value={speaker1Voice}
+                onChange={(e) => setSpeaker1Voice(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  fontSize: '14px'
+                }}
+              >
+                {VOICE_OPTIONS.map(voice => (
+                  <option key={voice.name} value={voice.name}>
+                    {voice.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                fontWeight: '600', 
+                marginBottom: '6px', 
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                Speaker 2 Voice
+              </label>
+              <select
+                value={speaker2Voice}
+                onChange={(e) => setSpeaker2Voice(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  fontSize: '14px'
+                }}
+              >
+                {VOICE_OPTIONS.map(voice => (
+                  <option key={voice.name} value={voice.name}>
+                    {voice.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Audio Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={handleGenerateAudio}
+              disabled={isGeneratingAudio}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 16px',
+                backgroundColor: isGeneratingAudio ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: isGeneratingAudio ? 'not-allowed' : 'pointer',
+                fontWeight: '500',
+                fontSize: '14px'
+              }}
+            >
+              <Volume2 size={16} />
+              {isGeneratingAudio ? 'Generating Audio...' : 'Generate Audio'}
+            </button>
+
+            {audioUrl && (
+              <>
+                <button
+                  onClick={handlePlayPause}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 16px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                  {isPlaying ? 'Pause' : 'Play'}
+                </button>
+
+                <button
+                  onClick={handleDownloadAudio}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 16px',
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  <Download size={16} />
+                  Download MP3
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Audio Element */}
+          {audioUrl && (
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onEnded={handleAudioEnded}
+              style={{ display: 'none' }}
+            />
+          )}
         </div>
 
         {/* Selected Text Preview */}
