@@ -18,6 +18,7 @@ import TextSelectionHandler from '@/components/TextSelectionHandler';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
+import TestModal from '@/components/TestModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -36,6 +37,9 @@ export default function Home() {
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
+  const [testContent, setTestContent] = useState('');
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -377,12 +381,67 @@ export default function Home() {
     }
   };
 
-  const handleTestMe = () => {
-    toast({
-      title: "Test Me",
-      description: "Creating practice questions and quiz...",
-    });
-    // TODO: Implement test generation
+  const handleTestMe = async (text?: string) => {
+    const textToUse = text || selectedText;
+    
+    if (!textToUse.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    // Clear previous content and show modal immediately
+    setTestContent('');
+    setIsProcessingSelection(true);
+    setIsGeneratingTest(true);
+    setShowTestModal(true); // Open modal immediately with loading state
+
+    try {
+      const response = await fetch('/api/test-me', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: textToUse,
+          documentTitle: currentDocument?.originalName || 'Document',
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate test: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Test received:', data.test);
+      setTestContent(data.test);
+
+      toast({
+        title: "Test Generated",
+        description: "Your practice test is ready!",
+      });
+
+    } catch (error) {
+      console.error('Test generation error:', error);
+      toast({
+        title: "Failed to generate test",
+        description: "Please try again with a different text selection.",
+        variant: "destructive",
+      });
+      setShowTestModal(false); // Close modal on error
+    } finally {
+      setIsGeneratingTest(false);
+      setIsProcessingSelection(false);
+    }
   };
 
   const handlePodcast = () => {
@@ -563,6 +622,14 @@ export default function Home() {
                   onClose={() => setShowStudyGuideModal(false)}
                   content={studyGuideContent}
                   isLoading={isGeneratingStudyGuide}
+                />
+
+                {/* Test Modal */}
+                <TestModal
+                  isOpen={showTestModal}
+                  onClose={() => setShowTestModal(false)}
+                  content={testContent}
+                  isLoading={isGeneratingTest}
                 />
               </div>
             ) : (

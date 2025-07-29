@@ -605,6 +605,74 @@ ${selectedText}
     }
   });
 
+  // Generate test for selected text
+  app.post("/api/test-me", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      const testPrompt = `Generate a short test based on the selected passage. Include:
+
+3 to 5 multiple-choice questions (clearly indicate the correct answer).
+
+2 short-answer or open-ended questions.
+
+Focus the questions on comprehension, inference, and application. Avoid trivia or superficial recall.
+
+Format the response with:
+- Lettered options (A, B, C, D) for multiple-choice questions
+- Mark correct answers with ✔️ 
+- A clear divider between multiple-choice and short-answer sections
+
+Selected passage from "${documentTitle}":
+"""
+${selectedText}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate test
+      const aiResponse = await generateChatResponse(
+        testPrompt,
+        selectedText,
+        []
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      res.json({
+        test: aiResponse.message
+      });
+      
+    } catch (error) {
+      console.error("Test generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate test" 
+      });
+    }
+  });
+
   // Send chat message about selected text
   app.post("/api/chat/selection", async (req, res) => {
     try {
