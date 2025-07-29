@@ -93,9 +93,82 @@ export default function TextSelectionToolbar({
     };
   }, []);
 
-  const handlePodcastClick = (type: 'standard' | 'modern') => {
+  const handlePodcastClick = async (type: 'standard' | 'modern') => {
     setShowPodcastDropdown(false);
-    onPodcast(type);
+    
+    // Show immediate feedback
+    const podcastType = type === 'standard' ? 'Standard Summary Dialogue' : 'Modern Reconstruction (5 min)';
+    
+    // Trigger download directly
+    try {
+      const prompt = type === 'standard' 
+        ? `Create a podcast-style dialogue between two speakers discussing the ideas in the selected passage. One speaker should summarize the main points; the other should ask clarifying or challenging questions. Keep the tone intelligent, focused, and conversational. Duration: approx. 5 minutes of dialogue.
+
+Selected passage:
+"""
+${selectedText}
+"""
+
+Format the response as alternating speakers:
+Speaker 1: [dialogue]
+Speaker 2: [dialogue]
+Speaker 1: [dialogue]
+...`
+        : `Create a 5-minute podcast-style dialogue. One speaker reconstructs the author's position based on the selected text; the other evaluates or updates that position using modern cognitive science, philosophy of mind, or adjacent fields. Avoid fluff. Focus on structure, function, and explanatory power.
+
+Selected passage:
+"""
+${selectedText}
+"""
+
+Format the response as alternating speakers:
+Speaker 1: [dialogue]
+Speaker 2: [dialogue]
+Speaker 1: [dialogue]
+...`;
+
+      console.log(`🎙️ Starting podcast generation: ${podcastType}`);
+
+      const response = await fetch('/api/generate-podcast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText,
+          documentTitle: 'Document',
+          provider: 'deepseek',
+          type: type,
+          prompt: prompt,
+          voiceOptions: {
+            speaker1: 'en-US-DavisNeural',
+            speaker2: 'en-US-JennyNeural'
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate podcast: ${response.statusText}`);
+      }
+
+      // Download the MP3 file directly
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `podcast-${type}-${Date.now()}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log(`✅ Podcast generated and downloaded: ${podcastType}`);
+
+    } catch (error) {
+      console.error('Podcast generation error:', error);
+      alert('Failed to generate podcast. Please try again.');
+    }
   };
 
   if (!selectedText || selectedText.trim().length === 0) return null;

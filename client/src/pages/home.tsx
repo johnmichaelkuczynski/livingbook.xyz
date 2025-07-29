@@ -470,6 +470,13 @@ export default function Home() {
     setIsProcessingSelection(true);
 
     try {
+      const podcastType = type === 'standard' ? 'Standard Summary Dialogue' : 'Modern Reconstruction (5 min)';
+      
+      toast({
+        title: "Generating Podcast",
+        description: `Creating ${podcastType} audio...`,
+      });
+
       const prompt = type === 'standard' 
         ? `Create a podcast-style dialogue between two speakers discussing the ideas in the selected passage. One speaker should summarize the main points; the other should ask clarifying or challenging questions. Keep the tone intelligent, focused, and conversational. Duration: approx. 5 minutes of dialogue.
 
@@ -496,7 +503,7 @@ Speaker 2: [dialogue]
 Speaker 1: [dialogue]
 ...`;
 
-      const response = await fetch('/api/podcast-dialogue', {
+      const response = await fetch('/api/generate-podcast', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -506,7 +513,11 @@ Speaker 1: [dialogue]
           documentTitle: currentDocument?.originalName || 'Document',
           provider: selectedProvider,
           type: type,
-          prompt: prompt
+          prompt: prompt,
+          voiceOptions: {
+            speaker1: 'en-US-DavisNeural',
+            speaker2: 'en-US-JennyNeural'
+          }
         }),
       });
 
@@ -514,17 +525,21 @@ Speaker 1: [dialogue]
         throw new Error(`Failed to generate podcast: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('Podcast dialogue received:', data.dialogue);
+      // Download the MP3 file directly
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
       
-      // Store dialogue and show it
-      setPodcastDialogue(data.dialogue);
-      setPodcastType(type);
-      setShowPodcastModal(true);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `podcast-${type}-${Date.now()}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Podcast Generated",
-        description: `${type === 'standard' ? 'Standard Summary' : 'Modern Reconstruction'} dialogue is ready!`,
+        description: `${podcastType} MP3 downloaded successfully!`,
       });
 
     } catch (error) {
@@ -669,8 +684,7 @@ Speaker 1: [dialogue]
                     setSelectedText(text);
                     handleTestMe();
                   }}
-                  onPodcast={(text, type) => {
-                    setSelectedText(text);
+                  onPodcast={(type) => {
                     handlePodcast(type);
                   }}
                   onCognitiveMap={(text) => {
@@ -957,16 +971,7 @@ Speaker 1: [dialogue]
         />
       )}
 
-      {/* Podcast Modal */}
-      {showPodcastModal && (
-        <PodcastModal
-          isOpen={showPodcastModal}
-          onClose={() => setShowPodcastModal(false)}
-          dialogue={podcastDialogue}
-          type={podcastType}
-          selectedText={selectedText}
-        />
-      )}
+
 
     </div>
   );
