@@ -87,7 +87,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
       </div>
       
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-full" style={{ overflowY: 'auto' }}>
           <div className="p-6">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -125,7 +125,9 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
             ) : (
               <div 
                 className="w-full"
-                onMouseUp={() => {
+                style={{ userSelect: 'text' }}
+                onMouseUp={(e) => {
+                  // Allow event to bubble for scrolling
                   setTimeout(() => {
                     const selection = window.getSelection();
                     const selectedText = selection?.toString().trim() || '';
@@ -135,7 +137,11 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
                       console.log('🎙️ CALLING onTextSelection with:', selectedText);
                       onTextSelection(selectedText);
                     }
-                  }, 200);
+                  }, 100);
+                }}
+                onMouseDown={(e) => {
+                  // Don't prevent default to allow text selection
+                  e.stopPropagation();
                 }}
               >
                 <div className="space-y-4 text-lg leading-relaxed">

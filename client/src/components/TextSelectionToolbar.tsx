@@ -10,7 +10,11 @@ import {
   Library,
   Bookmark,
   X,
-  ChevronDown
+  ChevronDown,
+  Play,
+  Pause,
+  Volume2,
+  Download
 } from 'lucide-react';
 
 interface TextSelectionToolbarProps {
@@ -49,6 +53,10 @@ export default function TextSelectionToolbar({
     message: string;
     type: 'loading' | 'success' | 'error';
   }>({ isVisible: false, message: '', type: 'loading' });
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPodcastType, setCurrentPodcastType] = useState<string>('');
+  const audioRef = useRef<HTMLAudioElement>(null);
   const podcastButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -134,10 +142,10 @@ Speaker 1: [dialogue]
 
       console.log(`🎙️ Starting podcast generation: ${podcastType}`);
 
-      // Show loading state
+      // Show loading state immediately
       setPodcastProgress({
         isVisible: true,
-        message: `Generating ${podcastType}...`,
+        message: `Generating ${podcastType} podcast...`,
         type: 'loading'
       });
 
@@ -163,31 +171,35 @@ Speaker 1: [dialogue]
         throw new Error(`Failed to generate podcast: ${response.statusText}`);
       }
 
-      // Download the MP3 file directly
+      // Create audio URL for in-app playback AND download
       const audioBlob = await response.blob();
       const url = URL.createObjectURL(audioBlob);
       
+      // Set audio URL for in-app playback
+      setAudioUrl(url);
+      setCurrentPodcastType(podcastType);
+      
+      // Auto-download the MP3 file
       const a = document.createElement('a');
       a.href = url;
       a.download = `podcast-${type}-${Date.now()}.mp3`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
 
       console.log(`✅ Podcast generated and downloaded: ${podcastType}`);
 
-      // Show success message
+      // Show success message with playback option
       setPodcastProgress({
         isVisible: true,
-        message: `${podcastType} downloaded!`,
+        message: `${podcastType} ready! Downloaded & ready to play`,
         type: 'success'
       });
 
-      // Hide success message after 3 seconds
+      // Hide success message after 5 seconds
       setTimeout(() => {
         setPodcastProgress(prev => ({ ...prev, isVisible: false }));
-      }, 3000);
+      }, 5000);
 
     } catch (error) {
       console.error('Podcast generation error:', error);
@@ -204,6 +216,30 @@ Speaker 1: [dialogue]
         setPodcastProgress(prev => ({ ...prev, isVisible: false }));
       }, 5000);
     }
+  };
+
+  // Audio playback controls
+  const togglePlayback = () => {
+    if (!audioRef.current || !audioUrl) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const downloadCurrentAudio = () => {
+    if (!audioUrl) return;
+    
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `podcast-${currentPodcastType}-${Date.now()}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   if (!selectedText || selectedText.trim().length === 0) return null;
@@ -426,6 +462,41 @@ Speaker 1: [dialogue]
             {podcastProgress.type === 'error' && <span>❌</span>}
             <span>{podcastProgress.message}</span>
           </div>
+        </div>
+      )}
+
+      {/* Audio Player Controls */}
+      {audioUrl && (
+        <div className="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl z-50 transition-all duration-300">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <Volume2 className="w-4 h-4" />
+              <span className="text-sm font-medium">{currentPodcastType}</span>
+            </div>
+            <Button
+              onClick={togglePlayback}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 h-8"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </Button>
+            <Button
+              onClick={downloadCurrentAudio}
+              size="sm"
+              variant="outline"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 px-3 py-1 h-8"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+            className="hidden"
+          />
         </div>
       )}
     </div>

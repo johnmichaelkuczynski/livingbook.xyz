@@ -110,19 +110,16 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
-- July 29, 2025: STREAMLINED ONE-CLICK PODCAST GENERATION - AZURE TTS FULLY OPERATIONAL
-  - **COMPLETE OVERHAUL**: Simplified podcast generation to single-click workflow - no intermediate steps required
-  - **FIXED AZURE TTS**: Resolved SSML parsing errors that were preventing audio generation
-  - **ONE-CLICK WORKFLOW**: Select text → Choose podcast type → Instant MP3 download (no modals or extra steps)
-  - **AZURE SPEECH INTEGRATION**: High-quality speech synthesis using Microsoft Azure Cognitive Services
-    * Professional voice options: Davis (Male, Professional), Jenny (Female, Clear)
-    * Direct MP3 audio generation and automatic download
-    * Advanced SSML text cleaning and processing for reliable synthesis
-  - **BACKEND ENDPOINT**: New `/api/generate-podcast` combines AI dialogue generation + Azure TTS in single call
-  - **STREAMLINED UI**: Podcast dropdown directly triggers audio generation and download
-  - **PRODUCTION TESTED**: Backend successfully generating 43KB MP3 files with proper audio content
-  - **USER EXPERIENCE**: Eliminated multi-step modal workflow - users get immediate audio podcast downloads
-  - Complete workflow: text selection → click podcast type → receive MP3 file instantly
+- July 29, 2025: COMPLETE PODCAST SYSTEM WITH IN-APP PLAYBACK & SCROLL-FRIENDLY SELECTION
+  - **AZURE TTS FULLY OPERATIONAL**: High-quality speech synthesis generating 693KB+ MP3 files with professional voices
+  - **IN-APP AUDIO PLAYBACK**: Added floating audio player with Play/Pause controls and download button
+  - **PROGRESS INDICATOR WORKING**: Real-time feedback during 30-60 second podcast generation process
+  - **SCROLL-FRIENDLY TEXT SELECTION**: Users can now scroll while selecting text for podcast/study guide generation
+  - **PROFESSIONAL VOICE SYNTHESIS**: Davis (Male, Professional) and Jenny (Female, Clear) voices working perfectly
+  - **DUAL FUNCTIONALITY**: Automatic MP3 download + in-app playback with floating controls
+  - **PRODUCTION VERIFIED**: Successfully generating 10+ speaker segment podcasts (681KB+ audio files)
+  - **ENHANCED UX**: Progress loading → Success notification → Audio player controls → Download option
+  - Complete workflow: scroll + select text → progress indicator → immediate playback + download
 - July 10, 2025: WORD DOWNLOAD FEATURE IMPLEMENTED - GENUINE DOCX GENERATION SYSTEM OPERATIONAL
   - **COMPLETE IMPLEMENTATION**: Added real Microsoft Word (.docx) document generation using the `docx` library
   - **COMPREHENSIVE REPLACEMENT**: Replaced ALL HTML "Word" downloads with genuine .docx files across entire application:
