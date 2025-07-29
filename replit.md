@@ -110,6 +110,16 @@ DocMath AI is a full-stack web application that allows users to upload documents
 - **File Storage**: Local filesystem for uploaded files (temporary)
 
 ## Changelog
+- July 29, 2025: COGNITIVE MAP FUNCTIONALITY WITH MERMAID.JS VISUALIZATION - COMPLETE IMPLEMENTATION
+  - **VISUAL CONCEPT MAPPING**: AI analyzes text structure and generates node-link diagrams using Mermaid.js
+  - **DUAL VIEW SYSTEM**: Toggle between visual Mermaid diagram and structured text hierarchy
+  - **ENHANCED PROMPT ENGINEERING**: Improved AI prompts to generate clean, render-friendly Mermaid code
+  - **ROBUST ERROR HANDLING**: Fallback diagram generation when primary Mermaid rendering fails
+  - **SPLIT-PANEL INTERFACE**: Selected passage shown alongside cognitive map in scrollable modal
+  - **PROFESSIONAL STYLING**: Custom Mermaid theme with consistent colors and typography
+  - **BACKEND API ENDPOINT**: `/api/generate-cognitive-map` processes text and returns structured analysis
+  - **PRODUCTION TESTED**: Successfully generating thesis-claim-evidence hierarchies with visual connections
+  - Complete workflow: select text → click Cognitive Map → view visual diagram + text structure
 - July 29, 2025: COMPLETE PODCAST SYSTEM WITH IN-APP PLAYBACK & SCROLL-FRIENDLY SELECTION
   - **AZURE TTS FULLY OPERATIONAL**: High-quality speech synthesis generating 693KB+ MP3 files with professional voices
   - **IN-APP AUDIO PLAYBACK**: Added floating audio player with Play/Pause controls and download button
