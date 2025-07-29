@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Eye, FileText } from 'lucide-react';
+import { X, Eye, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import mermaid from 'mermaid';
@@ -172,6 +172,103 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
     return mermaidCode || 'graph TD\n    A["Content Analysis"]';
   };
 
+  const downloadAsText = () => {
+    const textContent = `COGNITIVE MAP ANALYSIS\n\nSelected Text:\n${selectedText}\n\n${parsedContent.textStructure || content}`;
+    
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cognitive-map-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsPDF = async () => {
+    try {
+      const htmlContent = `
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Cognitive Map Analysis</title>
+            <style>
+              body { font-family: 'Times New Roman', serif; margin: 40px; line-height: 1.6; }
+              h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+              h2 { color: #34495e; margin-top: 30px; }
+              .selected-text { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #3498db; margin: 20px 0; }
+              .structure { white-space: pre-wrap; font-family: 'Courier New', monospace; background-color: #f5f5f5; padding: 20px; }
+              .diagram-note { font-style: italic; color: #7f8c8d; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>Cognitive Map Analysis</h1>
+            
+            <h2>Selected Passage</h2>
+            <div class="selected-text">${selectedText}</div>
+            
+            <h2>Logical Structure</h2>
+            <div class="structure">${parsedContent.textStructure || content}</div>
+            
+            <div class="diagram-note">
+              Note: This analysis includes a visual Mermaid.js diagram that can be viewed in the interactive application.
+            </div>
+          </body>
+        </html>
+      `;
+
+      const response = await fetch('/api/export-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: htmlContent,
+          title: 'Cognitive Map Analysis'
+        }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cognitive-map-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error('Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('PDF download error:', error);
+      // Fallback to text download
+      downloadAsText();
+    }
+  };
+
+  const downloadDiagram = () => {
+    try {
+      const svgElement = mermaidRef.current?.querySelector('svg');
+      if (svgElement) {
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cognitive-map-diagram-${Date.now()}.svg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Diagram download error:', error);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -193,6 +290,41 @@ export default function CognitiveMapModal({ isOpen, onClose, content, isLoading,
               {viewMode === 'visual' ? <FileText className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               <span>{viewMode === 'visual' ? 'Text View' : 'Visual View'}</span>
             </Button>
+            
+            <div className="flex items-center space-x-1">
+              <Button
+                onClick={downloadAsPDF}
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-1"
+                disabled={isLoading}
+              >
+                <Download className="w-4 h-4" />
+                <span>PDF</span>
+              </Button>
+              <Button
+                onClick={downloadAsText}
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-1"
+                disabled={isLoading}
+              >
+                <Download className="w-4 h-4" />
+                <span>TXT</span>
+              </Button>
+              {viewMode === 'visual' && parsedContent.mermaidCode && (
+                <Button
+                  onClick={downloadDiagram}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-1"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>SVG</span>
+                </Button>
+              )}
+            </div>
+            
             <Button onClick={onClose} variant="ghost" size="sm">
               <X className="w-4 h-4" />
             </Button>
