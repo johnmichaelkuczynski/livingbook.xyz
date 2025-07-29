@@ -31,33 +31,32 @@ export async function synthesizeSpeech(
   speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
   speechConfig.speechSynthesisVoiceName = voiceName;
 
-  // Clean text for SSML - remove problematic characters and format properly
+  // Clean text for plain text synthesis - remove all formatting but keep readability
   const cleanText = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-    .replace(/\*/g, '')
-    .replace(/#{1,6}\s?/g, '')
-    .replace(/\[([^\]]+)\]/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
+    // Remove markdown and formatting
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/_([^_]+)_/g, '$1')
+    
+    // Remove brackets and special characters, keep essential punctuation
+    .replace(/\[([^\]]*)\]/g, '$1')
+    .replace(/\([^)]*\)/g, '')
+    
+    // Clean whitespace and line breaks
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, '. ')
+    .replace(/\r/g, '')
     .trim();
 
-  // Create SSML for better speech synthesis
-  const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
-<voice name="${voiceName}">
-<prosody rate="0.9" pitch="0st">
-${cleanText}
-</prosody>
-</voice>
-</speak>`;
+  console.log(`🎤 Synthesizing text for ${voiceName}: ${cleanText.substring(0, 100)}...`);
 
   return new Promise((resolve, reject) => {
     const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
 
-    synthesizer.speakSsmlAsync(
-      ssml,
+    // Use plain text synthesis instead of SSML to avoid parsing errors
+    synthesizer.speakTextAsync(
+      cleanText,
       (result) => {
         if (result.errorDetails) {
           console.error('Azure Speech synthesis error:', result.errorDetails);
@@ -68,6 +67,7 @@ ${cleanText}
 
         if (result.audioData) {
           const audioBuffer = Buffer.from(result.audioData);
+          console.log(`✅ Successfully synthesized ${audioBuffer.length} bytes of audio`);
           synthesizer.close();
           resolve(audioBuffer);
         } else {
@@ -129,26 +129,32 @@ function parseDialogue(dialogue: string): Array<{ speaker: string; text: string 
   const segments: Array<{ speaker: string; text: string }> = [];
 
   for (const line of lines) {
-    // Match speaker patterns
-    const speakerMatch = line.match(/^(Speaker [12]|Host|Guest|.*?):\s*(.*)$/);
+    // Match speaker patterns with more flexibility
+    const speakerMatch = line.match(/^(Speaker [12]|Host|Guest):\s*(.*)$/);
     
     if (speakerMatch) {
       const [, speaker, text] = speakerMatch;
-      if (text.trim()) {
+      const cleanedText = text.trim();
+      
+      if (cleanedText && cleanedText.length > 0) {
         segments.push({
           speaker: speaker.trim(),
-          text: text.trim()
+          text: cleanedText
         });
       }
     } else if (line.trim() && !line.startsWith('**') && !line.startsWith('#')) {
-      // Handle non-speaker lines as narrator
-      segments.push({
-        speaker: 'Narrator',
-        text: line.trim()
-      });
+      // Handle non-speaker lines as narrator only if they're substantial
+      const trimmedLine = line.trim();
+      if (trimmedLine.length > 10) {
+        segments.push({
+          speaker: 'Narrator',
+          text: trimmedLine
+        });
+      }
     }
   }
 
+  console.log(`📋 Parsed ${segments.length} dialogue segments`);
   return segments;
 }
 
