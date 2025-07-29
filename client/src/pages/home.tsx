@@ -21,6 +21,7 @@ import StudyGuideModal from '@/components/StudyGuideModal';
 import TestModal from '@/components/TestModal';
 import PodcastModal from '@/components/PodcastModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
+import SummaryThesisModal from '@/components/SummaryThesisModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -49,6 +50,9 @@ export default function Home() {
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
   const [showCognitiveMap, setShowCognitiveMap] = useState(false);
   const [isGeneratingCognitiveMap, setIsGeneratingCognitiveMap] = useState(false);
+  const [summaryThesisContent, setSummaryThesisContent] = useState('');
+  const [showSummaryThesis, setShowSummaryThesis] = useState(false);
+  const [isGeneratingSummaryThesis, setIsGeneratingSummaryThesis] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -596,12 +600,63 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleSummaryThesis = () => {
-    toast({
-      title: "Summary+Thesis",
-      description: "Extracting key summary and thesis...",
-    });
-    // TODO: Implement summary and thesis extraction
+  const handleSummaryThesis = async () => {
+    if (!selectedText.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingSelection) {
+      return;
+    }
+
+    // Clear previous content and show modal immediately
+    setSummaryThesisContent('');
+    setIsProcessingSelection(true);
+    setIsGeneratingSummaryThesis(true);
+    setShowSummaryThesis(true); // Open modal immediately with loading state
+
+    try {
+      const response = await fetch('/api/generate-summary-thesis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: selectedText,
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate summary+thesis: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setSummaryThesisContent(data.summaryThesis);
+      
+      toast({
+        title: "Summary & Thesis Generated",
+        description: "Your structured analysis is ready!",
+      });
+      
+    } catch (error) {
+      console.error('Summary+Thesis generation error:', error);
+      toast({
+        title: "Error generating summary+thesis",
+        description: "Failed to generate analysis. Please try again.",
+        variant: "destructive",
+      });
+      setShowSummaryThesis(false); // Close modal on error
+    } finally {
+      setIsGeneratingSummaryThesis(false);
+      setIsProcessingSelection(false);
+    }
   };
 
   const handleThesisDeepDive = () => {
@@ -708,7 +763,7 @@ Speaker 1: [dialogue]
                   }}
                   onRewrite={(text) => {
                     setSelectedText(text);
-                    handleSummaryThesis();
+                    setIsRewritePanelOpen(true);
                   }}
                   onStudyGuide={(text) => {
                     setSelectedText(text);
@@ -718,8 +773,9 @@ Speaker 1: [dialogue]
                     setSelectedText(text);
                     handleTestMe();
                   }}
-                  onPodcast={(type: 'standard' | 'modern') => {
-                    handlePodcast(type);
+                  onPodcast={(text: string) => {
+                    setSelectedText(text);
+                    // This will be handled by the toolbar itself
                   }}
                   onCognitiveMap={(text) => {
                     setSelectedText(text);
@@ -773,6 +829,15 @@ Speaker 1: [dialogue]
                   onClose={() => setShowCognitiveMap(false)}
                   content={cognitiveMapContent}
                   isLoading={isGeneratingCognitiveMap}
+                  selectedText={selectedText}
+                />
+
+                {/* Summary+Thesis Modal */}
+                <SummaryThesisModal
+                  isOpen={showSummaryThesis}
+                  onClose={() => setShowSummaryThesis(false)}
+                  content={summaryThesisContent}
+                  isLoading={isGeneratingSummaryThesis}
                   selectedText={selectedText}
                 />
               </div>

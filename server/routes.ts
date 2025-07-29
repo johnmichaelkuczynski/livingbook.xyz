@@ -1705,6 +1705,71 @@ CRITICAL: Use only simple node labels with <br/> for line breaks. No markdown, n
     }
   });
 
+  // Summary+Thesis generation endpoint
+  app.post("/api/generate-summary-thesis", async (req, res) => {
+    try {
+      const { selectedText, provider = 'deepseek' } = req.body;
+      
+      if (!selectedText || selectedText.trim().length === 0) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log(`📝 GENERATING SUMMARY+THESIS - Provider: ${provider}, Text length: ${selectedText.length}`);
+
+      const prompt = `Summarize the selected passage in the following format:
+
+Thesis: [Concise 1–2 sentence main claim].
+
+Summary: [3–6 sentences explaining the logic, background, and implications].
+
+Focus on clarity, conceptual structure, and explanatory relevance. Avoid repeating the original text. Prioritize insight over coverage.
+
+Selected passage:
+"""
+${selectedText}
+"""
+
+Important: Format your response exactly as specified with "Thesis:" and "Summary:" headers. Be concise and insightful.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, selectedText, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      // Clean any markdown formatting
+      const cleanedContent = removeMarkupSymbols(response.message);
+      
+      console.log(`✅ SUMMARY+THESIS GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
+      
+      res.json({ summaryThesis: cleanedContent });
+      
+    } catch (error) {
+      console.error("Summary+Thesis generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate summary+thesis"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
