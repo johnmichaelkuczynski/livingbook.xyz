@@ -1616,7 +1616,86 @@ Instructions: ${instructions}
     }
   });
 
+  // Generate cognitive map endpoint
+  app.post('/api/generate-cognitive-map', async (req, res) => {
+    try {
+      const { selectedText, provider = 'deepseek' } = req.body;
 
+      if (!selectedText || !selectedText.trim()) {
+        return res.status(400).json({ error: 'Selected text is required' });
+      }
+
+      console.log(`🧠 GENERATING COGNITIVE MAP - Provider: ${provider}, Text length: ${selectedText.length}`);
+
+      const prompt = `Analyze the selected text and output a structured cognitive map. Identify the main thesis, key claims, logical dependencies, and conceptual relationships.
+
+Selected passage:
+"""
+${selectedText}
+"""
+
+Provide your analysis in two parts:
+
+LOGICAL STRUCTURE:
+Present the structure as a hierarchy or dependency tree using indentation and arrows:
+- Main Thesis: [identify the central argument]
+  → Key Claim 1: [supporting argument]
+    → Sub-claim 1a: [detail]
+    → Sub-claim 1b: [detail]
+  → Key Claim 2: [supporting argument]
+    → Evidence/Example: [supporting detail]
+  → Definitions: [key terms defined]
+  → Assumptions: [underlying assumptions]
+
+MERMAID DIAGRAM:
+Generate a Mermaid.js flowchart code to visualize the relationships:
+graph TD
+    A["Main Thesis"] --> B["Key Claim 1"]
+    A --> C["Key Claim 2"] 
+    B --> D["Sub-claim 1a"]
+    B --> E["Sub-claim 1b"]
+    C --> F["Evidence"]
+    G["Definitions"] --> A
+    H["Assumptions"] --> A
+
+Make the diagram clear and readable with proper node connections.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, selectedText, []);
+
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ COGNITIVE MAP GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        cognitiveMap: response.message,
+        provider: provider
+      });
+
+    } catch (error) {
+      console.error('❌ Cognitive map generation error:', error);
+      res.status(500).json({ error: 'Failed to generate cognitive map' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

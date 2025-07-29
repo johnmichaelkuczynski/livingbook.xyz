@@ -20,6 +20,7 @@ import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
 import TestModal from '@/components/TestModal';
 import PodcastModal from '@/components/PodcastModal';
+import CognitiveMapModal from '@/components/CognitiveMapModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -45,6 +46,9 @@ export default function Home() {
   const [podcastDialogue, setPodcastDialogue] = useState('');
   const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [podcastType, setPodcastType] = useState<'standard' | 'modern'>('standard');
+  const [cognitiveMapContent, setCognitiveMapContent] = useState('');
+  const [showCognitiveMap, setShowCognitiveMap] = useState(false);
+  const [isGeneratingCognitiveMap, setIsGeneratingCognitiveMap] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -554,12 +558,42 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleCognitiveMap = () => {
-    toast({
-      title: "Cognitive Map", 
-      description: "Creating visual concept map...",
-    });
-    // TODO: Implement cognitive mapping
+  const handleCognitiveMap = async () => {
+    if (!selectedText.trim()) return;
+    
+    setIsGeneratingCognitiveMap(true);
+    setShowCognitiveMap(true);
+    setCognitiveMapContent('');
+    
+    try {
+      const response = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: selectedText,
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate cognitive map: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setCognitiveMapContent(data.cognitiveMap);
+      
+    } catch (error) {
+      console.error('Cognitive map generation error:', error);
+      toast({
+        title: "Error generating cognitive map",
+        description: "Failed to generate cognitive map. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCognitiveMap(false);
+    }
   };
 
   const handleSummaryThesis = () => {
@@ -684,7 +718,7 @@ Speaker 1: [dialogue]
                     setSelectedText(text);
                     handleTestMe();
                   }}
-                  onPodcast={(type) => {
+                  onPodcast={(type: 'standard' | 'modern') => {
                     handlePodcast(type);
                   }}
                   onCognitiveMap={(text) => {
@@ -731,6 +765,15 @@ Speaker 1: [dialogue]
                   onClose={() => setShowTestModal(false)}
                   content={testContent}
                   isLoading={isGeneratingTest}
+                />
+
+                {/* Cognitive Map Modal */}
+                <CognitiveMapModal
+                  isOpen={showCognitiveMap}
+                  onClose={() => setShowCognitiveMap(false)}
+                  content={cognitiveMapContent}
+                  isLoading={isGeneratingCognitiveMap}
+                  selectedText={selectedText}
                 />
               </div>
             ) : (
