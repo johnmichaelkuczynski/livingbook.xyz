@@ -614,23 +614,38 @@ ${selectedText}
         return res.status(400).json({ error: "Selected text is required" });
       }
 
-      const testPrompt = `Generate a short test based on the selected passage. Include:
+      const testPrompt = `Generate a structured test based on the selected passage. Return ONLY a valid JSON object with the following format:
 
-3 to 5 multiple-choice questions (clearly indicate the correct answer).
+{
+  "title": "Test Title",
+  "multipleChoice": [
+    {
+      "question": "Question text?",
+      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "correctAnswer": 1
+    }
+  ],
+  "shortAnswer": [
+    {
+      "question": "Question text?",
+      "sampleAnswer": "A good answer would include..."
+    }
+  ]
+}
 
-2 short-answer or open-ended questions.
-
-Focus the questions on comprehension, inference, and application. Avoid trivia or superficial recall.
-
-Format the response with:
-- Lettered options (A, B, C, D) for multiple-choice questions
-- Mark correct answers with ✔️ 
-- A clear divider between multiple-choice and short-answer sections
+Requirements:
+- 3-5 multiple-choice questions with 4 options each
+- correctAnswer is the index (0-3) of the correct option
+- 2 short-answer questions with sample answers for grading
+- Focus on comprehension, inference, and application
+- Avoid trivia or superficial recall
 
 Selected passage from "${documentTitle}":
 """
 ${selectedText}
-"""`;
+"""
+
+Return ONLY the JSON object, no other text.`;
 
       // Select AI service based on provider
       let generateChatResponse;
@@ -661,14 +676,132 @@ ${selectedText}
         return res.status(500).json({ error: aiResponse.error });
       }
 
-      res.json({
-        test: aiResponse.message
-      });
+      // Parse JSON response
+      let testData;
+      try {
+        const cleanedResponse = aiResponse.message.replace(/```json\n?|\n?```/g, '').trim();
+        testData = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error('Failed to parse test JSON:', parseError);
+        return res.status(500).json({ error: "Failed to generate valid test format" });
+      }
+
+      res.json({ test: testData });
       
     } catch (error) {
       console.error("Test generation error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to generate test" 
+      });
+    }
+  });
+
+  // Grade test submission
+  app.post("/api/grade-test", async (req, res) => {
+    try {
+      const { selectedText, testData, userAnswers, provider = 'openai' } = req.body;
+      
+      if (!selectedText || !testData || !userAnswers) {
+        return res.status(400).json({ error: "Missing required data for grading" });
+      }
+
+      // Calculate multiple choice score
+      let mcScore = 0;
+      const mcTotal = testData.multipleChoice.length;
+      
+      testData.multipleChoice.forEach((question: any, index: number) => {
+        if (userAnswers.multipleChoice[index] === question.correctAnswer) {
+          mcScore++;
+        }
+      });
+
+      // Grade short answers using AI
+      const gradingPrompt = `Grade the following short answer responses based on the original passage and sample answers. Provide a score out of 10 for each answer and detailed feedback.
+
+Original passage:
+"""
+${selectedText}
+"""
+
+Questions and responses to grade:
+${testData.shortAnswer.map((q: any, i: number) => `
+Question ${i + 1}: ${q.question}
+Sample answer: ${q.sampleAnswer}
+Student answer: ${userAnswers.shortAnswer[i] || 'No answer provided'}
+`).join('\n')}
+
+Return ONLY a JSON object with this format:
+{
+  "shortAnswerGrades": [
+    {
+      "score": 8,
+      "feedback": "Detailed feedback on the answer..."
+    }
+  ],
+  "overallFeedback": "General comments on performance..."
+}`;
+
+      // Select AI service for grading
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      const gradingResponse = await generateChatResponse(
+        gradingPrompt,
+        selectedText,
+        []
+      );
+      
+      if (gradingResponse.error) {
+        return res.status(500).json({ error: gradingResponse.error });
+      }
+
+      // Parse grading response
+      let gradingData;
+      try {
+        const cleanedResponse = gradingResponse.message.replace(/```json\n?|\n?```/g, '').trim();
+        gradingData = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error('Failed to parse grading JSON:', parseError);
+        return res.status(500).json({ error: "Failed to process grading" });
+      }
+
+      // Calculate total score
+      const saTotal = testData.shortAnswer.length * 10;
+      const saScore = gradingData.shortAnswerGrades.reduce((sum: number, grade: any) => sum + grade.score, 0);
+      
+      const totalScore = mcScore + saScore;
+      const totalPossible = mcTotal + saTotal;
+      const percentage = Math.round((totalScore / totalPossible) * 100);
+
+      res.json({
+        multipleChoiceScore: mcScore,
+        multipleChoiceTotal: mcTotal,
+        shortAnswerScore: saScore,
+        shortAnswerTotal: saTotal,
+        totalScore: totalScore,
+        totalPossible: totalPossible,
+        percentage: percentage,
+        gradingData: gradingData
+      });
+      
+    } catch (error) {
+      console.error("Test grading error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to grade test" 
       });
     }
   });
