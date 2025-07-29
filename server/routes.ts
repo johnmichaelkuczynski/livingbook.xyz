@@ -1770,6 +1770,82 @@ Important: Format your response exactly as specified with "Thesis:" and "Summary
     }
   });
 
+  // Thesis Deep-Dive generation endpoint
+  app.post("/api/generate-thesis-deep-dive", async (req, res) => {
+    try {
+      const { selectedText, provider = 'deepseek', comparisonTarget } = req.body;
+      
+      if (!selectedText || selectedText.trim().length === 0) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log(`🔍 GENERATING THESIS DEEP-DIVE - Provider: ${provider}, Text length: ${selectedText.length}`);
+
+      let prompt = `Extract the core thesis of the selected passage. Then:
+(a) Quote the author's original wording of the thesis.
+(b) Explain the practical or theoretical relevance of the thesis in a contemporary context.
+(c) Cross-check the thesis with major modern thinkers or fields (e.g. neuroscience, philosophy of mind, AI, cognitive science, education). Indicate points of agreement, contradiction, or obsolescence. Keep the output dense and analytical.
+
+Format the response using the following labeled sections:
+
+Extracted Thesis: [Identify and state the central argument clearly]
+
+Original Wording: [Quote the author's exact phrasing of the thesis from the text]
+
+Modern Applications: [Explain contemporary relevance and practical implications]
+
+Cross-Comparison: [Compare with modern thinkers/fields, noting agreements, contradictions, or obsolescence]
+
+Selected passage:
+"""
+${selectedText}
+"""`;
+
+      if (comparisonTarget && comparisonTarget.trim()) {
+        prompt += `\n\nSpecific comparison focus: Compare the thesis against ${comparisonTarget}. Provide detailed analysis of similarities, differences, and theoretical evolution.`;
+      }
+
+      prompt += `\n\nImportant: Format your response exactly as specified with the four labeled sections. Be dense, analytical, and scholarly in your approach.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, selectedText, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      // Clean any markdown formatting
+      const cleanedContent = removeMarkupSymbols(response.message);
+      
+      console.log(`✅ THESIS DEEP-DIVE GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
+      
+      res.json({ thesisDeepDive: cleanedContent });
+      
+    } catch (error) {
+      console.error("Thesis Deep-Dive generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate thesis deep-dive"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
