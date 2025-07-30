@@ -1,88 +1,64 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-// For PDF processing - use PDF.js for proper structure extraction
+// For PDF processing - use robust fallback system
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
-    // Use pdfjs-dist for better structure preservation
-    const pdfjs = await import('pdfjs-dist');
+    console.log('Attempting PDF extraction for:', filePath);
+    
+    // First try pdf-parse which is more stable in Node.js
+    const pdfParse = await import('pdf-parse');
     const buffer = await fs.readFile(filePath);
     
-    // Load PDF document
-    const pdf = await pdfjs.getDocument({
-      data: new Uint8Array(buffer),
-      useSystemFonts: true
-    }).promise;
+    const data = await pdfParse.default(buffer);
     
-    let fullText = '';
+    console.log('PDF text extraction successful, length:', data.text.length);
     
-    // Extract text from each page with positioning info
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      
-      let pageText = '';
-      let lastY = 0;
-      
-      for (const item of textContent.items) {
-        if ('str' in item && 'transform' in item) {
-          const currentY = item.transform[5];
-          
-          // Detect paragraph breaks based on vertical spacing
-          if (lastY > 0 && Math.abs(lastY - currentY) > 15) {
-            pageText += '\n\n';
-          }
-          
-          pageText += item.str + ' ';
-          lastY = currentY;
-        }
-      }
-      
-      fullText += pageText + '\n\n';
-    }
+    // Process the extracted text into proper HTML paragraphs
+    let fullText = data.text;
     
-    // Convert to proper HTML with paragraph structure
+    // Clean up common PDF artifacts
+    fullText = fullText
+      .replace(/\f/g, '\n\n') // Form feed to paragraph break
+      .replace(/\r\n/g, '\n') // Normalize line endings
+      .replace(/\r/g, '\n')
+      .replace(/\n{3,}/g, '\n\n') // Multiple newlines to double
+      .replace(/[ \t]+/g, ' ') // Multiple spaces to single
+      .trim();
+    
+    // Split into paragraphs based on double newlines
     const paragraphs = fullText.split(/\n\s*\n/);
     
     const htmlContent = paragraphs
-      .filter(para => para.trim().length > 20) // Filter out short fragments
+      .filter(para => para.trim().length > 10) // Filter out short fragments
       .map(para => {
         const cleanPara = para.replace(/\s+/g, ' ').trim();
         
-        // Detect headings based on length and capitalization
-        if (cleanPara.length < 80 && (
+        // Detect headings based on length and capitalization patterns
+        if (cleanPara.length < 100 && (
           cleanPara === cleanPara.toUpperCase() || 
-          cleanPara.match(/^[A-Z][^.]*$/) ||
-          cleanPara.split(' ').length < 10
+          cleanPara.match(/^[A-Z][^.]*[^.]$/) ||
+          cleanPara.split(' ').length < 12
         )) {
           return `<h2 style="font-size: 1.4em; font-weight: bold; margin: 2em 0 1em 0; text-align: left;">${cleanPara}</h2>`;
         }
         
-        // Regular paragraphs
+        // Regular paragraphs with proper formatting
         return `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${cleanPara}</p>`;
       })
       .join('');
     
-    return htmlContent;
+    return htmlContent || `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${fullText}</p>`;
+    
   } catch (error) {
-    console.error('PDF.js parsing error:', error);
-    // Fallback to pdf-parse if PDF.js fails
-    const pdfParse = await import('pdf-parse');
-    const buffer = await fs.readFile(filePath);
-    const data = await pdfParse.default(buffer);
+    console.error('PDF parsing failed:', error);
     
-    // Simple paragraph creation as fallback
-    const sentences = data.text.match(/[^.!?]*[.!?]+/g) || [data.text];
-    const paragraphs = [];
-    
-    for (let i = 0; i < sentences.length; i += 4) {
-      const chunk = sentences.slice(i, i + 4).join(' ').trim();
-      if (chunk.length > 0) {
-        paragraphs.push(`<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6;">${chunk}</p>`);
-      }
-    }
-    
-    return paragraphs.join('');
+    // Last resort: return a simple error message wrapped in HTML
+    return `<p style="margin-bottom: 1.5em; text-indent: 1.5em; text-align: justify; line-height: 1.6; color: red;">
+      <strong>PDF Processing Error:</strong> This PDF file could not be processed. 
+      The file may be corrupted, password-protected, or use an unsupported format. 
+      Please try uploading a different PDF file or convert it to a Word document or text file.
+    </p>`;
   }
 }
 
