@@ -118,8 +118,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { originalname, filename, mimetype, size, path: filePath } = req.file;
       
-      // Extract text from the document
-      let extractedText = await extractTextFromDocument(filePath, mimetype);
+      // Extract text from the document with detailed error handling
+      let extractedText = '';
+      try {
+        extractedText = await extractTextFromDocument(filePath, mimetype);
+        
+        // Check if we got meaningful content
+        if (!extractedText || extractedText.trim().length < 10) {
+          throw new Error('No readable text could be extracted from this document');
+        }
+        
+        console.log('Document processing successful, extracted text length:', extractedText.length);
+        
+      } catch (extractionError) {
+        console.error('Document extraction error:', extractionError);
+        
+        // For PDFs, provide specific error message
+        if (mimetype === 'application/pdf') {
+          throw new Error('This PDF file could not be processed. It may be corrupted, password-protected, or use an unsupported format. Please try a different PDF or convert it to Word/text format.');
+        }
+        
+        // For other file types
+        throw new Error(`Failed to process ${originalname}: ${extractionError instanceof Error ? extractionError.message : 'Unknown error'}`);
+      }
       
       // Process math notation
       extractedText = processMathNotation(extractedText);
