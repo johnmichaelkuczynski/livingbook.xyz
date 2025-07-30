@@ -271,3 +271,45 @@ h1, h2, h3, h4, h5, h6 {
 .katex-display {
   margin: 1rem 0;
 }
+
+/* CRITICAL: Scroll-friendly text selection for mobile and desktop */
+.scroll-friendly-selection {
+  /* Force text selection to work properly */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  
+  /* Allow smooth scrolling during text selection */
+  overflow: visible;
+  touch-action: manipulation;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Ensure selection doesn't interfere with scrolling */
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all children inherit text selection properties */
+.scroll-friendly-selection * {
+  user-select: inherit !important;
+  -webkit-user-select: inherit !important;
+  -moz-user-select: inherit !important;
+  -ms-user-select: inherit !important;
+}
+
+/* Fix ScrollArea viewport for text selection */
+[data-radix-scroll-area-viewport] {
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection from blocking scroll events */
+.scroll-friendly-selection::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.scroll-friendly-selection::-moz-selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}

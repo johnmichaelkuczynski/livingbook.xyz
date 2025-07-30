@@ -124,10 +124,16 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             ) : (
               <div 
-                className="w-full"
-                style={{ userSelect: 'text' }}
+                className="w-full prose prose-lg max-w-none scroll-friendly-selection"
+                style={{ 
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text',
+                  MozUserSelect: 'text',
+                  msUserSelect: 'text',
+                  position: 'relative'
+                }}
                 onMouseUp={(e) => {
-                  // Allow event to bubble for scrolling
+                  // Use setTimeout to ensure selection is complete and avoid blocking scroll
                   setTimeout(() => {
                     const selection = window.getSelection();
                     const selectedText = selection?.toString().trim() || '';
@@ -137,16 +143,25 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
                       console.log('🎙️ CALLING onTextSelection with:', selectedText);
                       onTextSelection(selectedText);
                     }
-                  }, 100);
+                  }, 150);
                 }}
                 onMouseDown={(e) => {
-                  // Don't prevent default to allow text selection
-                  e.stopPropagation();
+                  // Don't prevent default - allow normal text selection behavior
+                  // Don't stop propagation - allow scrolling to work during selection
+                }}
+                onTouchEnd={(e) => {
+                  // Mobile touch selection support
+                  setTimeout(() => {
+                    const selection = window.getSelection();
+                    const selectedText = selection?.toString().trim() || '';
+                    
+                    if (selectedText.length > 10 && onTextSelection) {
+                      onTextSelection(selectedText);
+                    }
+                  }, 200);
                 }}
               >
-                <div className="space-y-4 text-lg leading-relaxed">
-                  {formatContent(document.content)}
-                </div>
+                {formatContent(document.content)}
               </div>
             )}
           </div>
