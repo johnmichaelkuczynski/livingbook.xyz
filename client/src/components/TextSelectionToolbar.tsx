@@ -305,11 +305,20 @@ Speaker 1: [dialogue]
   return (
     <div
       id="text-selection-toolbar"
-      className="fixed z-[9999] bg-white rounded-lg shadow-xl border border-gray-200 p-3"
+      className="fixed z-[9999] bg-white rounded-lg shadow-xl border border-gray-200 p-3 select-none"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
-        transform: position.top === 0 ? 'translateY(-100%)' : 'none'
+        transform: position.top === 0 ? 'translateY(-100%)' : 'none',
+        pointerEvents: 'auto'
+      }}
+      onMouseEnter={() => {
+        // Prevent toolbar from disappearing when hovering
+        document.body.classList.add('toolbar-hover-active');
+      }}
+      onMouseLeave={() => {
+        // Allow toolbar to disappear when not hovering
+        document.body.classList.remove('toolbar-hover-active');
       }}
     >
       <div className="flex flex-col space-y-2">
