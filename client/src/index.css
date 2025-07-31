@@ -313,3 +313,41 @@ h1, h2, h3, h4, h5, h6 {
 .scroll-friendly-selection::-moz-selection {
   background-color: rgba(59, 130, 246, 0.3);
 }
+
+/* Text Selection Toolbar Persistence */
+#text-selection-toolbar {
+  /* Make toolbar more persistent */
+  pointer-events: auto !important;
+  transition: opacity 0.2s ease-in-out;
+  user-select: none !important;
+}
+
+#text-selection-toolbar:hover {
+  /* Stay visible when hovering over toolbar */
+  opacity: 1 !important;
+  z-index: 10000 !important;
+}
+
+/* Prevent toolbar from disappearing too quickly */
+.text-selection-active {
+  user-select: text !important;
+}
+
+.toolbar-hover-active #text-selection-toolbar {
+  /* Keep toolbar visible when hovering */
+  opacity: 1 !important;
+  z-index: 10000 !important;
+}
+
+/* Ensure toolbar buttons are clickable */
+#text-selection-toolbar button {
+  pointer-events: auto !important;
+  z-index: 10001 !important;
+  user-select: none !important;
+}
+
+/* Hover states for toolbar elements */
+#text-selection-toolbar * {
+  user-select: none !important;
+  pointer-events: auto !important;
+}

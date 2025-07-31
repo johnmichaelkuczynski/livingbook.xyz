@@ -34,24 +34,42 @@ export default function TextSelectionHandler({
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection();
+      
+      // If no selection, only hide if toolbar is currently visible and we're sure selection was cleared intentionally
       if (!selection || selection.rangeCount === 0) {
-        setShowToolbar(false);
-        setSelectedText('');
+        // Don't immediately hide - user might be interacting with toolbar
+        setTimeout(() => {
+          const currentSelection = window.getSelection();
+          if (!currentSelection || currentSelection.rangeCount === 0) {
+            // Only hide if selection is still empty after delay AND not hovering toolbar
+            const toolbar = document.getElementById('text-selection-toolbar');
+            const isHoveringToolbar = toolbar?.matches(':hover') || document.body.classList.contains('toolbar-hover-active');
+            
+            if (!isHoveringToolbar) {
+              setShowToolbar(false);
+              setSelectedText('');
+              document.body.classList.remove('text-selection-active');
+            }
+          }
+        }, 100);
         return;
       }
 
       const range = selection.getRangeAt(0);
       const text = selection.toString().trim();
       
-      // Only show toolbar if text is selected and the selection is within our container
-      if (text.length > 0 && containerRef.current?.contains(range.commonAncestorContainer)) {
+      // Show toolbar if text is selected and within our container
+      if (text.length > 10 && containerRef.current?.contains(range.commonAncestorContainer)) {
         const rect = range.getBoundingClientRect();
         setSelectedText(text);
         setSelectionRect(rect);
         setShowToolbar(true);
-      } else {
-        setShowToolbar(false);
-        setSelectedText('');
+        
+        // Add class to body to indicate active selection
+        document.body.classList.add('text-selection-active');
+      } else if (text.length <= 10) {
+        // Remove class when selection is too short
+        document.body.classList.remove('text-selection-active');
       }
     };
 
@@ -61,18 +79,26 @@ export default function TextSelectionHandler({
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      // Hide toolbar if clicking outside the container or toolbar
+      // Hide toolbar ONLY if clicking outside both container AND toolbar
       const target = event.target as Element;
       const toolbar = document.getElementById('text-selection-toolbar');
       
-      if (containerRef.current && 
-          !containerRef.current.contains(target) && 
-          (!toolbar || !toolbar.contains(target))) {
-        setShowToolbar(false);
-        setSelectedText('');
-        // Clear selection
-        window.getSelection()?.removeAllRanges();
+      // Don't hide if clicking on the toolbar itself or its children
+      if (toolbar && toolbar.contains(target)) {
+        return;
       }
+      
+      // Don't hide if clicking within the container (document area)
+      if (containerRef.current && containerRef.current.contains(target)) {
+        return;
+      }
+      
+      // Only hide if clicking completely outside both areas
+      setShowToolbar(false);
+      setSelectedText('');
+      document.body.classList.remove('text-selection-active');
+      document.body.classList.remove('toolbar-hover-active');
+      window.getSelection()?.removeAllRanges();
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -89,6 +115,7 @@ export default function TextSelectionHandler({
   const handleClose = () => {
     setShowToolbar(false);
     setSelectedText('');
+    document.body.classList.remove('text-selection-active');
     window.getSelection()?.removeAllRanges();
   };
 
