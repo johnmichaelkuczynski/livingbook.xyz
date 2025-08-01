@@ -87,7 +87,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
       </div>
       
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full" style={{ overflowY: 'auto' }}>
+        <div className="h-full overflow-y-auto overflow-x-hidden" style={{ scrollBehavior: 'smooth' }}>
           <div className="p-6">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -165,7 +165,7 @@ export default function DocumentViewer({ document, isLoading, onUploadClick, onR
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </Card>
   );

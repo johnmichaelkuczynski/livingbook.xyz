@@ -280,10 +280,14 @@ h1, h2, h3, h4, h5, h6 {
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   
-  /* Allow smooth scrolling during text selection */
-  overflow: visible;
-  touch-action: manipulation;
+  /* CRITICAL: Allow scrolling during text selection */
+  overflow-y: auto !important;
+  touch-action: pan-y pinch-zoom !important;
   -webkit-overflow-scrolling: touch;
+  
+  /* Enable scroll while selecting */
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   
   /* Ensure selection doesn't interfere with scrolling */
   position: relative;
