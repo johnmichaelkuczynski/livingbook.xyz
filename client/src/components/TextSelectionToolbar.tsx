@@ -142,10 +142,10 @@ Speaker 1: [dialogue]
 
       console.log(`🎙️ Starting podcast generation: ${podcastType}`);
 
-      // Show loading state immediately
+      // Show detailed loading state immediately
       setPodcastProgress({
         isVisible: true,
-        message: `Generating ${podcastType} podcast...`,
+        message: `🎙️ Generating ${podcastType}...\n⏳ Creating dialogue script...\n🎵 Converting to audio...\n📥 This may take 30-60 seconds`,
         type: 'loading'
       });
 
@@ -457,19 +457,28 @@ Speaker 1: [dialogue]
         </div>
       </div>
 
-      {/* Progress Indicator */}
+      {/* Enhanced Progress Indicator */}
       {podcastProgress.isVisible && (
-        <div className={`fixed top-4 right-4 ${
+        <div className={`fixed top-4 right-4 max-w-sm ${
           podcastProgress.type === 'loading' ? 'bg-blue-500' :
           podcastProgress.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        } text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300`}>
-          <div className="flex items-center space-x-2">
+        } text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`}>
+          <div className="flex items-start space-x-3">
             {podcastProgress.type === 'loading' && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mt-1"></div>
             )}
-            {podcastProgress.type === 'success' && <span>✅</span>}
-            {podcastProgress.type === 'error' && <span>❌</span>}
-            <span>{podcastProgress.message}</span>
+            {podcastProgress.type === 'success' && <span className="text-lg">✅</span>}
+            {podcastProgress.type === 'error' && <span className="text-lg">❌</span>}
+            <div className="flex-1">
+              <div className="whitespace-pre-line text-sm leading-relaxed">
+                {podcastProgress.message}
+              </div>
+              {podcastProgress.type === 'loading' && (
+                <div className="mt-2 bg-white bg-opacity-20 rounded-full h-1">
+                  <div className="bg-white h-1 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
