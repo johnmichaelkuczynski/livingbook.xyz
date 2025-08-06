@@ -135,7 +135,10 @@ export default function TextSelectionHandler({
           }}
           onTestMe={() => onTestMe(selectedText)}
           onPodcast={() => onPodcast(selectedText)}
-          onCognitiveMap={() => onCognitiveMap(selectedText)}
+          onCognitiveMap={() => {
+            console.log('🧠 COGNITIVE MAP CLICKED - Text length:', selectedText.length);
+            onCognitiveMap(selectedText);
+          }}
           onSummaryThesis={() => onSummaryThesis(selectedText)}
           onThesisDeepDive={() => onThesisDeepDive(selectedText)}
           onSuggestedReadings={() => onSuggestedReadings(selectedText)}

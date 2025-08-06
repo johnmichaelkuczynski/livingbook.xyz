@@ -600,12 +600,24 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleCognitiveMap = async () => {
-    if (!selectedText.trim()) return;
+  const handleCognitiveMap = async (text?: string) => {
+    const textToAnalyze = text || selectedText;
+    if (!textToAnalyze.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('🧠 COGNITIVE MAP CLICKED - Text length:', textToAnalyze.length);
+    console.log('🧠 Starting Cognitive Map generation process...');
     
     setIsGeneratingCognitiveMap(true);
     setShowCognitiveMap(true);
     setCognitiveMapContent('');
+    console.log('🧠 Modal state set - showCognitiveMap:', true, 'isGeneratingCognitiveMap:', true);
     
     try {
       const response = await fetch('/api/generate-cognitive-map', {
@@ -614,7 +626,7 @@ Speaker 1: [dialogue]
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selectedText: selectedText,
+          selectedText: textToAnalyze,
           provider: selectedProvider
         }),
       });
@@ -624,7 +636,9 @@ Speaker 1: [dialogue]
       }
 
       const data = await response.json();
+      console.log('Cognitive map received:', data.cognitiveMap);
       setCognitiveMapContent(data.cognitiveMap);
+      console.log('Cognitive map content loaded:', data.cognitiveMap.length, 'characters');
       
     } catch (error) {
       console.error('Cognitive map generation error:', error);
