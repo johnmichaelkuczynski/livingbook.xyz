@@ -1125,6 +1125,15 @@ Speaker 1: [dialogue]
         isLoading={isGeneratingStudyGuide}
       />
 
+      {/* Cognitive Map Modal */}
+      <CognitiveMapModal
+        isOpen={showCognitiveMap}
+        onClose={() => setShowCognitiveMap(false)}
+        content={cognitiveMapContent}
+        isLoading={isGeneratingCognitiveMap}
+        selectedText={selectedText}
+      />
+
     </div>
   );
 }
