@@ -2155,18 +2155,36 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
   // Generate Test Me questions
   app.post("/api/generate-test", async (req, res) => {
     try {
-      const { selectedText, provider = 'openai' } = req.body;
+      const { selectedText, provider = 'openai', difficulty = 5 } = req.body;
 
       if (!selectedText?.trim()) {
         return res.status(400).json({ error: 'Selected text is required' });
       }
 
-      console.log(`📝 GENERATING TEST - Provider: ${provider}, Text length: ${selectedText.length}`);
+      console.log(`📝 GENERATING TEST - Provider: ${provider}, Difficulty: ${difficulty}/10, Text length: ${selectedText.length}`);
 
-      // Create test generation prompt
+      // Create difficulty-aware test generation prompt
+      const getDifficultyInstruction = (level) => {
+        switch (level) {
+          case 1:
+          case 2: return "Create REMEDIAL level questions focusing on basic definitions and simple recall. Use straightforward language and ask about the most fundamental concepts only.";
+          case 3:
+          case 4: return "Create ELEMENTARY to INTERMEDIATE level questions that test basic understanding and simple applications of concepts.";
+          case 5: return "Create STANDARD level questions that test comprehension, analysis, and application of key concepts.";
+          case 6:
+          case 7: return "Create ADVANCED level questions requiring deeper analysis, synthesis, and critical thinking about complex relationships.";
+          case 8:
+          case 9: return "Create GRADUATE level questions that demand sophisticated analysis, evaluation, and synthesis of advanced concepts.";
+          case 10: return "Create PhD LEVEL questions requiring expert-level analysis, original thinking, and mastery of highly complex theoretical concepts.";
+          default: return "Create STANDARD level questions that test comprehension, analysis, and application of key concepts.";
+        }
+      };
+
       const testPrompt = `Create exactly 5 questions based on the following text. The test must follow this strict format:
 - Exactly 3 multiple choice questions (with 4 options each, labeled A, B, C, D)  
 - Exactly 2 short answer questions
+
+DIFFICULTY LEVEL: ${difficulty}/10 - ${getDifficultyInstruction(difficulty)}
 
 For each question, provide:
 1. The question text

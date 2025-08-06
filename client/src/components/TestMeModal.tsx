@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Slider } from './ui/slider';
 
 interface Question {
   id: number;
@@ -36,13 +37,30 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
   const [isGrading, setIsGrading] = useState(false);
   const [currentStep, setCurrentStep] = useState<'generate' | 'take' | 'results'>('generate');
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [difficulty, setDifficulty] = useState([5]); // Default difficulty level 5
 
-  // Auto-generate test when modal opens
+  // Show generate step first to let user set difficulty
   React.useEffect(() => {
-    if (isOpen && selectedText && !testData && !isGeneratingTest) {
-      handleGenerateTest();
+    if (isOpen && selectedText) {
+      setCurrentStep('generate');
     }
   }, [isOpen, selectedText]);
+
+  const getDifficultyLabel = (level: number) => {
+    switch (level) {
+      case 1: return "Remedial";
+      case 2: return "Basic";
+      case 3: return "Elementary";
+      case 4: return "Intermediate";
+      case 5: return "Standard";
+      case 6: return "Advanced";
+      case 7: return "Expert";
+      case 8: return "Graduate";
+      case 9: return "Professional";
+      case 10: return "PhD Level";
+      default: return "Standard";
+    }
+  };
 
   // Reset state when modal closes
   React.useEffect(() => {
@@ -53,6 +71,7 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
       setShowResults(false);
       setCurrentStep('generate');
       setIsGeneratingTest(false);
+      setDifficulty([5]); // Reset to default
     }
   }, [isOpen]);
 
@@ -68,7 +87,8 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
         },
         body: JSON.stringify({
           selectedText,
-          provider: 'openai'
+          provider: 'openai',
+          difficulty: difficulty[0]
         }),
       });
 
@@ -138,11 +158,34 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
   };
 
   const renderGenerateStep = () => (
-    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+    <div className="flex flex-col items-center justify-center py-8 space-y-6">
       <h3 className="text-lg font-semibold">Generate Test</h3>
       <p className="text-sm text-gray-600 text-center">
         Create a 5-question test (3 multiple choice, 2 short answer) based on your selected text.
       </p>
+      
+      {/* Difficulty Slider */}
+      <div className="w-full max-w-sm space-y-3">
+        <div className="text-center">
+          <Label className="text-sm font-medium">
+            Difficulty Level: {difficulty[0]} - {getDifficultyLabel(difficulty[0])}
+          </Label>
+        </div>
+        <Slider
+          value={difficulty}
+          onValueChange={setDifficulty}
+          min={1}
+          max={10}
+          step={1}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>1 - Remedial</span>
+          <span>5 - Standard</span>
+          <span>10 - PhD Level</span>
+        </div>
+      </div>
+      
       <Button 
         onClick={handleGenerateTest} 
         disabled={isGenerating}
