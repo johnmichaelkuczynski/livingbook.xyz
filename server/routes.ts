@@ -1116,15 +1116,17 @@ Please provide a helpful response based on the selected text. Keep your response
       
       // Prepare message with selected text context if provided
       let contextualMessage = message;
+      let contextualDocumentContent = documentContent;
+      
       if (selectedText && selectedText.trim()) {
         console.log('✅ ADDING SELECTED TEXT CONTEXT TO MESSAGE');
-        contextualMessage = `IMPORTANT: The user has selected this SPECIFIC passage from the document:
+        // Replace the document content with ONLY the selected text
+        contextualDocumentContent = selectedText;
+        contextualMessage = `${message}
 
-"${selectedText}"
+CONTEXT: The user has selected a specific passage from their document. Answer their question based ONLY on this selected text below, do not reference the full document:
 
-The user's question is: "${message}"
-
-You MUST answer ONLY about the selected passage above. Do NOT talk about the entire document. Focus exclusively on the highlighted text provided.`;
+"${selectedText}"`;
       } else {
         console.log('❌ NO SELECTED TEXT - using regular message');
       }
@@ -1132,7 +1134,7 @@ You MUST answer ONLY about the selected passage above. Do NOT talk about the ent
       // Generate AI response
       const aiResponse = await generateChatResponse(
         contextualMessage,
-        documentContent,
+        contextualDocumentContent,
         conversationHistory
       );
       

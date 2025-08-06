@@ -1034,12 +1034,6 @@ Speaker 1: [dialogue]
               />
             </div>
             <div className="flex flex-col space-y-2">
-              {selectedText && (
-                <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                  <span className="text-blue-700 font-medium">Selected text: </span>
-                  <span className="text-blue-600">"{selectedText.substring(0, 100)}{selectedText.length > 100 ? '...' : ''}"</span>
-                </div>
-              )}
               <Select value={selectedProvider} onValueChange={setSelectedProvider}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
