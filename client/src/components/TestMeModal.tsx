@@ -246,7 +246,7 @@ export default function TestMeModal({
           </div>
 
           {/* Right Panel - Generated Test/Results */}
-          <div className="w-1/2 bg-white flex flex-col">
+          <div className="w-1/2 bg-white flex flex-col max-h-full overflow-hidden">
             {view === 'config' && (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center p-8">
@@ -321,8 +321,8 @@ export default function TestMeModal({
             )}
 
             {view === 'test' && (
-              <div className="flex-1 flex flex-col">
-                <div className="p-6 border-b">
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="p-6 border-b flex-shrink-0">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Take Your Practice Test</h3>
                   <div className="flex items-center justify-between">
                     <Button
@@ -338,7 +338,7 @@ export default function TestMeModal({
                   </div>
                 </div>
 
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-auto">
                   <div className="p-6 space-y-6">
                     {questions.map((question, index) => (
                       <div key={question.id} className="border-b pb-6 last:border-b-0">
@@ -390,9 +390,9 @@ export default function TestMeModal({
                       </div>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
 
-                <div className="p-6 border-t bg-gray-50">
+                <div className="p-6 border-t bg-gray-50 flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">
                       {Object.keys(userAnswers).length} of {questions.length} questions answered
