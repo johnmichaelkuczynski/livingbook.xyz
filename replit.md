@@ -20,6 +20,7 @@ DocMath AI is a streamlined document processing web application focused on text 
 - **Error Handling**: Fixed critical runtime errors in popup toolbar system and streamlined code architecture
 - **Download Functionality Fixed**: Implemented robust podcast download system with dedicated endpoint and fallback mechanisms
 - **Study Guide Function Working**: Fixed missing modal rendering - study guide generation now fully functional with proper UI display
+- **Cognitive Map Function Working**: Fixed critical connection bug - cognitive map now generates both logical structure analysis and interactive Mermaid diagrams
 
 ## User Preferences
 
