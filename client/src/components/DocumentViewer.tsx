@@ -42,7 +42,17 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
   }, [onTextSelection]);
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden p-6 document-viewer-content" style={{ scrollBehavior: 'smooth' }}>
+    <div 
+      className="document-viewer-content p-6" 
+      style={{ 
+        height: '600px',
+        maxHeight: '80vh', 
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        scrollBehavior: 'smooth',
+        border: '1px solid #e5e7eb'
+      }}
+    >
       <KaTeXRenderer 
         content={content} 
         className="text-gray-700 leading-relaxed text-lg select-text max-w-full"

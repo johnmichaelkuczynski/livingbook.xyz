@@ -888,9 +888,9 @@ Speaker 1: [dialogue]
             className="hidden"
           />
           
-          <div className="flex-1 relative">
+          <div className="flex-1 relative" style={{ minHeight: '600px', maxHeight: '80vh' }}>
             {currentDocument ? (
-              <div>
+              <div className="h-full">
                 <TextSelectionHandler
                   onDiscuss={(text) => {
                     setSelectedText(text);
