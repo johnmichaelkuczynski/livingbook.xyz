@@ -922,7 +922,7 @@ Speaker 1: [dialogue]
                   onStudyGuide={handleStudyGuide}
                   onTestMe={() => setShowTestModal(true)}
                   onPodcast={() => setShowPodcastModal(true)}
-                  onCognitiveMap={() => setShowCognitiveMap(true)}
+                  onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={() => {}}
                   onThesisDeepDive={() => {}}
                   onSuggestedReadings={() => {}}
