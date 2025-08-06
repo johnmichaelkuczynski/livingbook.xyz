@@ -124,6 +124,12 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
       >
         {isGenerating ? 'Generating Test...' : 'Generate Test'}
       </Button>
+      {isGenerating && (
+        <div className="flex items-center space-x-2 text-sm text-blue-600">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span>Creating your personalized test...</span>
+        </div>
+      )}
     </div>
   );
 
@@ -197,8 +203,14 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
           <Button 
             onClick={handleSubmitTest} 
             disabled={isGrading || Object.keys(userAnswers).length === 0}
+            className="relative"
           >
-            {isGrading ? 'Grading...' : 'Submit Test'}
+            {isGrading && (
+              <div className="absolute left-3 animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            <span className={isGrading ? 'ml-6' : ''}>
+              {isGrading ? 'Grading Test...' : 'Submit Test'}
+            </span>
           </Button>
         </div>
       </div>
