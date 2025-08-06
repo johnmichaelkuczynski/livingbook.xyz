@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2 } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +20,7 @@ import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
 import TestModal from '@/components/TestModal';
 import PodcastModal from '@/components/PodcastModal';
+import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
 import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
@@ -48,6 +49,7 @@ export default function Home() {
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
   const [podcastDialogue, setPodcastDialogue] = useState('');
   const [showPodcastModal, setShowPodcastModal] = useState(false);
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [podcastType, setPodcastType] = useState<'standard' | 'modern'>('standard');
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
   const [showCognitiveMap, setShowCognitiveMap] = useState(false);
@@ -1086,6 +1088,16 @@ Speaker 1: [dialogue]
                   <Volume2 className="w-4 h-4" />
                   Podcast
                 </Button>
+                <Button
+                  onClick={() => setShowRewriteModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 px-2"
+                  disabled={!currentDocument}
+                >
+                  <FileEdit className="w-4 h-4" />
+                  Rewrite
+                </Button>
                 <button 
                   onClick={handleSendMessage}
                   disabled={!message.trim() || sendMessageMutation.isPending}
@@ -1105,6 +1117,14 @@ Speaker 1: [dialogue]
       <PodcastModal
         isOpen={showPodcastModal}
         onClose={() => setShowPodcastModal(false)}
+        document={currentDocument}
+        selectedText={selectedText}
+      />
+
+      {/* Rewrite Modal */}
+      <RewriteModal
+        isOpen={showRewriteModal}
+        onClose={() => setShowRewriteModal(false)}
         document={currentDocument}
         selectedText={selectedText}
       />

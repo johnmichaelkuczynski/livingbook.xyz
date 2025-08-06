@@ -2014,7 +2014,7 @@ Follow the custom instructions provided while creating an engaging audio script.
         const lines = script.split('\n').filter(line => line.trim());
         let ssmlParts = [];
         
-        for (const line of lines) {
+        for (const line: string of lines) {
           if (line.startsWith('HOST:')) {
             const text = line.replace('HOST:', '').trim();
             ssmlParts.push(`<voice name="en-US-BrianNeural">${text}</voice>`);
@@ -2045,14 +2045,14 @@ Follow the custom instructions provided while creating an engaging audio script.
       const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
       
       // Generate audio
-      const result = await new Promise((resolve, reject) => {
+      const result: any = await new Promise((resolve, reject) => {
         synthesizer.speakSsmlAsync(
           ssmlScript,
-          (result) => {
+          (result: any) => {
             synthesizer.close();
             resolve(result);
           },
-          (error) => {
+          (error: any) => {
             synthesizer.close();
             reject(error);
           }
@@ -2071,6 +2071,84 @@ Follow the custom instructions provided while creating an engaging audio script.
       console.error("Podcast audio generation error:", error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to generate podcast audio" 
+      });
+    }
+  });
+
+  // Rewrite content based on selected text or document sections
+  app.post("/api/rewrite-content", async (req, res) => {
+    try {
+      const { documentId, selectedText, instructions } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+      
+      if (!instructions || !instructions.trim()) {
+        return res.status(400).json({ error: "Rewrite instructions are required" });
+      }
+      
+      // Get document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Determine content to rewrite
+      let contentToRewrite = '';
+      let contextInfo = '';
+      
+      if (selectedText && selectedText.trim()) {
+        // User has selected specific text
+        contentToRewrite = selectedText.trim();
+        contextInfo = 'The user has selected specific text to rewrite.';
+      } else {
+        // No text selected - use full document and let AI identify sections based on instructions
+        contentToRewrite = document.content;
+        contextInfo = 'The user has not selected specific text. Use the instructions to identify which part of the document to rewrite.';
+      }
+      
+      // Create comprehensive prompt for rewriting
+      const prompt = `You are an expert content rewriter. Your task is to rewrite content according to specific user instructions.
+
+${contextInfo}
+
+USER INSTRUCTIONS: ${instructions}
+
+CONTENT TO PROCESS:
+${contentToRewrite}
+
+INSTRUCTIONS FOR REWRITING:
+1. If the user specified a particular section (like "Chapter 2", "Introduction", etc.), identify and rewrite only that section
+2. If no specific section is mentioned, rewrite the entire provided content
+3. Follow the user's style and formatting instructions exactly
+4. Preserve any important information while applying the requested changes
+5. Maintain the logical flow and structure unless instructed otherwise
+6. If you cannot identify a requested section, explain what sections are available
+
+IMPORTANT: Return ONLY the rewritten content. Do not include explanations, introductions, or meta-commentary unless specifically requested by the user.`;
+
+      console.log(`🔄 REWRITE REQUEST - Instructions: "${instructions.substring(0, 100)}...", Content length: ${contentToRewrite.length}`);
+      
+      // Generate rewrite using OpenAI
+      const rewriteResponse = await openaiService.generateChatResponse(
+        prompt,
+        '',
+        []
+      );
+      
+      if (rewriteResponse.error) {
+        return res.status(500).json({ error: rewriteResponse.error });
+      }
+      
+      console.log(`✅ REWRITE COMPLETED - Output length: ${rewriteResponse.message.length} chars`);
+      
+      res.json({ rewrittenContent: rewriteResponse.message });
+      
+    } catch (error) {
+      console.error("Content rewrite error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to rewrite content" 
       });
     }
   });
