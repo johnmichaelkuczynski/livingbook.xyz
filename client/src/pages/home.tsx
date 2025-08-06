@@ -14,7 +14,7 @@ import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import RewritePanel from '@/components/RewritePanel';
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
-import TextSelectionHandler from '@/components/TextSelectionHandler';
+import SimpleTextSelection from '@/components/SimpleTextSelection';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
@@ -876,59 +876,20 @@ Speaker 1: [dialogue]
           <div className="flex-1 relative">
             {currentDocument ? (
               <div>
-                <TextSelectionHandler
+                <SimpleTextSelection
                   onDiscuss={(text) => {
                     setSelectedText(text);
-                    handleStudyGuide();
+                    // Add to chat
                   }}
                   onRewrite={(text) => {
-                    console.log('🔄 REWRITE HANDLER - Received text:', text.substring(0, 100) + '...');
                     setSelectedText(text);
                     setIsRewritePanelOpen(true);
-                    console.log('🔄 REWRITE PANEL - Opening panel, state set to:', true);
-                  }}
-                  onStudyGuide={(text) => {
-                    console.log('🎯 STUDY GUIDE HANDLER - Received text:', text.substring(0, 100) + '...');
-                    setSelectedText(text);
-                    handleStudyGuide();
-                  }}
-                  onTestMe={(text) => {
-                    setSelectedText(text);
-                    handleTestMe();
-                  }}
-                  onPodcast={(text: string) => {
-                    setSelectedText(text);
-                    // This will be handled by the toolbar itself
-                  }}
-                  onCognitiveMap={(text) => {
-                    setSelectedText(text);
-                    handleCognitiveMap();
-                  }}
-                  onSummaryThesis={(text) => {
-                    setSelectedText(text);
-                    handleSummaryThesis();
-                  }}
-                  onThesisDeepDive={(text) => {
-                    setSelectedText(text);
-                    handleThesisDeepDive();
-                  }}
-                  onSuggestedReadings={(text) => {
-                    setSelectedText(text);
-                    handleSuggestedReadings();
                   }}
                 >
                   <DocumentViewer 
-                    document={currentDocument}
-                    isLoading={isUploading}
-                    onUploadClick={() => fileInputRef.current?.click()}
-                    onRewriteClick={handleRewriteClick}
-                    onFileDrop={handleFile}
-                    onTextSelection={(text) => {
-                      setSelectedText(text);
-                      // Removed the popup - we only want the floating toolbar now
-                    }}
+                    content={currentDocument.content} 
                   />
-                </TextSelectionHandler>
+                </SimpleTextSelection>
                 
                 {/* Study Guide Modal */}
                 <StudyGuideModal
