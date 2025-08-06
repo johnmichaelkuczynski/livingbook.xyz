@@ -108,7 +108,6 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
   const handleClose = () => {
     setInstructions('');
     setRewrittenContent('');
-    setIsGenerating(false);
     onClose();
   };
 
@@ -244,10 +243,27 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
           )}
         </div>
 
-        <div className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
+        <div className="flex-shrink-0 flex justify-between gap-2 pt-4 border-t">
           <Button variant="outline" onClick={handleClose}>
             <X className="w-4 h-4 mr-2" />
             Close
+          </Button>
+          <Button 
+            onClick={handleGenerateRewrite}
+            disabled={!instructions.trim() || isGenerating}
+            className="flex items-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
+                Rewriting...
+              </>
+            ) : (
+              <>
+                <FileEdit className="w-4 h-4" />
+                {rewrittenContent ? 'Rewrite Again' : 'Rewrite Content'}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>

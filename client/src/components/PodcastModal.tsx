@@ -104,7 +104,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
   };
 
   const resetModal = () => {
-    setMode('single');
+    setMode('normal-single');
     setCustomInstructions('');
     setPodcastScript('');
     setAudioUrl('');
@@ -297,7 +297,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
             </Button>
             <Button 
               onClick={handleGeneratePodcast}
-              disabled={isGenerating}
+              disabled={isGenerating || ((mode === 'custom-single' || mode === 'custom-dialogue') && !customInstructions.trim())}
               className="flex items-center gap-2"
             >
               {isGenerating ? (
@@ -305,7 +305,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
               ) : (
                 <Volume2 className="w-4 h-4" />
               )}
-              Generate Podcast
+              {isGenerating ? 'Generating...' : 'Generate Podcast'}
             </Button>
           </div>
         </div>
