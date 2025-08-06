@@ -26,6 +26,7 @@ import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
 import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
 import SuggestedReadingsModal from '@/components/SuggestedReadingsModal';
+import TestMeModal from '@/components/TestMeModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -1163,6 +1164,14 @@ Speaker 1: [dialogue]
         content={suggestedReadingsContent}
         isLoading={isGeneratingSuggestedReadings}
         selectedText={selectedText}
+      />
+
+      {/* Test Me Modal */}
+      <TestMeModal
+        isOpen={showTestModal}
+        onClose={() => setShowTestModal(false)}
+        selectedText={selectedText}
+        isGenerating={isGeneratingTest}
       />
 
     </div>
