@@ -12,7 +12,10 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim() || '';
       
+      console.log('🔍 DOCUMENT VIEWER - Selection detected:', selectedText.length > 0 ? `"${selectedText.substring(0, 100)}..."` : 'empty');
+      
       if (selectedText.length > 10 && onTextSelection) {
+        console.log('✅ DOCUMENT VIEWER - Calling onTextSelection with text');
         onTextSelection(selectedText);
       }
     };

@@ -279,6 +279,7 @@ export default function Home() {
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
+    console.log('🔍 SENDING MESSAGE WITH SELECTED TEXT:', selectedText ? `"${selectedText.substring(0, 100)}..."` : 'null');
     sendMessageMutation.mutate(message.trim());
     // Clear selected text after sending
     setSelectedText('');

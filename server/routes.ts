@@ -1111,16 +1111,22 @@ Please provide a helpful response based on the selected text. Keep your response
           `\n\n[Note: Document is ${document.content.length} characters. Only first ${maxContentLength} characters shown. For specific sections, please ask the user to use the chunked document view or ask about specific topics.]`;
       }
       
+      // Debug logging for selected text
+      console.log('🔍 SELECTED TEXT DEBUG:', selectedText ? `"${selectedText.substring(0, 200)}..."` : 'null');
+      
       // Prepare message with selected text context if provided
       let contextualMessage = message;
       if (selectedText && selectedText.trim()) {
-        contextualMessage = `The user has highlighted this specific passage from the document:
+        console.log('✅ ADDING SELECTED TEXT CONTEXT TO MESSAGE');
+        contextualMessage = `IMPORTANT: The user has selected this SPECIFIC passage from the document:
 
 "${selectedText}"
 
-User's question about this passage: ${message}
+The user's question is: "${message}"
 
-Please answer specifically about the highlighted passage, referencing it directly in your response.`;
+You MUST answer ONLY about the selected passage above. Do NOT talk about the entire document. Focus exclusively on the highlighted text provided.`;
+      } else {
+        console.log('❌ NO SELECTED TEXT - using regular message');
       }
 
       // Generate AI response
