@@ -252,15 +252,17 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
           {audioUrl && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Generated Podcast</CardTitle>
+                <CardTitle className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                  ✅ Podcast Generated Successfully - High Quality Alloy Voice
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4">
                   <Button
                     onClick={handlePlayPause}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    size="default"
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                   >
                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     {isPlaying ? 'Pause' : 'Play'}
@@ -269,7 +271,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
                   <Button
                     onClick={handleDownload}
                     variant="outline"
-                    size="sm"
+                    size="default"
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
@@ -290,8 +292,8 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
             </Card>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-between pt-4 border-t">
+          {/* Action Buttons - Always visible at bottom */}
+          <div className="flex-shrink-0 flex justify-between pt-4 border-t bg-white">
             <Button variant="outline" onClick={handleClose}>
               Close
             </Button>

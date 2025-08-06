@@ -233,7 +233,7 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
                   </div>
                 ) : (
                   <div className="prose prose-sm max-w-none">
-                    <div className="p-4 bg-gray-50 rounded border max-h-96 overflow-auto whitespace-pre-wrap">
+                    <div className="p-4 bg-gray-50 rounded border max-h-96 overflow-auto whitespace-pre-wrap text-gray-900 font-medium leading-relaxed">
                       {rewrittenContent}
                     </div>
                   </div>
