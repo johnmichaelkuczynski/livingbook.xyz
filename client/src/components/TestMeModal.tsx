@@ -1,0 +1,292 @@
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
+
+interface Question {
+  id: number;
+  type: 'multiple_choice' | 'short_answer';
+  question: string;
+  options?: string[];
+  correct_answer: string;
+  explanation: string;
+}
+
+interface TestData {
+  questions: Question[];
+}
+
+interface TestMeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedText: string;
+  isGenerating: boolean;
+}
+
+export default function TestMeModal({ isOpen, onClose, selectedText, isGenerating }: TestMeModalProps) {
+  const [testData, setTestData] = useState<TestData | null>(null);
+  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
+  const [showResults, setShowResults] = useState(false);
+  const [results, setResults] = useState<any>(null);
+  const [isGrading, setIsGrading] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'generate' | 'take' | 'results'>('generate');
+
+  if (!isOpen) return null;
+
+  const handleGenerateTest = async () => {
+    try {
+      const response = await fetch('/api/generate-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText,
+          provider: 'openai'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate test');
+      }
+
+      const data = await response.json();
+      setTestData(data);
+      setCurrentStep('take');
+    } catch (error) {
+      console.error('Error generating test:', error);
+    }
+  };
+
+  const handleSubmitTest = async () => {
+    if (!testData) return;
+
+    setIsGrading(true);
+    try {
+      const response = await fetch('/api/grade-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questions: testData.questions,
+          userAnswers,
+          selectedText,
+          provider: 'openai'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to grade test');
+      }
+
+      const gradingResults = await response.json();
+      setResults(gradingResults);
+      setCurrentStep('results');
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error grading test:', error);
+    } finally {
+      setIsGrading(false);
+    }
+  };
+
+  const handleAnswerChange = (questionId: number, answer: string) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
+  const resetTest = () => {
+    setTestData(null);
+    setUserAnswers({});
+    setResults(null);
+    setShowResults(false);
+    setCurrentStep('generate');
+  };
+
+  const renderGenerateStep = () => (
+    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+      <h3 className="text-lg font-semibold">Generate Test</h3>
+      <p className="text-sm text-gray-600 text-center">
+        Create a 5-question test (3 multiple choice, 2 short answer) based on your selected text.
+      </p>
+      <Button 
+        onClick={handleGenerateTest} 
+        disabled={isGenerating}
+        className="px-6 py-2"
+      >
+        {isGenerating ? 'Generating Test...' : 'Generate Test'}
+      </Button>
+    </div>
+  );
+
+  const renderTestStep = () => {
+    if (!testData) return null;
+
+    const multipleChoiceQuestions = testData.questions.filter(q => q.type === 'multiple_choice');
+    const shortAnswerQuestions = testData.questions.filter(q => q.type === 'short_answer');
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Take Test</h3>
+          <Button onClick={resetTest} variant="outline" size="sm">
+            Generate New Test
+          </Button>
+        </div>
+
+        <ScrollArea className="h-96">
+          <div className="space-y-6 pr-4">
+            {/* Multiple Choice Questions */}
+            <div>
+              <h4 className="font-medium mb-4">Multiple Choice Questions</h4>
+              {multipleChoiceQuestions.map((question, index) => (
+                <Card key={question.id} className="mb-4">
+                  <CardContent className="pt-4">
+                    <p className="font-medium mb-3">
+                      {index + 1}. {question.question}
+                    </p>
+                    <RadioGroup
+                      value={userAnswers[question.id] || ''}
+                      onValueChange={(value) => handleAnswerChange(question.id, value)}
+                    >
+                      {question.options?.map((option, optionIndex) => (
+                        <div key={optionIndex} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option} id={`${question.id}-${optionIndex}`} />
+                          <Label htmlFor={`${question.id}-${optionIndex}`}>{option}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Separator />
+
+            {/* Short Answer Questions */}
+            <div>
+              <h4 className="font-medium mb-4">Short Answer Questions</h4>
+              {shortAnswerQuestions.map((question, index) => (
+                <Card key={question.id} className="mb-4">
+                  <CardContent className="pt-4">
+                    <p className="font-medium mb-3">
+                      {multipleChoiceQuestions.length + index + 1}. {question.question}
+                    </p>
+                    <Textarea
+                      placeholder="Enter your answer here..."
+                      value={userAnswers[question.id] || ''}
+                      onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                      className="min-h-20"
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </ScrollArea>
+
+        <div className="flex justify-end pt-4 border-t">
+          <Button 
+            onClick={handleSubmitTest} 
+            disabled={isGrading || Object.keys(userAnswers).length === 0}
+          >
+            {isGrading ? 'Grading...' : 'Submit Test'}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderResultsStep = () => {
+    if (!results || !testData) return null;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Test Results</h3>
+          <Button onClick={resetTest} variant="outline" size="sm">
+            Take New Test
+          </Button>
+        </div>
+
+        {/* Score Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Overall Score</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-center">
+              {results.score}/{results.totalQuestions} ({Math.round((results.score / results.totalQuestions) * 100)}%)
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detailed Feedback */}
+        <ScrollArea className="h-80">
+          <div className="space-y-4 pr-4">
+            {results.feedback?.map((item: any, index: number) => {
+              const question = testData.questions.find(q => q.id === item.questionId);
+              if (!question) return null;
+
+              return (
+                <Card key={item.questionId} className="mb-4">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <p className="font-medium">{index + 1}. {question.question}</p>
+                      
+                      <div className="bg-gray-50 p-3 rounded">
+                        <p className="text-sm font-medium">Your Answer:</p>
+                        <p className="text-sm">{item.userAnswer || 'No answer provided'}</p>
+                      </div>
+
+                      <div className="bg-green-50 p-3 rounded">
+                        <p className="text-sm font-medium">Correct Answer:</p>
+                        <p className="text-sm">{item.correctAnswer}</p>
+                      </div>
+
+                      <div className={`p-3 rounded ${item.isCorrect ? 'bg-green-100' : 'bg-red-100'}`}>
+                        <p className="text-sm font-medium">
+                          {item.isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                        </p>
+                        <p className="text-sm mt-1">{item.explanation}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-semibold">Test Me</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-6 overflow-hidden">
+          {currentStep === 'generate' && renderGenerateStep()}
+          {currentStep === 'take' && renderTestStep()}
+          {currentStep === 'results' && renderResultsStep()}
+        </div>
+      </div>
+    </div>
+  );
+}
