@@ -1078,14 +1078,6 @@ Speaker 1: [dialogue]
                 </SelectContent>
               </Select>
               <div className="flex flex-col space-y-2">
-                {/* Show notification at top when text is selected - won't block buttons */}
-                {selectedText && (
-                  <div className="text-xs text-green-700 bg-green-100 px-3 py-2 rounded border border-green-300 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    ✓ Text selected ({selectedText.length} chars) - Use special buttons below
-                  </div>
-                )}
-                
                 {/* Make buttons much more prominent when text is selected */}
                 <div className="flex space-x-2">
                   <Button
