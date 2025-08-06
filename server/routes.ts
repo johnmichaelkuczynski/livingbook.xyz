@@ -1043,7 +1043,7 @@ Please provide a helpful response based on the selected text. Keep your response
   app.post("/api/chat/:documentId/message", async (req, res) => {
     try {
       const documentId = parseInt(req.params.documentId);
-      const { message, provider = 'deepseek' } = req.body;
+      const { message, provider = 'deepseek', selectedText } = req.body;
       
       console.log(`🔍 PROVIDER DEBUG - Document Chat: Provider received: "${provider}"`);
       
@@ -1111,9 +1111,21 @@ Please provide a helpful response based on the selected text. Keep your response
           `\n\n[Note: Document is ${document.content.length} characters. Only first ${maxContentLength} characters shown. For specific sections, please ask the user to use the chunked document view or ask about specific topics.]`;
       }
       
+      // Prepare message with selected text context if provided
+      let contextualMessage = message;
+      if (selectedText && selectedText.trim()) {
+        contextualMessage = `The user has highlighted this specific passage from the document:
+
+"${selectedText}"
+
+User's question about this passage: ${message}
+
+Please answer specifically about the highlighted passage, referencing it directly in your response.`;
+      }
+
       // Generate AI response
       const aiResponse = await generateChatResponse(
-        message,
+        contextualMessage,
         documentContent,
         conversationHistory
       );
