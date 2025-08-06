@@ -363,7 +363,8 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-hidden">
-          {(currentStep === 'generate' || isGeneratingTest) && (
+          {currentStep === 'generate' && !isGeneratingTest && renderGenerateStep()}
+          {isGeneratingTest && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <p className="text-lg font-semibold">Generating Your Test</p>
