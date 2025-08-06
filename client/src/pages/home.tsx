@@ -773,8 +773,9 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleSuggestedReadings = async () => {
-    if (!selectedText.trim()) {
+  const handleSuggestedReadings = async (text?: string) => {
+    const textToAnalyze = text || selectedText;
+    if (!textToAnalyze.trim()) {
       toast({
         title: "No text selected",
         description: "Please select some text first.",
@@ -782,6 +783,10 @@ Speaker 1: [dialogue]
       });
       return;
     }
+
+    console.log('📚 SUGGESTED READINGS CLICKED - Text length:', textToAnalyze.length);
+    console.log('📚 HANDLE SUGGESTED READINGS - Called with text:', textToAnalyze.slice(0, 100) + '...');
+    console.log('📚 Starting Suggested Readings generation process...');
 
     // Prevent multiple simultaneous requests
     if (isProcessingSelection) {
@@ -793,6 +798,7 @@ Speaker 1: [dialogue]
     setIsProcessingSelection(true);
     setIsGeneratingSuggestedReadings(true);
     setShowSuggestedReadings(true); // Open modal immediately with loading state
+    console.log('📚 Modal state set - showSuggestedReadings:', true, 'isGeneratingSuggestedReadings:', true);
 
     try {
       const response = await fetch('/api/generate-suggested-readings', {
@@ -801,7 +807,7 @@ Speaker 1: [dialogue]
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selectedText: selectedText,
+          selectedText: textToAnalyze,
           provider: selectedProvider
         }),
       });
@@ -811,7 +817,9 @@ Speaker 1: [dialogue]
       }
 
       const data = await response.json();
+      console.log('Suggested readings received:', data.suggestedReadings);
       setSuggestedReadingsContent(data.suggestedReadings);
+      console.log('Suggested readings content loaded:', data.suggestedReadings.length, 'characters');
       
       toast({
         title: "Suggested Readings Generated",
@@ -925,7 +933,7 @@ Speaker 1: [dialogue]
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={() => {}}
                   onThesisDeepDive={() => {}}
-                  onSuggestedReadings={() => {}}
+                  onSuggestedReadings={handleSuggestedReadings}
                 >
                   <DocumentViewer 
                     content={currentDocument.content}
@@ -1145,6 +1153,15 @@ Speaker 1: [dialogue]
         onClose={() => setShowCognitiveMap(false)}
         content={cognitiveMapContent}
         isLoading={isGeneratingCognitiveMap}
+        selectedText={selectedText}
+      />
+
+      {/* Suggested Readings Modal */}
+      <SuggestedReadingsModal
+        isOpen={showSuggestedReadings}
+        onClose={() => setShowSuggestedReadings(false)}
+        content={suggestedReadingsContent}
+        isLoading={isGeneratingSuggestedReadings}
         selectedText={selectedText}
       />
 
