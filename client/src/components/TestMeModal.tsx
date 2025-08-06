@@ -56,8 +56,11 @@ export default function TestMeModal({
   const [numberOfQuestions, setNumberOfQuestions] = useState('5');
   const [customInstructions, setCustomInstructions] = useState('');
   const [isSubmittingTest, setIsSubmittingTest] = useState(false);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
 
   const generateTest = async () => {
+    setIsGeneratingTest(true);
+    
     const activeTypes = [];
     if (questionTypes.multipleChoice) activeTypes.push('multiple_choice');
     if (questionTypes.shortAnswer) activeTypes.push('short_answer');
@@ -90,6 +93,8 @@ export default function TestMeModal({
       setView('generated');
     } catch (error) {
       console.error('Test generation error:', error);
+    } finally {
+      setIsGeneratingTest(false);
     }
   };
 
@@ -249,7 +254,7 @@ export default function TestMeModal({
           <div className="w-1/2 bg-white flex flex-col max-h-full overflow-hidden">
             {view === 'config' && (
               <div className="flex-1 flex items-center justify-center">
-                {isGenerating ? (
+                {isGeneratingTest ? (
                   <div className="text-center p-8">
                     <div className="w-16 h-16 mx-auto mb-4 relative">
                       <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -273,7 +278,7 @@ export default function TestMeModal({
                     </p>
                     <Button 
                       onClick={generateTest} 
-                      disabled={isGenerating || !Object.values(questionTypes).some(Boolean)}
+                      disabled={isGeneratingTest || !Object.values(questionTypes).some(Boolean)}
                       className="w-full max-w-xs"
                     >
                       Generate Practice Test
@@ -356,7 +361,7 @@ export default function TestMeModal({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto">
+                <ScrollArea className="flex-1">
                   <div className="p-6 space-y-6">
                     {questions.map((question, index) => (
                       <div key={question.id} className="border-b pb-6 last:border-b-0">
@@ -408,7 +413,7 @@ export default function TestMeModal({
                       </div>
                     ))}
                   </div>
-                </div>
+                </ScrollArea>
 
                 <div className="p-6 border-t bg-gray-50 flex-shrink-0">
                   <div className="flex items-center justify-between">
