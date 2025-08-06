@@ -9,9 +9,10 @@ DocMath AI is a streamlined document processing web application focused on text 
 - **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
 - **Podcast Generation Added**: Implemented comprehensive podcast system with three modes (single person, two person dialogue, custom instructions)
 - **Azure Speech Integration**: Added full Azure Speech API integration for audio generation with different voices for dialogue mode
+- **Rewrite Function Added**: Created comprehensive rewrite system that works with selected text or document sections specified in instructions
 - **Visual Feedback**: Added toast notifications and input styling to indicate when text is selected
 - **Data Flow**: Fixed client-to-server communication to properly pass selected text context
-- **Smart Content Selection**: Podcast generation works with either selected text passages or full documents
+- **Smart Content Selection**: Both podcast and rewrite functions work with either selected text passages or full documents/specified sections
 
 ## User Preferences
 
@@ -45,13 +46,14 @@ Preferred communication style: Simple, everyday language.
 - **Contextual AI Chat**: AI analyzes only the selected text passage instead of the entire document when text is highlighted.
 - **Podcast Generation**: Three-mode system (single person, two person dialogue, custom instructions) with Azure Speech API integration.
 - **Audio Processing**: Generates SSML scripts for natural speech with different voices for dialogue participants.
-- **Smart Content Selection**: Works with both selected text passages and full documents for podcast generation.
+- **Content Rewriting**: Advanced rewrite function that allows custom instructions for selected text or document sections (e.g., "Chapter 2").
+- **Smart Content Selection**: Both podcast and rewrite functions work with either selected text passages or full documents/specified sections.
 - **Visual Feedback**: Toast notifications and input styling provide clear indication when text is selected.
 - **Multi-Provider AI**: Supports DeepSeek, OpenAI, Anthropic, and Perplexity for chat responses.
 - **Math Rendering**: KaTeX integration for proper mathematical notation display.
 - **Input Flexibility**: Supports both file uploads (PDF, DOCX, TXT) and direct text input.
 - **Clean Interface**: Streamlined UI with essential podcast functionality integrated.
-- **Fixed Input**: Bottom-positioned chat input with podcast button that stays accessible while browsing documents.
+- **Fixed Input**: Bottom-positioned chat input with podcast and rewrite buttons that stay accessible while browsing documents.
 
 ## External Dependencies
 
