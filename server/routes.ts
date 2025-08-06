@@ -501,6 +501,42 @@ Please rewrite the text according to the instructions. Return only the rewritten
     }
   });
 
+  // Generate summary + thesis for selected text
+  app.post("/api/summary-thesis", async (req, res) => {
+    try {
+      const { selectedText, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log('📋 GENERATING SUMMARY+THESIS - Provider:', provider, 'Text length:', selectedText.length);
+
+      const summaryThesisPrompt = `Analyze the following text and provide:
+
+1. ONE sentence that captures the main thesis or central argument
+2. ONE paragraph explanation that elaborates on this thesis
+
+Format your response exactly as follows:
+THESIS: [One clear sentence stating the main thesis]
+
+EXPLANATION: [One paragraph explaining and supporting the thesis]
+
+Here is the text to analyze:
+
+${selectedText}`;
+
+      const response = await generateAIResponse(summaryThesisPrompt, provider);
+      
+      console.log('✅ SUMMARY+THESIS GENERATED - Provider:', provider, 'Length:', response.length, 'chars');
+      
+      res.json({ summaryThesis: response });
+    } catch (error) {
+      console.error('❌ SUMMARY+THESIS ERROR:', error);
+      res.status(500).json({ error: "Failed to generate summary and thesis" });
+    }
+  });
+
   // Generate study guide for selected text
   app.post("/api/study-guide", async (req, res) => {
     try {
