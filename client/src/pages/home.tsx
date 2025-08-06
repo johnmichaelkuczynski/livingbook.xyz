@@ -26,7 +26,7 @@ import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
 import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
 import SuggestedReadingsModal from '@/components/SuggestedReadingsModal';
-import TestMeModal from '@/components/TestMeModal';
+
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
 
@@ -45,9 +45,7 @@ export default function Home() {
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
-  const [testContent, setTestContent] = useState('');
-  const [showTestModal, setShowTestModal] = useState(false);
-  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
   const [podcastDialogue, setPodcastDialogue] = useState('');
   const [showPodcastModal, setShowPodcastModal] = useState(false);
@@ -432,22 +430,7 @@ export default function Home() {
     }
   };
 
-  const handleTestMe = async (text?: string) => {
-    const textToUse = text || selectedText;
-    
-    if (!textToUse.trim()) {
-      toast({
-        title: "No text selected",
-        description: "Please select some text first.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    console.log('🧪 TEST ME - Opening modal with selected text:', textToUse.length, 'characters');
-    setSelectedText(textToUse);
-    setShowTestModal(true);
-  };
 
   const handlePodcast = async (type: 'standard' | 'modern', text?: string) => {
     const textToUse = text || selectedText;
@@ -883,7 +866,7 @@ Speaker 1: [dialogue]
                   }}
                   onRewrite={() => setShowRewriteModal(true)}
                   onStudyGuide={handleStudyGuide}
-                  onTestMe={handleTestMe}
+
                   onPodcast={() => setShowPodcastModal(true)}
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={() => {}}
@@ -1120,13 +1103,7 @@ Speaker 1: [dialogue]
         selectedText={selectedText}
       />
 
-      {/* Test Me Modal */}
-      <TestMeModal
-        isOpen={showTestModal}
-        onClose={() => setShowTestModal(false)}
-        selectedText={selectedText}
-        isGenerating={isGeneratingTest}
-      />
+
 
     </div>
   );
