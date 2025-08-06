@@ -885,6 +885,12 @@ Speaker 1: [dialogue]
                   onTextSelection={(text) => {
                     setSelectedText(text);
                     console.log('Text selected:', text.substring(0, 100) + '...');
+                    // Show visual feedback
+                    toast({
+                      title: "Text Selected",
+                      description: `"${text.substring(0, 80)}..."`,
+                      duration: 3000,
+                    });
                   }}
                 />
                 
@@ -1033,7 +1039,9 @@ Speaker 1: [dialogue]
                       ? "Ask me anything about your document..." 
                       : "Ask me any question..."
                 }
-                className="w-full h-20 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                className={`w-full h-20 resize-none text-lg border-2 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                  selectedText ? 'border-green-500 bg-green-50' : 'border-gray-300'
+                }`}
                 disabled={sendMessageMutation.isPending}
                 autoComplete="off"
                 spellCheck="true"

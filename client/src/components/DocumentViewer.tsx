@@ -14,23 +14,35 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
       
       console.log('🔍 DOCUMENT VIEWER - Selection detected:', selectedText.length > 0 ? `"${selectedText.substring(0, 100)}..."` : 'empty');
       
+      // Only pass selection if it's substantial text and came from the document viewer
       if (selectedText.length > 10 && onTextSelection) {
-        console.log('✅ DOCUMENT VIEWER - Calling onTextSelection with text');
-        onTextSelection(selectedText);
+        // Check if the selection is within the document viewer
+        const docViewer = document.querySelector('.document-viewer-content');
+        if (docViewer && selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          if (docViewer.contains(range.commonAncestorContainer)) {
+            console.log('✅ DOCUMENT VIEWER - Calling onTextSelection with text');
+            onTextSelection(selectedText);
+          }
+        }
       }
     };
 
-    document.addEventListener('mouseup', handleSelection);
-    document.addEventListener('keyup', handleSelection);
-    
-    return () => {
-      document.removeEventListener('mouseup', handleSelection);
-      document.removeEventListener('keyup', handleSelection);
-    };
+    // Only listen for selections within the document viewer
+    const docViewer = document.querySelector('.document-viewer-content');
+    if (docViewer) {
+      docViewer.addEventListener('mouseup', handleSelection);
+      docViewer.addEventListener('keyup', handleSelection);
+      
+      return () => {
+        docViewer.removeEventListener('mouseup', handleSelection);
+        docViewer.removeEventListener('keyup', handleSelection);
+      };
+    }
   }, [onTextSelection]);
 
   return (
-    <div className="h-full overflow-auto p-6">
+    <div className="h-full overflow-auto p-6 document-viewer-content">
       <KaTeXRenderer 
         content={content} 
         className="text-gray-700 leading-relaxed text-lg select-text"
