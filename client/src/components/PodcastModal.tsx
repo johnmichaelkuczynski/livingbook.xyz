@@ -96,10 +96,30 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
 
   const handleDownload = () => {
     if (audioUrl) {
-      const link = document.createElement('a');
-      link.href = audioUrl;
-      link.download = `podcast-${Date.now()}.mp3`;
-      link.click();
+      try {
+        // Create download URL with query parameter
+        const downloadUrl = `${audioUrl}?download=true`;
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `podcast-${Date.now()}.mp3`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download started",
+          description: "Your podcast is being downloaded.",
+        });
+      } catch (error) {
+        console.error('Download error:', error);
+        toast({
+          title: "Download failed",
+          description: "Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
