@@ -1077,27 +1077,29 @@ Speaker 1: [dialogue]
                   <SelectItem value="perplexity">Perplexity</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => setShowPodcastModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 px-2"
-                  disabled={!currentDocument}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Podcast
-                </Button>
-                <Button
-                  onClick={() => setShowRewriteModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 px-2"
-                  disabled={!currentDocument}
-                >
-                  <FileEdit className="w-4 h-4" />
-                  Rewrite
-                </Button>
+              <div className="flex flex-col space-y-2">
+                <div className="flex space-x-1">
+                  <Button
+                    onClick={() => setShowPodcastModal(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 text-xs"
+                    disabled={!currentDocument}
+                  >
+                    <Volume2 className="w-3 h-3" />
+                    Podcast
+                  </Button>
+                  <Button
+                    onClick={() => setShowRewriteModal(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 text-xs"
+                    disabled={!currentDocument}
+                  >
+                    <FileEdit className="w-3 h-3" />
+                    Rewrite
+                  </Button>
+                </div>
                 <button 
                   onClick={handleSendMessage}
                   disabled={!message.trim() || sendMessageMutation.isPending}
