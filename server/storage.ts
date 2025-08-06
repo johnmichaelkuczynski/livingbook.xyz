@@ -58,6 +58,51 @@ export class MemStorage implements IStorage {
     this.currentMessageId = 1;
     this.currentComparisonSessionId = 1;
     this.currentComparisonMessageId = 1;
+    
+    // Add a test document for functionality verification
+    this.addTestDocument();
+  }
+  
+  private addTestDocument() {
+    const testDoc: Document = {
+      id: 1,
+      filename: 'test-doc',
+      originalName: 'The Prince - Test Document.txt',
+      fileType: 'text/plain',
+      fileSize: 1500,
+      content: `The Prince by Niccolò Machiavelli
+
+Chapter I: How Many Kinds of Principalities There Are
+
+All states, all powers, that have held and hold rule over men have been and are either republics or principalities. Principalities are either hereditary, in which the family has been long established; or they are new.
+
+The new are either entirely new, as was Milan to Francesco Sforza, or they are, as it were, members annexed to the hereditary state of the prince who has acquired them, as was the kingdom of Naples to that of the King of Spain.
+
+Such dominions thus acquired are either accustomed to live under a prince, or to live in freedom; and are acquired either by the arms of the prince himself, or of others, or else by fortune or by ability.
+
+Chapter II: Concerning Hereditary Principalities
+
+I will leave out all discussion on republics, and will address myself only to principalities. I say at once there are fewer difficulties in holding hereditary states, and those long accustomed to the family of their prince, than new ones; for it is sufficient only not to transgress the customs of his ancestors, and to deal prudently with circumstances as they arise.
+
+For the hereditary prince has less cause and less necessity to offend; hence it happens that he will be more loved; and unless extraordinary vices cause him to be hated, it is reasonable to expect that his subjects will be naturally well disposed towards him.`,
+      isChunked: false,
+      chunkCount: 1,
+      totalWords: 200,
+      uploadedAt: new Date()
+    };
+    
+    this.documents.set(1, testDoc);
+    
+    // Create chat session for this document
+    const chatSession: ChatSession = {
+      id: 1,
+      documentId: 1,
+      createdAt: new Date()
+    };
+    
+    this.chatSessions.set(1, chatSession);
+    this.currentDocumentId = 2;
+    this.currentSessionId = 2;
   }
 
   async getUser(id: number): Promise<User | undefined> {
