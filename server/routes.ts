@@ -1905,7 +1905,12 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
   // Generate test endpoint
   app.post("/api/generate-test", async (req, res) => {
     try {
-      const { selectedText, totalQuestions = 5, multipleChoiceCount = 3, shortAnswerCount = 2, provider = 'deepseek' } = req.body;
+      const { selectedText, provider = 'deepseek' } = req.body;
+      
+      // Always standardize to 5 questions: 3 multiple choice, 2 short answer
+      const totalQuestions = 5;
+      const multipleChoiceCount = 3;
+      const shortAnswerCount = 2;
       
       if (!selectedText || selectedText.trim().length === 0) {
         return res.status(400).json({ error: "Selected text is required" });

@@ -66,9 +66,7 @@ export default function TestMeModal({
     if (questionTypes.shortAnswer) activeTypes.push('short_answer');
     if (questionTypes.longAnswer) activeTypes.push('long_answer');
 
-    const mcCount = questionTypes.multipleChoice ? Math.ceil(parseInt(numberOfQuestions) * 0.7) : 0;
-    const saCount = parseInt(numberOfQuestions) - mcCount;
-
+    // Always generate 5 questions: 3 multiple choice, 2 short answer
     try {
       const response = await fetch('/api/generate-test', {
         method: 'POST',
@@ -77,9 +75,6 @@ export default function TestMeModal({
         },
         body: JSON.stringify({
           selectedText,
-          totalQuestions: parseInt(numberOfQuestions),
-          multipleChoiceCount: mcCount,
-          shortAnswerCount: saCount,
           customInstructions
         }),
       });
