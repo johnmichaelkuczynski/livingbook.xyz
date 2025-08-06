@@ -2003,9 +2003,53 @@ Follow the custom instructions provided while creating an engaging conversation 
       
       console.log(`🎙️ PODCAST AUDIO GENERATION - Mode: ${mode}, Script length: ${script.length} chars`);
       
-      // Try to use real Azure Speech if configured
+      // Use OpenAI TTS with Alloy voice as primary option
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          console.log('🎤 Using OpenAI TTS with Alloy voice...');
+          
+          // Clean script for better TTS
+          const cleanScript = script
+            .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markdown
+            .replace(/\*([^*]+)\*/g, '$1')     // Remove italic markdown
+            .replace(/#{1,6}\s*/g, '')         // Remove headers
+            .replace(/\[([^\]]*)\]/g, '')      // Remove brackets
+            .replace(/\([^)]*\)/g, '')         // Remove parentheses
+            .replace(/\s+/g, ' ')              // Normalize whitespace
+            .trim();
+          
+          // Create OpenAI client directly for TTS
+          const OpenAI = (await import('openai')).default;
+          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          
+          const response = await openai.audio.speech.create({
+            model: "tts-1",
+            voice: "alloy", // High-quality Alloy voice as requested
+            input: cleanScript,
+            response_format: "mp3"
+          });
+          
+          const audioBuffer = Buffer.from(await response.arrayBuffer());
+          
+          // Create unique audio ID and cache the audio
+          const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          audioCache.set(audioId, audioBuffer);
+          
+          console.log(`✅ OPENAI ALLOY PODCAST GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
+          
+          // Return URL that will serve this specific audio
+          res.json({ audioUrl: `/api/audio/${audioId}` });
+          return;
+          
+        } catch (openaiError) {
+          console.error('OpenAI TTS error, trying fallback:', openaiError);
+        }
+      }
+      
+      // Fallback to Azure Speech if OpenAI fails
       if (process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION) {
         try {
+          console.log('🎤 Falling back to Azure Speech...');
           const azureSpeechService = await import('./services/azureSpeech');
           let audioBuffer: Buffer;
           
@@ -2024,7 +2068,7 @@ Follow the custom instructions provided while creating an engaging conversation 
           const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           audioCache.set(audioId, audioBuffer);
           
-          console.log(`✅ PODCAST AUDIO GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
+          console.log(`✅ AZURE PODCAST GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
           
           // Return URL that will serve this specific audio
           res.json({ audioUrl: `/api/audio/${audioId}` });
