@@ -142,12 +142,18 @@ Speaker 1: [dialogue]
 
       console.log(`🎙️ Starting podcast generation: ${podcastType}`);
 
-      // Show detailed loading state immediately
+      // Show detailed loading state immediately with forced display
+      console.log('🎙️ SETTING PODCAST PROGRESS VISIBLE');
       setPodcastProgress({
         isVisible: true,
         message: `🎙️ Generating ${podcastType}...\n⏳ Creating dialogue script...\n🎵 Converting to audio...\n📥 This may take 30-60 seconds`,
         type: 'loading'
       });
+      
+      // Force a re-render to ensure progress is visible
+      setTimeout(() => {
+        console.log('🎙️ PROGRESS STATE CHECK:', podcastProgress.isVisible);
+      }, 100);
 
       const response = await fetch('/api/generate-podcast', {
         method: 'POST',
