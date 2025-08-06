@@ -2167,11 +2167,23 @@ Follow the custom instructions provided while creating an engaging conversation 
       return res.status(404).json({ error: "Audio not found" });
     }
     
+    // Check if this is a download request
+    const isDownload = req.query.download === 'true';
+    
     res.set({
       'Content-Type': 'audio/mpeg',
       'Content-Length': audioBuffer.length.toString(),
-      'Cache-Control': 'public, max-age=3600'
+      'Cache-Control': 'public, max-age=3600',
+      'Accept-Ranges': 'bytes'
     });
+    
+    // Add download headers if requested
+    if (isDownload) {
+      res.set({
+        'Content-Disposition': `attachment; filename="podcast-${audioId}.mp3"`,
+        'Content-Transfer-Encoding': 'binary'
+      });
+    }
     
     res.send(audioBuffer);
   });
