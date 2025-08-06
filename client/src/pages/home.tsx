@@ -263,7 +263,6 @@ export default function Home() {
           description: data.message,
         });
       }
-      setMessage('');
       if (textareaRef.current) {
         textareaRef.current.focus();
       }
@@ -281,7 +280,8 @@ export default function Home() {
     if (!message.trim()) return;
     console.log('🔍 SENDING MESSAGE WITH SELECTED TEXT:', selectedText ? `"${selectedText.substring(0, 100)}..."` : 'null');
     sendMessageMutation.mutate(message.trim());
-    // Clear selected text after sending
+    // Clear message and selected text after sending
+    setMessage('');
     setSelectedText('');
   };
 
@@ -1026,7 +1026,13 @@ Speaker 1: [dialogue]
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={currentDocument ? "Ask me anything about your document..." : "Ask me any question..."}
+                placeholder={
+                  selectedText 
+                    ? "Ask about the selected text..." 
+                    : currentDocument 
+                      ? "Ask me anything about your document..." 
+                      : "Ask me any question..."
+                }
                 className="w-full h-20 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 disabled={sendMessageMutation.isPending}
                 autoComplete="off"
