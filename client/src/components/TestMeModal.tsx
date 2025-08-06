@@ -35,10 +35,19 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
   const [results, setResults] = useState<any>(null);
   const [isGrading, setIsGrading] = useState(false);
   const [currentStep, setCurrentStep] = useState<'generate' | 'take' | 'results'>('generate');
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+
+  // Auto-generate test when modal opens
+  React.useEffect(() => {
+    if (isOpen && selectedText && !testData && !isGeneratingTest) {
+      handleGenerateTest();
+    }
+  }, [isOpen, selectedText]);
 
   if (!isOpen) return null;
 
   const handleGenerateTest = async () => {
+    setIsGeneratingTest(true);
     try {
       const response = await fetch('/api/generate-test', {
         method: 'POST',
@@ -60,6 +69,8 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
       setCurrentStep('take');
     } catch (error) {
       console.error('Error generating test:', error);
+    } finally {
+      setIsGeneratingTest(false);
     }
   };
 
@@ -109,6 +120,9 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
     setResults(null);
     setShowResults(false);
     setCurrentStep('generate');
+    setIsGeneratingTest(false);
+    // Auto-generate new test
+    handleGenerateTest();
   };
 
   const renderGenerateStep = () => (
@@ -294,8 +308,16 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-hidden">
-          {currentStep === 'generate' && renderGenerateStep()}
-          {currentStep === 'take' && renderTestStep()}
+          {(currentStep === 'generate' || isGeneratingTest) && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-lg font-semibold">Generating Your Test</p>
+              <p className="text-sm text-gray-600 text-center">
+                Creating 5 questions (3 multiple choice, 2 short answer) based on your selected text...
+              </p>
+            </div>
+          )}
+          {currentStep === 'take' && !isGeneratingTest && renderTestStep()}
           {currentStep === 'results' && renderResultsStep()}
         </div>
       </div>
