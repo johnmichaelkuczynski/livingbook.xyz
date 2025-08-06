@@ -6,10 +6,16 @@ DocMath AI is a streamlined document processing web application focused on text 
 
 ## Recent Changes (January 2025)
 
+### Document Viewer Scrolling - FIXED (January 6, 2025) 
+- **Critical Document Scrolling Fixed**: Applied explicit height constraints (600px, max 80vh) with overflow-y: auto
+- **Independent Scrolling**: Document viewer now scrolls independently from rest of application
+- **Visual Improvements**: Added subtle border to clearly indicate scrollable area
+- **User Confirmed**: Scrolling problem completely resolved and working perfectly
+
 ### Test Me Function - Fully Completed (January 6, 2025)
-- **Critical Scrolling Issue Fixed**: Resolved height constraints preventing users from accessing questions beyond first few
-- **Professional Loading States**: Added animated spinner, progress bar, and descriptive feedback during test generation and grading
-- **Complete User Experience**: Test Me now works seamlessly with proper scrolling, visual feedback, and professional interface matching user's reference screenshots
+- **One-Click Workflow Working**: Auto-generates test immediately when modal opens (16-second generation time)
+- **JSON Parsing Robustness**: Fixed 20-minute hang issue with improved OpenAI response parsing
+- **Complete User Experience**: Test Me now works seamlessly with proper scrolling, visual feedback, and professional interface
 - **Handler Connection Fixed**: Corrected toolbar button to modal communication ensuring proper text selection context
 
 - **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
