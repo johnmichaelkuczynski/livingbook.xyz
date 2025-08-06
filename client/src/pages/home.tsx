@@ -249,6 +249,7 @@ export default function Home() {
       const response = await apiRequest('POST', endpoint, {
         message: messageContent,
         provider: selectedProvider,
+        selectedText: selectedText || null,
       });
       return response.json();
     },
@@ -279,6 +280,8 @@ export default function Home() {
   const handleSendMessage = () => {
     if (!message.trim()) return;
     sendMessageMutation.mutate(message.trim());
+    // Clear selected text after sending
+    setSelectedText('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -877,7 +880,11 @@ Speaker 1: [dialogue]
             {currentDocument ? (
               <div>
                 <DocumentViewer 
-                  content={currentDocument.content} 
+                  content={currentDocument.content}
+                  onTextSelection={(text) => {
+                    setSelectedText(text);
+                    console.log('Text selected:', text.substring(0, 100) + '...');
+                  }}
                 />
                 
                 {/* All modals removed */}
@@ -1026,6 +1033,12 @@ Speaker 1: [dialogue]
               />
             </div>
             <div className="flex flex-col space-y-2">
+              {selectedText && (
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <span className="text-blue-700 font-medium">Selected text: </span>
+                  <span className="text-blue-600">"{selectedText.substring(0, 100)}{selectedText.length > 100 ? '...' : ''}"</span>
+                </div>
+              )}
               <Select value={selectedProvider} onValueChange={setSelectedProvider}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
