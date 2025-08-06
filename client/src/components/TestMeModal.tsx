@@ -249,19 +249,37 @@ export default function TestMeModal({
           <div className="w-1/2 bg-white flex flex-col max-h-full overflow-hidden">
             {view === 'config' && (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-6">
-                    Generate a practice test to see it here
-                  </p>
-                  <Button 
-                    onClick={generateTest} 
-                    disabled={isGenerating || !Object.values(questionTypes).some(Boolean)}
-                    className="w-full max-w-xs"
-                  >
-                    {isGenerating ? 'Generating Test...' : 'Generate Practice Test'}
-                  </Button>
-                </div>
+                {isGenerating ? (
+                  <div className="text-center p-8">
+                    <div className="w-16 h-16 mx-auto mb-4 relative">
+                      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Your Test</h3>
+                    <p className="text-gray-600 mb-4">
+                      AI is creating {numberOfQuestions} {Object.values(questionTypes).filter(Boolean).length > 1 ? 'mixed-type' : 
+                        questionTypes.multipleChoice ? 'multiple choice' :
+                        questionTypes.shortAnswer ? 'short answer' : 'long answer'} questions...
+                    </p>
+                    <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2 mb-4">
+                      <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                    </div>
+                    <p className="text-sm text-gray-500">This may take 10-30 seconds</p>
+                  </div>
+                ) : (
+                  <div className="text-center p-8">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-6">
+                      Generate a practice test to see it here
+                    </p>
+                    <Button 
+                      onClick={generateTest} 
+                      disabled={isGenerating || !Object.values(questionTypes).some(Boolean)}
+                      className="w-full max-w-xs"
+                    >
+                      Generate Practice Test
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -400,11 +418,19 @@ export default function TestMeModal({
                     <Button 
                       onClick={submitTest}
                       disabled={isSubmittingTest || Object.keys(userAnswers).length < questions.length}
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
                     >
-                      {isSubmittingTest ? 'Submitting...' : 'Submit & Grade Test'}
+                      {isSubmittingTest && (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      )}
+                      {isSubmittingTest ? 'Grading Test...' : 'Submit & Grade Test'}
                     </Button>
                   </div>
+                  {isSubmittingTest && (
+                    <div className="mt-3 text-center">
+                      <p className="text-sm text-gray-600">AI is reviewing your answers...</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
