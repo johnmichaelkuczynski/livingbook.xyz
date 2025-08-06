@@ -12,9 +12,9 @@ import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
-import RewritePanel from '@/components/RewritePanel';
+// Removed RewritePanel
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
-import SimpleTextSelection from '@/components/SimpleTextSelection';
+// Removed all text selection - just basic document viewing
 import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
@@ -876,73 +876,11 @@ Speaker 1: [dialogue]
           <div className="flex-1 relative">
             {currentDocument ? (
               <div>
-                <SimpleTextSelection
-                  onDiscuss={(text) => {
-                    setSelectedText(text);
-                    // Add to chat
-                  }}
-                  onRewrite={(text) => {
-                    setSelectedText(text);
-                    setIsRewritePanelOpen(true);
-                  }}
-                >
-                  <DocumentViewer 
-                    content={currentDocument.content} 
-                  />
-                </SimpleTextSelection>
+                <DocumentViewer 
+                  content={currentDocument.content} 
+                />
                 
-                {/* Study Guide Modal */}
-                <StudyGuideModal
-                  isOpen={showStudyGuideModal}
-                  onClose={() => setShowStudyGuideModal(false)}
-                  content={studyGuideContent}
-                  isLoading={isGeneratingStudyGuide}
-                />
-
-                {/* Test Modal */}
-                <TestModal
-                  isOpen={showTestModal}
-                  onClose={() => setShowTestModal(false)}
-                  content={testContent}
-                  isLoading={isGeneratingTest}
-                />
-
-                {/* Cognitive Map Modal */}
-                <CognitiveMapModal
-                  isOpen={showCognitiveMap}
-                  onClose={() => setShowCognitiveMap(false)}
-                  content={cognitiveMapContent}
-                  isLoading={isGeneratingCognitiveMap}
-                  selectedText={selectedText}
-                />
-
-                {/* Summary+Thesis Modal */}
-                <SummaryThesisModal
-                  isOpen={showSummaryThesis}
-                  onClose={() => setShowSummaryThesis(false)}
-                  content={summaryThesisContent}
-                  isLoading={isGeneratingSummaryThesis}
-                  selectedText={selectedText}
-                />
-
-                {/* Thesis Deep-Dive Modal */}
-                <ThesisDeepDiveModal
-                  isOpen={showThesisDeepDive}
-                  onClose={() => setShowThesisDeepDive(false)}
-                  content={thesisDeepDiveContent}
-                  isLoading={isGeneratingThesisDeepDive}
-                  selectedText={selectedText}
-                  onRegenerate={(comparisonTarget) => handleThesisDeepDive(comparisonTarget)}
-                />
-
-                {/* Suggested Readings Modal */}
-                <SuggestedReadingsModal
-                  isOpen={showSuggestedReadings}
-                  onClose={() => setShowSuggestedReadings(false)}
-                  content={suggestedReadingsContent}
-                  isLoading={isGeneratingSuggestedReadings}
-                  selectedText={selectedText}
-                />
+                {/* All modals removed */}
               </div>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
@@ -1113,74 +1051,7 @@ Speaker 1: [dialogue]
         </div>
       </div>
 
-      {/* Rewrite Panel */}
-      <RewritePanel
-        document={currentDocument}
-        isOpen={isRewritePanelOpen}
-        onClose={handleCloseRewritePanel}
-        onApplyChunkToDocument={(chunkIndex: number, newContent: string) => {
-          if (documentChunks && currentDocument) {
-            // Update the specific chunk in document chunks
-            const updatedChunks = [...documentChunks.chunks];
-            if (updatedChunks[chunkIndex]) {
-              updatedChunks[chunkIndex] = {
-                ...updatedChunks[chunkIndex],
-                content: newContent,
-                isModified: true
-              };
-              
-              setDocumentChunks({
-                ...documentChunks,
-                chunks: updatedChunks
-              });
 
-              // Also update the main document content
-              const reconstructedContent = updatedChunks.map(chunk => chunk.content).join('\n\n');
-              setCurrentDocument({
-                ...currentDocument,
-                content: reconstructedContent
-              });
-
-              toast({
-                title: "Document Updated",
-                description: `Chunk ${chunkIndex + 1} has been applied to the main document.`,
-              });
-            }
-          }
-        }}
-      />
-
-      {/* Text Selection Popup - REMOVED per user request */}
-      
-      {/* Loading Indicator */}
-      <LoadingIndicator
-        message="Generating study guide"
-        isVisible={isGeneratingStudyGuide}
-      />
-
-
-
-
-
-
-
-      {/* Study Guide Modal */}
-      {showStudyGuideModal && (
-        <StudyGuideModal
-          isOpen={showStudyGuideModal}
-          onClose={() => setShowStudyGuideModal(false)}
-          content={studyGuideContent}
-        />
-      )}
-
-      {/* Test Modal */}
-      {showTestModal && (
-        <TestModal
-          isOpen={showTestModal}
-          onClose={() => setShowTestModal(false)}
-          content={testContent}
-        />
-      )}
 
 
 
