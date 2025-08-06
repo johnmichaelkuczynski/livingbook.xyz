@@ -882,8 +882,10 @@ Speaker 1: [dialogue]
                     handleStudyGuide();
                   }}
                   onRewrite={(text) => {
+                    console.log('🔄 REWRITE HANDLER - Received text:', text.substring(0, 100) + '...');
                     setSelectedText(text);
                     setIsRewritePanelOpen(true);
+                    console.log('🔄 REWRITE PANEL - Opening panel, state set to:', true);
                   }}
                   onStudyGuide={(text) => {
                     console.log('🎯 STUDY GUIDE HANDLER - Received text:', text.substring(0, 100) + '...');
