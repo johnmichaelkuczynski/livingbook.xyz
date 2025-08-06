@@ -1,464 +1,298 @@
-import React, { useState, useRef } from 'react';
-import { X, Copy, Play, Pause, Download, Volume2 } from 'lucide-react';
-
-interface VoiceOption {
-  name: string;
-  displayName: string;
-}
-
-const VOICE_OPTIONS: VoiceOption[] = [
-  { name: 'en-US-JennyNeural', displayName: 'Jenny (Female, Clear)' },
-  { name: 'en-US-DavisNeural', displayName: 'Davis (Male, Professional)' },
-  { name: 'en-US-AriaNeural', displayName: 'Aria (Female, Natural)' },
-  { name: 'en-US-GuyNeural', displayName: 'Guy (Male, Casual)' },
-  { name: 'en-US-AmberNeural', displayName: 'Amber (Female, Warm)' }
-];
+import { useState, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Play, Pause, Download, Volume2, Users, User, Settings, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PodcastModalProps {
   isOpen: boolean;
   onClose: () => void;
-  dialogue: string;
-  type: 'standard' | 'modern';
-  selectedText: string;
+  document: any;
+  selectedText?: string;
 }
 
-export default function PodcastModal({
-  isOpen,
-  onClose,
-  dialogue,
-  type,
-  selectedText
-}: PodcastModalProps) {
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+type PodcastMode = 'single' | 'dialogue' | 'custom';
+
+export default function PodcastModal({ isOpen, onClose, document, selectedText }: PodcastModalProps) {
+  const [mode, setMode] = useState<PodcastMode>('single');
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [podcastScript, setPodcastScript] = useState('');
+  const [audioUrl, setAudioUrl] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speaker1Voice, setSpeaker1Voice] = useState('en-US-DavisNeural');
-  const [speaker2Voice, setSpeaker2Voice] = useState('en-US-JennyNeural');
+  const [currentStep, setCurrentStep] = useState<'script' | 'audio' | 'complete'>('script');
+  
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { toast } = useToast();
 
-  if (!isOpen) return null;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(dialogue);
-    // Could add a toast notification here
-  };
-
-  const handleGenerateAudio = async () => {
-    setIsGeneratingAudio(true);
-    try {
-      const response = await fetch('/api/podcast-audio', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dialogue,
-          voiceOptions: {
-            speaker1: speaker1Voice,
-            speaker2: speaker2Voice
-          }
-        }),
+  const handleGeneratePodcast = async () => {
+    if (mode === 'custom' && !customInstructions.trim()) {
+      toast({
+        title: "Custom instructions required",
+        description: "Please provide custom instructions for the podcast.",
+        variant: "destructive",
       });
+      return;
+    }
 
-      if (!response.ok) {
-        throw new Error('Failed to generate audio');
-      }
-
-      const audioBlob = await response.blob();
-      const url = URL.createObjectURL(audioBlob);
-      setAudioUrl(url);
-
+    setIsGenerating(true);
+    setCurrentStep('script');
+    
+    try {
+      // Step 1: Generate podcast script
+      const scriptResponse = await apiRequest('POST', '/api/generate-podcast-script', {
+        documentId: document.id,
+        selectedText: selectedText || null,
+        mode,
+        customInstructions: mode === 'custom' ? customInstructions : null,
+      });
+      
+      const scriptData = await scriptResponse.json();
+      setPodcastScript(scriptData.script);
+      setCurrentStep('audio');
+      
+      // Step 2: Generate audio
+      const audioResponse = await apiRequest('POST', '/api/generate-podcast-audio', {
+        script: scriptData.script,
+        mode,
+      });
+      
+      const audioData = await audioResponse.json();
+      setAudioUrl(audioData.audioUrl);
+      setCurrentStep('complete');
+      
+      toast({
+        title: "Podcast generated successfully",
+        description: "Your podcast is ready to play!",
+      });
+      
     } catch (error) {
-      console.error('Error generating audio:', error);
-      // Could add toast notification for error
+      console.error('Podcast generation error:', error);
+      toast({
+        title: "Failed to generate podcast",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
     } finally {
-      setIsGeneratingAudio(false);
+      setIsGenerating(false);
     }
   };
 
   const handlePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
     }
+    setIsPlaying(!isPlaying);
   };
 
-  const handleAudioEnded = () => {
-    setIsPlaying(false);
-  };
-
-  const handleDownloadAudio = () => {
+  const handleDownload = () => {
     if (audioUrl) {
-      const a = document.createElement('a');
-      a.href = audioUrl;
-      a.download = `podcast-${type}-${Date.now()}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = `podcast-${Date.now()}.mp3`;
+      link.click();
     }
   };
 
-  const formatDialogue = (text: string) => {
-    // Split by speaker lines and format
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines.map((line, index) => {
-      if (line.startsWith('Speaker 1:') || line.startsWith('Host:')) {
-        return (
-          <div key={index} style={{ marginBottom: '16px' }}>
-            <div style={{ 
-              fontWeight: 'bold', 
-              color: '#1d4ed8', 
-              marginBottom: '4px' 
-            }}>
-              {line.startsWith('Host:') ? 'Host:' : 'Speaker 1:'}
-            </div>
-            <div style={{ 
-              color: '#374151', 
-              lineHeight: '1.6',
-              paddingLeft: '16px'
-            }}>
-              {line.replace(/^(Speaker 1:|Host:)\s*/, '').trim()}
-            </div>
-          </div>
-        );
-      } else if (line.startsWith('Speaker 2:') || line.startsWith('Guest:')) {
-        return (
-          <div key={index} style={{ marginBottom: '16px' }}>
-            <div style={{ 
-              fontWeight: 'bold', 
-              color: '#dc2626', 
-              marginBottom: '4px' 
-            }}>
-              {line.startsWith('Guest:') ? 'Guest:' : 'Speaker 2:'}
-            </div>
-            <div style={{ 
-              color: '#374151', 
-              lineHeight: '1.6',
-              paddingLeft: '16px'
-            }}>
-              {line.replace(/^(Speaker 2:|Guest:)\s*/, '').trim()}
-            </div>
-          </div>
-        );
-      } else if (line.startsWith('**') || line.startsWith('#')) {
-        // Handle titles and headers
-        return (
-          <div key={index} style={{ 
-            fontWeight: 'bold',
-            color: '#111827',
-            marginBottom: '12px',
-            fontSize: '18px'
-          }}>
-            {line.replace(/\*\*/g, '').replace(/#{1,6}\s?/, '')}
-          </div>
-        );
-      } else if (line.trim()) {
-        // Handle non-speaker lines
-        return (
-          <div key={index} style={{ 
-            color: '#6b7280', 
-            marginBottom: '8px',
-            fontStyle: 'italic'
-          }}>
-            {line}
-          </div>
-        );
-      }
-      return null;
-    });
+  const resetModal = () => {
+    setMode('single');
+    setCustomInstructions('');
+    setPodcastScript('');
+    setAudioUrl('');
+    setIsPlaying(false);
+    setCurrentStep('script');
+  };
+
+  const handleClose = () => {
+    resetModal();
+    onClose();
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10000,
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        width: '100%',
-        maxWidth: '800px',
-        maxHeight: '90vh',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid #e5e7eb',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: '#1f2937',
-              margin: '0 0 4px 0'
-            }}>
-              Podcast Dialogue
-            </h2>
-            <p style={{
-              fontSize: '14px',
-              color: '#6b7280',
-              margin: 0
-            }}>
-              {type === 'standard' ? 'Standard Summary Dialogue' : 'Modern Reconstruction (5 min)'}
-            </p>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={handleCopy}
-              style={{
-                backgroundColor: '#059669',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Copy size={16} />
-              Copy
-            </button>
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <X size={20} color="#6b7280" />
-            </button>
-          </div>
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Volume2 className="w-5 h-5" />
+            Generate Podcast
+          </DialogTitle>
+        </DialogHeader>
 
-        {/* Voice Selection and Audio Controls */}
-        <div style={{
-          padding: '20px 24px',
-          backgroundColor: '#f8fafc',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
-          {/* Voice Selection */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
-            marginBottom: '16px'
-          }}>
-            <div>
-              <label style={{ 
-                display: 'block', 
-                fontWeight: '600', 
-                marginBottom: '6px', 
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                Speaker 1 Voice
-              </label>
-              <select
-                value={speaker1Voice}
-                onChange={(e) => setSpeaker1Voice(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  backgroundColor: 'white',
-                  fontSize: '14px'
-                }}
+        <div className="space-y-6">
+          {/* Source Content Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Source Content</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                {selectedText 
+                  ? `Selected text: "${selectedText.substring(0, 100)}..."` 
+                  : `Full document: ${document?.originalName || 'Untitled'}`
+                }
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Podcast Mode Selection */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Podcast Mode</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card 
+                className={`cursor-pointer transition-all ${mode === 'single' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('single')}
               >
-                {VOICE_OPTIONS.map(voice => (
-                  <option key={voice.name} value={voice.name}>
-                    {voice.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={{ 
-                display: 'block', 
-                fontWeight: '600', 
-                marginBottom: '6px', 
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                Speaker 2 Voice
-              </label>
-              <select
-                value={speaker2Voice}
-                onChange={(e) => setSpeaker2Voice(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  backgroundColor: 'white',
-                  fontSize: '14px'
-                }}
+                <CardContent className="p-4 text-center">
+                  <User className="w-8 h-8 mx-auto mb-2 text-primary" />
+                  <h3 className="font-medium">Single Person</h3>
+                  <p className="text-sm text-gray-600 mt-1">One narrator explaining the content</p>
+                </CardContent>
+              </Card>
+              
+              <Card 
+                className={`cursor-pointer transition-all ${mode === 'dialogue' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('dialogue')}
               >
-                {VOICE_OPTIONS.map(voice => (
-                  <option key={voice.name} value={voice.name}>
-                    {voice.displayName}
-                  </option>
-                ))}
-              </select>
+                <CardContent className="p-4 text-center">
+                  <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
+                  <h3 className="font-medium">Two Person Dialogue</h3>
+                  <p className="text-sm text-gray-600 mt-1">Conversation between two speakers</p>
+                </CardContent>
+              </Card>
+              
+              <Card 
+                className={`cursor-pointer transition-all ${mode === 'custom' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('custom')}
+              >
+                <CardContent className="p-4 text-center">
+                  <Settings className="w-8 h-8 mx-auto mb-2 text-primary" />
+                  <h3 className="font-medium">Custom</h3>
+                  <p className="text-sm text-gray-600 mt-1">Your own instructions</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
-          {/* Audio Controls */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={handleGenerateAudio}
-              disabled={isGeneratingAudio}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 16px',
-                backgroundColor: isGeneratingAudio ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: isGeneratingAudio ? 'not-allowed' : 'pointer',
-                fontWeight: '500',
-                fontSize: '14px'
-              }}
-            >
-              <Volume2 size={16} />
-              {isGeneratingAudio ? 'Generating Audio...' : 'Generate Audio'}
-            </button>
-
-            {audioUrl && (
-              <>
-                <button
-                  onClick={handlePlayPause}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '10px 16px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    fontSize: '14px'
-                  }}
-                >
-                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                  {isPlaying ? 'Pause' : 'Play'}
-                </button>
-
-                <button
-                  onClick={handleDownloadAudio}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '10px 16px',
-                    backgroundColor: '#6366f1',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    fontSize: '14px'
-                  }}
-                >
-                  <Download size={16} />
-                  Download MP3
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Audio Element */}
-          {audioUrl && (
-            <audio
-              ref={audioRef}
-              src={audioUrl}
-              onEnded={handleAudioEnded}
-              style={{ display: 'none' }}
-            />
+          {/* Custom Instructions */}
+          {mode === 'custom' && (
+            <div className="space-y-2">
+              <Label htmlFor="custom-instructions">Custom Instructions</Label>
+              <Textarea
+                id="custom-instructions"
+                placeholder="Describe how you want the podcast to be structured and presented..."
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
           )}
-        </div>
 
-        {/* Selected Text Preview */}
-        {selectedText && (
-          <div style={{
-            padding: '16px 24px',
-            backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Original Text
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: '#6b7280',
-              lineHeight: '1.5',
-              maxHeight: '100px',
-              overflow: 'auto'
-            }}>
-              {selectedText.length > 200 ? selectedText.substring(0, 200) + '...' : selectedText}
-            </div>
-          </div>
-        )}
+          {/* Generation Progress */}
+          {isGenerating && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <div>
+                    <p className="font-medium">
+                      {currentStep === 'script' && 'Generating podcast script...'}
+                      {currentStep === 'audio' && 'Converting to audio...'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {currentStep === 'script' && 'Creating engaging content from your text'}
+                      {currentStep === 'audio' && 'Using Azure Speech Services to generate audio'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Content */}
-        <div style={{
-          flex: 1,
-          padding: '24px',
-          overflow: 'auto'
-        }}>
-          <div style={{
-            fontFamily: 'system-ui, -apple-system, sans-serif'
-          }}>
-            {formatDialogue(dialogue)}
+          {/* Generated Script */}
+          {podcastScript && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Generated Script</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-40 overflow-y-auto bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">
+                  {podcastScript}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Audio Player */}
+          {audioUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Generated Podcast</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={handlePlayPause}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    {isPlaying ? 'Pause' : 'Play'}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleDownload}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </Button>
+                </div>
+                
+                <audio
+                  ref={audioRef}
+                  src={audioUrl}
+                  onEnded={() => setIsPlaying(false)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  className="w-full mt-4"
+                  controls
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-between pt-4 border-t">
+            <Button variant="outline" onClick={handleClose}>
+              Close
+            </Button>
+            <Button 
+              onClick={handleGeneratePodcast}
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+              Generate Podcast
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

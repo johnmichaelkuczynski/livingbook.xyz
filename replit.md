@@ -7,10 +7,11 @@ DocMath AI is a streamlined document processing web application focused on text 
 ## Recent Changes (January 2025)
 
 - **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
-- **Simplified UI**: Removed all complex modals, study guides, podcast generation, and other advanced features
-- **Core Functionality**: Now focuses exclusively on document viewing and contextual AI chat based on text selection
+- **Podcast Generation Added**: Implemented comprehensive podcast system with three modes (single person, two person dialogue, custom instructions)
+- **Azure Speech Integration**: Added full Azure Speech API integration for audio generation with different voices for dialogue mode
 - **Visual Feedback**: Added toast notifications and input styling to indicate when text is selected
 - **Data Flow**: Fixed client-to-server communication to properly pass selected text context
+- **Smart Content Selection**: Podcast generation works with either selected text passages or full documents
 
 ## User Preferences
 
@@ -42,12 +43,15 @@ Preferred communication style: Simple, everyday language.
 - **Document Processing Pipeline**: Handles file upload, text extraction, math notation formatting, and storage with HTML preservation for document structure.
 - **Text Selection System**: Users can highlight specific passages in documents for targeted AI analysis.
 - **Contextual AI Chat**: AI analyzes only the selected text passage instead of the entire document when text is highlighted.
+- **Podcast Generation**: Three-mode system (single person, two person dialogue, custom instructions) with Azure Speech API integration.
+- **Audio Processing**: Generates SSML scripts for natural speech with different voices for dialogue participants.
+- **Smart Content Selection**: Works with both selected text passages and full documents for podcast generation.
 - **Visual Feedback**: Toast notifications and input styling provide clear indication when text is selected.
 - **Multi-Provider AI**: Supports DeepSeek, OpenAI, Anthropic, and Perplexity for chat responses.
 - **Math Rendering**: KaTeX integration for proper mathematical notation display.
 - **Input Flexibility**: Supports both file uploads (PDF, DOCX, TXT) and direct text input.
-- **Clean Interface**: Minimal, focused UI without complex modals or advanced features.
-- **Fixed Input**: Bottom-positioned chat input that stays accessible while browsing documents.
+- **Clean Interface**: Streamlined UI with essential podcast functionality integrated.
+- **Fixed Input**: Bottom-positioned chat input with podcast button that stays accessible while browsing documents.
 
 ## External Dependencies
 

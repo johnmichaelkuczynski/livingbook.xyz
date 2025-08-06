@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1075,23 +1075,39 @@ Speaker 1: [dialogue]
                   <SelectItem value="perplexity">Perplexity</SelectItem>
                 </SelectContent>
               </Select>
-              <button 
-                onClick={handleSendMessage}
-                disabled={!message.trim() || sendMessageMutation.isPending}
-                className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                type="button"
-              >
-                <Send className="w-5 h-5 mr-2" />
-                {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
-              </button>
+              <div className="flex space-x-2">
+                <Button
+                  onClick={() => setShowPodcastModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 px-2"
+                  disabled={!currentDocument}
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Podcast
+                </Button>
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={!message.trim() || sendMessageMutation.isPending}
+                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                >
+                  <Send className="w-5 h-5 mr-2" />
+                  {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-
-
-
+      {/* Podcast Modal */}
+      <PodcastModal
+        isOpen={showPodcastModal}
+        onClose={() => setShowPodcastModal(false)}
+        document={currentDocument}
+        selectedText={selectedText}
+      />
 
     </div>
   );
