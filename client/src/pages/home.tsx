@@ -1117,6 +1117,14 @@ Speaker 1: [dialogue]
         selectedText={selectedText}
       />
 
+      {/* Study Guide Modal */}
+      <StudyGuideModal
+        isOpen={showStudyGuideModal}
+        onClose={() => setShowStudyGuideModal(false)}
+        content={studyGuideContent}
+        isLoading={isGeneratingStudyGuide}
+      />
+
     </div>
   );
 }
