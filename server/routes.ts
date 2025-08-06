@@ -1819,7 +1819,7 @@ Follow the custom instructions provided while creating an engaging conversation 
             console.log('🎤 Using OpenAI TTS with dual voices for dialogue...');
             
             // Parse dialogue and generate with different voices
-            const lines = script.split('\n').filter(line => line.trim());
+            const lines = script.split('\n').filter((line: string) => line.trim());
             const audioBuffers: Buffer[] = [];
             
             for (const line of lines) {
@@ -2092,6 +2092,191 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to rewrite content" 
       });
+    }
+  });
+
+  // Generate Test Me questions
+  app.post("/api/generate-test", async (req, res) => {
+    try {
+      const { selectedText, provider = 'openai' } = req.body;
+
+      if (!selectedText?.trim()) {
+        return res.status(400).json({ error: 'Selected text is required' });
+      }
+
+      console.log(`📝 GENERATING TEST - Provider: ${provider}, Text length: ${selectedText.length}`);
+
+      // Create test generation prompt
+      const testPrompt = `Create exactly 5 questions based on the following text. The test must follow this strict format:
+- Exactly 3 multiple choice questions (with 4 options each, labeled A, B, C, D)  
+- Exactly 2 short answer questions
+
+For each question, provide:
+1. The question text
+2. For multiple choice: the four options and correct answer
+3. For short answer: the correct/expected answer
+4. A brief explanation
+
+Return the response as valid JSON with this structure:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text here?",
+      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "correct_answer": "A. Option 1",
+      "explanation": "Brief explanation"
+    },
+    {
+      "id": 4,
+      "type": "short_answer", 
+      "question": "Question text here?",
+      "correct_answer": "Expected answer here",
+      "explanation": "Brief explanation"
+    }
+  ]
+}
+
+Text to create test from:
+"""
+${selectedText}
+"""
+
+IMPORTANT: Return only valid JSON. No additional text.`;
+
+      let testResponse;
+      switch (provider) {
+        case 'openai':
+          testResponse = await openaiService.generateChatResponse(testPrompt, selectedText, []);
+          break;
+        case 'deepseek':
+          testResponse = await deepseekService.generateChatResponse(testPrompt, selectedText, []);
+          break;
+        case 'anthropic':
+          testResponse = await anthropicService.generateChatResponse(testPrompt, selectedText, []);
+          break;
+        case 'perplexity':
+          testResponse = await perplexityService.generateChatResponse(testPrompt, selectedText, []);
+          break;
+        default:
+          testResponse = await openaiService.generateChatResponse(testPrompt, selectedText, []);
+      }
+
+      if (testResponse.error) {
+        return res.status(500).json({ error: testResponse.error });
+      }
+
+      // Parse the JSON response
+      let testData;
+      try {
+        const cleanResponse = testResponse.message.trim();
+        // Remove any markdown code blocks if present
+        const jsonMatch = cleanResponse.match(/```json\n?([\s\S]*?)\n?```/);
+        const jsonString = jsonMatch ? jsonMatch[1] : cleanResponse;
+        testData = JSON.parse(jsonString);
+      } catch (parseError) {
+        console.error('Failed to parse test JSON:', parseError);
+        return res.status(500).json({ error: 'Failed to generate valid test format' });
+      }
+
+      console.log(`✅ TEST GENERATED - ${testData.questions?.length} questions`);
+      res.json(testData);
+
+    } catch (error) {
+      console.error('Error generating test:', error);
+      res.status(500).json({ error: 'Failed to generate test' });
+    }
+  });
+
+  // Grade Test Me answers
+  app.post("/api/grade-test", async (req, res) => {
+    try {
+      const { questions, userAnswers, selectedText, provider = 'openai' } = req.body;
+
+      if (!questions || !userAnswers) {
+        return res.status(400).json({ error: 'Questions and user answers are required' });
+      }
+
+      console.log(`🔍 GRADING TEST - Provider: ${provider}, ${questions.length} questions`);
+
+      // Create grading prompt
+      const gradingPrompt = `Grade this test based on the original text. For each question, determine if the user's answer is correct and provide feedback.
+
+Original text:
+"""
+${selectedText}
+"""
+
+Questions and User Answers:
+${questions.map((q: any, i: number) => {
+  const userAnswer = userAnswers[q.id] || 'No answer provided';
+  return `
+Question ${i + 1} (${q.type}): ${q.question}
+${q.type === 'multiple_choice' ? `Options: ${q.options?.join(', ')}` : ''}
+Correct Answer: ${q.correct_answer}
+User Answer: ${userAnswer}
+`;
+}).join('\n')}
+
+Provide grading results as JSON:
+{
+  "score": number (total correct answers),
+  "totalQuestions": ${questions.length},
+  "feedback": [
+    {
+      "questionId": 1,
+      "isCorrect": true/false,
+      "userAnswer": "user's answer",
+      "correctAnswer": "correct answer", 
+      "explanation": "detailed explanation of why correct/incorrect"
+    }
+  ]
+}
+
+IMPORTANT: Return only valid JSON. No additional text.`;
+
+      let gradingResponse;
+      switch (provider) {
+        case 'openai':
+          gradingResponse = await openaiService.generateChatResponse(gradingPrompt, selectedText, []);
+          break;
+        case 'deepseek':
+          gradingResponse = await deepseekService.generateChatResponse(gradingPrompt, selectedText, []);
+          break;
+        case 'anthropic':
+          gradingResponse = await anthropicService.generateChatResponse(gradingPrompt, selectedText, []);
+          break;
+        case 'perplexity':
+          gradingResponse = await perplexityService.generateChatResponse(gradingPrompt, selectedText, []);
+          break;
+        default:
+          gradingResponse = await openaiService.generateChatResponse(gradingPrompt, selectedText, []);
+      }
+
+      if (gradingResponse.error) {
+        return res.status(500).json({ error: gradingResponse.error });
+      }
+
+      // Parse the JSON response
+      let gradingData;
+      try {
+        const cleanResponse = gradingResponse.message.trim();
+        // Remove any markdown code blocks if present
+        const jsonMatch = cleanResponse.match(/```json\n?([\s\S]*?)\n?```/);
+        const jsonString = jsonMatch ? jsonMatch[1] : cleanResponse;
+        gradingData = JSON.parse(jsonString);
+      } catch (parseError) {
+        console.error('Failed to parse grading JSON:', parseError);
+        return res.status(500).json({ error: 'Failed to generate valid grading results' });
+      }
+
+      console.log(`✅ TEST GRADED - Score: ${gradingData.score}/${gradingData.totalQuestions}`);
+      res.json(gradingData);
+
+    } catch (error) {
+      console.error('Error grading test:', error);
+      res.status(500).json({ error: 'Failed to grade test' });
     }
   });
 

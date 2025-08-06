@@ -19,7 +19,7 @@ import TextSelectionHandler from '@/components/TextSelectionHandler';
 import StudyGuideOutput from '@/components/StudyGuideOutput';
 import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
-import TestModal from '@/components/TestModal';
+import TestMeModal from '@/components/TestMeModal';
 import PodcastModal from '@/components/PodcastModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
@@ -63,6 +63,8 @@ export default function Home() {
   const [suggestedReadingsContent, setSuggestedReadingsContent] = useState('');
   const [showSuggestedReadings, setShowSuggestedReadings] = useState(false);
   const [isGeneratingSuggestedReadings, setIsGeneratingSuggestedReadings] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -430,7 +432,37 @@ export default function Home() {
     }
   };
 
+  const handleTestMe = async () => {
+    if (!selectedText?.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text to create a test.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    if (isProcessingSelection) {
+      return;
+    }
+
+    setIsGeneratingTest(true);
+    setShowTestModal(true);
+    
+    try {
+      // Modal will handle the generation process
+    } catch (error) {
+      console.error('Test generation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare test generation.",
+        variant: "destructive",
+      });
+      setShowTestModal(false);
+    } finally {
+      setIsGeneratingTest(false);
+    }
+  };
 
   const handlePodcast = async (type: 'standard' | 'modern', text?: string) => {
     const textToUse = text || selectedText;
@@ -866,7 +898,7 @@ Speaker 1: [dialogue]
                   }}
                   onRewrite={() => setShowRewriteModal(true)}
                   onStudyGuide={handleStudyGuide}
-
+                  onTestMe={handleTestMe}
                   onPodcast={() => setShowPodcastModal(true)}
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={() => {}}
@@ -1083,6 +1115,14 @@ Speaker 1: [dialogue]
         onClose={() => setShowStudyGuideModal(false)}
         content={studyGuideContent}
         isLoading={isGeneratingStudyGuide}
+      />
+
+      {/* Test Me Modal */}
+      <TestMeModal
+        isOpen={showTestModal}
+        onClose={() => setShowTestModal(false)}
+        selectedText={selectedText}
+        isGenerating={isGeneratingTest}
       />
 
       {/* Cognitive Map Modal */}
