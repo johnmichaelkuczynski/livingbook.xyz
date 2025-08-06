@@ -94,32 +94,52 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     setIsPlaying(!isPlaying);
   };
 
-  const handleDownload = () => {
-    if (audioUrl) {
-      try {
-        // Create download URL with query parameter
-        const downloadUrl = `${audioUrl}?download=true`;
-        
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `podcast-${Date.now()}.mp3`;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast({
-          title: "Download started",
-          description: "Your podcast is being downloaded.",
-        });
-      } catch (error) {
-        console.error('Download error:', error);
-        toast({
-          title: "Download failed",
-          description: "Please try again or contact support.",
-          variant: "destructive",
-        });
+  const handleDownload = async () => {
+    if (!audioUrl) return;
+
+    try {
+      toast({
+        title: "Starting download...",
+        description: "Please wait while we prepare your podcast.",
+      });
+
+      // Fetch the audio file as a blob
+      const response = await fetch(`${audioUrl}?download=true`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const blob = await response.blob();
+      
+      // Create object URL for the blob
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create and trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `podcast-${Date.now()}.mp3`;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      URL.revokeObjectURL(blobUrl);
+      
+      toast({
+        title: "Download completed",
+        description: "Your podcast has been downloaded successfully.",
+      });
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Unable to download the podcast. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
