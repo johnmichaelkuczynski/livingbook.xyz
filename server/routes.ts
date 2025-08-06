@@ -526,7 +526,28 @@ Here is the text to analyze:
 
 ${selectedText}`;
 
-      const response = await generateAIResponse(summaryThesisPrompt, provider);
+      let response;
+      switch (provider) {
+        case 'openai':
+          const openaiResponse = await openaiService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = openaiResponse.error ? openaiResponse.error : openaiResponse.message;
+          break;
+        case 'deepseek':
+          const deepseekResponse = await deepseekService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = deepseekResponse.error ? deepseekResponse.error : deepseekResponse.message;
+          break;
+        case 'anthropic':
+          const anthropicResponse = await anthropicService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = anthropicResponse.error ? anthropicResponse.error : anthropicResponse.message;
+          break;
+        case 'perplexity':
+          const perplexityResponse = await perplexityService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = perplexityResponse.error ? perplexityResponse.error : perplexityResponse.message;
+          break;
+        default:
+          const defaultResponse = await openaiService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = defaultResponse.error ? defaultResponse.error : defaultResponse.message;
+      }
       
       console.log('✅ SUMMARY+THESIS GENERATED - Provider:', provider, 'Length:', response.length, 'chars');
       
@@ -2203,17 +2224,54 @@ IMPORTANT: Return only valid JSON. No additional text.`;
         return res.status(500).json({ error: testResponse.error });
       }
 
-      // Parse the JSON response
+      // Parse the JSON response with robust handling
       let testData;
       try {
-        const cleanResponse = testResponse.message.trim();
+        let cleanResponse = testResponse.message.trim();
+        console.log('Raw AI response length:', cleanResponse.length);
+        console.log('Raw AI response sample:', cleanResponse.substring(0, 200));
+        
         // Remove any markdown code blocks if present
         const jsonMatch = cleanResponse.match(/```json\n?([\s\S]*?)\n?```/);
-        const jsonString = jsonMatch ? jsonMatch[1] : cleanResponse;
-        testData = JSON.parse(jsonString);
+        if (jsonMatch) {
+          cleanResponse = jsonMatch[1];
+        }
+        
+        // Try to fix common JSON issues
+        cleanResponse = cleanResponse
+          .replace(/^\s*[\r\n]+/gm, '') // Remove empty lines
+          .replace(/,\s*}/g, '}')       // Remove trailing commas before }
+          .replace(/,\s*]/g, ']')       // Remove trailing commas before ]
+          .trim();
+          
+        // If response seems truncated, try to close it
+        if (!cleanResponse.endsWith('}') && !cleanResponse.endsWith(']')) {
+          // Count open braces/brackets and try to close them
+          const openBraces = (cleanResponse.match(/{/g) || []).length;
+          const closeBraces = (cleanResponse.match(/}/g) || []).length;
+          const openBrackets = (cleanResponse.match(/\[/g) || []).length;
+          const closeBrackets = (cleanResponse.match(/]/g) || []).length;
+          
+          // Add missing closing brackets/braces
+          for (let i = 0; i < openBrackets - closeBrackets; i++) {
+            cleanResponse += ']';
+          }
+          for (let i = 0; i < openBraces - closeBraces; i++) {
+            cleanResponse += '}';
+          }
+        }
+        
+        testData = JSON.parse(cleanResponse);
+        
+        // Validate the structure
+        if (!testData.questions || !Array.isArray(testData.questions) || testData.questions.length !== 5) {
+          throw new Error('Invalid test structure - must have exactly 5 questions');
+        }
+        
       } catch (parseError) {
         console.error('Failed to parse test JSON:', parseError);
-        return res.status(500).json({ error: 'Failed to generate valid test format' });
+        console.error('Attempted to parse:', cleanResponse?.substring(0, 500));
+        return res.status(500).json({ error: 'Failed to generate valid test format. Please try again.' });
       }
 
       console.log(`✅ TEST GENERATED - ${testData.questions?.length} questions`);

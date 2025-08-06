@@ -44,6 +44,18 @@ export default function TestMeModal({ isOpen, onClose, selectedText, isGeneratin
     }
   }, [isOpen, selectedText]);
 
+  // Reset state when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setTestData(null);
+      setUserAnswers({});
+      setResults(null);
+      setShowResults(false);
+      setCurrentStep('generate');
+      setIsGeneratingTest(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleGenerateTest = async () => {
