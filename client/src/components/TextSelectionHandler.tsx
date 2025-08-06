@@ -6,7 +6,7 @@ interface TextSelectionHandlerProps {
   onDiscuss: (text: string) => void;
   onRewrite: (text: string) => void;
   onStudyGuide: (text: string) => void;
-
+  onTestMe: (text: string) => void;
   onPodcast: (text: string) => void;
   onCognitiveMap: (text: string) => void;
   onSummaryThesis: (text: string) => void;
@@ -19,7 +19,7 @@ export default function TextSelectionHandler({
   onDiscuss,
   onRewrite,
   onStudyGuide,
-
+  onTestMe,
   onPodcast,
   onCognitiveMap,
   onSummaryThesis,
@@ -59,7 +59,7 @@ export default function TextSelectionHandler({
       const text = selection.toString().trim();
       
       // Show toolbar if text is selected and within our container
-      if (text.length > 10 && containerRef.current?.contains(range.commonAncestorContainer)) {
+      if (text.length > 5 && containerRef.current?.contains(range.commonAncestorContainer)) {
         const rect = range.getBoundingClientRect();
         setSelectedText(text);
         setSelectionRect(rect);
@@ -67,7 +67,7 @@ export default function TextSelectionHandler({
         
         // Add class to body to indicate active selection
         document.body.classList.add('text-selection-active');
-      } else if (text.length <= 10) {
+      } else if (text.length <= 5) {
         // Remove class when selection is too short
         document.body.classList.remove('text-selection-active');
       }
@@ -133,7 +133,10 @@ export default function TextSelectionHandler({
             console.log('🎯 STUDY GUIDE CLICKED - Text length:', selectedText.length);
             onStudyGuide(selectedText);
           }}
-
+          onTestMe={() => {
+            console.log('📝 TEST ME CLICKED - Text length:', selectedText.length);
+            onTestMe(selectedText);
+          }}
           onPodcast={() => onPodcast(selectedText)}
           onCognitiveMap={() => {
             console.log('🧠 COGNITIVE MAP CLICKED - Text length:', selectedText.length);
