@@ -426,7 +426,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
 
   const applyChunkToDocument = (chunk: TextChunk) => {
     if (chunk.rewrittenText && onApplyChunkToDocument) {
-      onApplyChunkToDocument(parseInt(chunk.id) - 1, chunk.rewrittenText);
+      onApplyChunkToDocument(chunk.id - 1, chunk.rewrittenText);
       toast({
         title: "Applied to Document",
         description: `Chunk ${chunk.id} has been applied to the main document view.`,
@@ -661,13 +661,13 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-xs font-medium text-green-600">Rewritten:</p>
                             <Button
-                              onClick={() => togglePreviewExpanded(chunk.id)}
+                              onClick={() => togglePreviewExpanded(chunk.id.toString())}
                               variant="ghost"
                               size="sm"
                               className="h-6 w-6 p-0 hover:bg-green-100"
-                              title={expandedPreviews.has(chunk.id) ? "Minimize preview" : "Expand preview to read full content"}
+                              title={expandedPreviews.has(chunk.id.toString()) ? "Minimize preview" : "Expand preview to read full content"}
                             >
-                              {expandedPreviews.has(chunk.id) ? (
+                              {expandedPreviews.has(chunk.id.toString()) ? (
                                 <Minimize className="w-3 h-3" />
                               ) : (
                                 <ZoomIn className="w-3 h-3" />
@@ -675,7 +675,7 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                             </Button>
                           </div>
                           <div className={`text-sm text-gray-700 bg-green-50 p-3 rounded overflow-y-auto border border-green-200 transition-all duration-300 ${
-                            expandedPreviews.has(chunk.id) ? 'max-h-[80vh] min-h-96' : 'max-h-32'
+                            expandedPreviews.has(chunk.id.toString()) ? 'max-h-[80vh] min-h-96' : 'max-h-32'
                           }`}>
                             <KaTeXRenderer content={chunk.rewrittenText} />
                           </div>
