@@ -2170,20 +2170,43 @@ Follow the custom instructions provided while creating an engaging conversation 
     // Check if this is a download request
     const isDownload = req.query.download === 'true';
     
-    res.set({
+    const headers: Record<string, string> = {
       'Content-Type': 'audio/mpeg',
       'Content-Length': audioBuffer.length.toString(),
       'Cache-Control': 'public, max-age=3600',
       'Accept-Ranges': 'bytes'
-    });
+    };
     
-    // Add download headers if requested
+    // Force download with proper headers
     if (isDownload) {
-      res.set({
-        'Content-Disposition': `attachment; filename="podcast-${audioId}.mp3"`,
-        'Content-Transfer-Encoding': 'binary'
-      });
+      headers['Content-Disposition'] = `attachment; filename="podcast-${audioId}.mp3"`;
+      headers['Content-Transfer-Encoding'] = 'binary';
+      headers['Content-Type'] = 'application/octet-stream';
     }
+    
+    res.set(headers);
+    res.send(audioBuffer);
+  });
+
+  // Dedicated download endpoint
+  app.get("/api/download-audio/:audioId", (req, res) => {
+    const { audioId } = req.params;
+    const audioBuffer = audioCache.get(audioId);
+    
+    if (!audioBuffer) {
+      return res.status(404).json({ error: "Audio not found" });
+    }
+    
+    // Force download with aggressive headers
+    res.set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="podcast-${audioId}.mp3"`,
+      'Content-Length': audioBuffer.length.toString(),
+      'Content-Transfer-Encoding': 'binary',
+      'Pragma': 'no-cache',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Expires': '0'
+    });
     
     res.send(audioBuffer);
   });

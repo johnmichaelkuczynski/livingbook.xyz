@@ -95,7 +95,12 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
   };
 
   const handleDownload = async () => {
-    if (!audioUrl) return;
+    if (!audioUrl) {
+      console.log('No audio URL available');
+      return;
+    }
+
+    console.log('Starting download for URL:', audioUrl);
 
     try {
       toast({
@@ -103,43 +108,51 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
         description: "Please wait while we prepare your podcast.",
       });
 
-      // Fetch the audio file as a blob
-      const response = await fetch(`${audioUrl}?download=true`);
+      // Extract audio ID from URL and use dedicated download endpoint
+      const audioId = audioUrl.split('/').pop();
+      const downloadUrl = `/api/download-audio/${audioId}`;
+      console.log('Download URL:', downloadUrl);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      
-      // Create object URL for the blob
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Create and trigger download
+      // Try direct download first
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = downloadUrl;
       link.download = `podcast-${Date.now()}.mp3`;
-      link.style.display = 'none';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       
+      // Trigger click immediately
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Clean up the object URL
-      URL.revokeObjectURL(blobUrl);
+      console.log('Download triggered successfully');
       
       toast({
-        title: "Download completed",
-        description: "Your podcast has been downloaded successfully.",
+        title: "Download initiated",
+        description: "Your podcast download should start shortly.",
       });
       
     } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download failed",
-        description: "Unable to download the podcast. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Download error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // Fallback: open in new tab
+      try {
+        console.log('Trying fallback: opening in new tab');
+        window.open(`${audioUrl}?download=true`, '_blank');
+        toast({
+          title: "Download opened in new tab",
+          description: "Right-click and save the audio file.",
+        });
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        toast({
+          title: "Download failed",
+          description: "Please try right-clicking the audio player and selecting 'Save audio as...'",
+          variant: "destructive",
+        });
+      }
     }
   };
 
