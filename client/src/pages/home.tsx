@@ -339,6 +339,8 @@ export default function Home() {
 
   // Bottom toolbar handlers
   const handleStudyGuide = async () => {
+    console.log('🎯 HANDLE STUDY GUIDE - Called with text:', selectedText.substring(0, 100) + '...');
+    
     if (!selectedText.trim()) {
       toast({
         title: "No text selected",
@@ -350,14 +352,19 @@ export default function Home() {
 
     // Prevent multiple simultaneous requests
     if (isProcessingSelection) {
+      console.log('❌ Already processing selection, skipping...');
       return;
     }
 
+    console.log('🎯 Starting Study Guide generation process...');
+    
     // Clear previous content and show modal immediately
     setStudyGuideContent('');
     setIsProcessingSelection(true);
     setIsGeneratingStudyGuide(true);
     setShowStudyGuideModal(true); // Open modal immediately with loading state
+    
+    console.log('🎯 Modal state set - showStudyGuideModal:', true, 'isGeneratingStudyGuide:', true);
 
     try {
       const response = await fetch('/api/study-guide', {
@@ -879,6 +886,7 @@ Speaker 1: [dialogue]
                     setIsRewritePanelOpen(true);
                   }}
                   onStudyGuide={(text) => {
+                    console.log('🎯 STUDY GUIDE HANDLER - Received text:', text.substring(0, 100) + '...');
                     setSelectedText(text);
                     handleStudyGuide();
                   }}

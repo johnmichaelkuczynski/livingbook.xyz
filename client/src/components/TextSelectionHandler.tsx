@@ -129,7 +129,10 @@ export default function TextSelectionHandler({
           selectionRect={selectionRect}
           onDiscuss={() => onDiscuss(selectedText)}
           onRewrite={() => onRewrite(selectedText)}
-          onStudyGuide={() => onStudyGuide(selectedText)}
+          onStudyGuide={() => {
+            console.log('🎯 STUDY GUIDE CLICKED - Text length:', selectedText.length);
+            onStudyGuide(selectedText);
+          }}
           onTestMe={() => onTestMe(selectedText)}
           onPodcast={() => onPodcast(selectedText)}
           onCognitiveMap={() => onCognitiveMap(selectedText)}
