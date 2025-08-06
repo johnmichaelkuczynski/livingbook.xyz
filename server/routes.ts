@@ -1902,6 +1902,179 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
     }
   });
 
+  // Generate podcast script
+  app.post("/api/generate-podcast-script", async (req, res) => {
+    try {
+      const { documentId, selectedText, mode, customInstructions } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+      
+      // Get document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Determine content to use
+      const contentToUse = selectedText || document.content;
+      
+      // Generate podcast script based on mode
+      let prompt = '';
+      
+      switch (mode) {
+        case 'single':
+          prompt = `Create an engaging single-person podcast script about the following content. The script should be conversational, informative, and suitable for audio narration. Include natural pauses and emphasis where appropriate.
+
+Content: ${contentToUse}
+
+Format the script as a natural monologue with clear sections and smooth transitions.`;
+          break;
+          
+        case 'dialogue':
+          prompt = `Create an engaging two-person podcast dialogue about the following content. Format it as a conversation between HOST and GUEST, with natural back-and-forth discussion. Make it informative yet conversational.
+
+Content: ${contentToUse}
+
+Format:
+HOST: [dialogue]
+GUEST: [dialogue]
+
+Make the conversation flow naturally with questions, explanations, and insights.`;
+          break;
+          
+        case 'custom':
+          prompt = `Create a podcast script based on these custom instructions: ${customInstructions}
+
+Content to discuss: ${contentToUse}
+
+Follow the custom instructions provided while creating an engaging audio script.`;
+          break;
+          
+        default:
+          return res.status(400).json({ error: "Invalid podcast mode" });
+      }
+      
+      // Generate script using OpenAI (you can switch to other providers)
+      const scriptResponse = await openaiService.generateChatResponse(
+        prompt,
+        '',
+        []
+      );
+      
+      if (scriptResponse.error) {
+        return res.status(500).json({ error: scriptResponse.error });
+      }
+      
+      res.json({ script: scriptResponse.message });
+      
+    } catch (error) {
+      console.error("Podcast script generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate podcast script" 
+      });
+    }
+  });
+
+  // Generate podcast audio using Azure Speech
+  app.post("/api/generate-podcast-audio", async (req, res) => {
+    try {
+      const { script, mode } = req.body;
+      
+      if (!script) {
+        return res.status(400).json({ error: "Script is required" });
+      }
+      
+      // Check if Azure Speech credentials are available
+      if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) {
+        return res.status(500).json({ 
+          error: "Azure Speech credentials not configured. Please set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION environment variables." 
+        });
+      }
+      
+      const sdk = require('microsoft-cognitiveservices-speech-sdk');
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Create audio config
+      const audioFile = path.join(process.cwd(), 'uploads', `podcast-${Date.now()}.mp3`);
+      const audioConfig = sdk.AudioConfig.fromAudioFileOutput(audioFile);
+      
+      // Create speech config
+      const speechConfig = sdk.SpeechConfig.fromSubscription(
+        process.env.AZURE_SPEECH_KEY,
+        process.env.AZURE_SPEECH_REGION
+      );
+      
+      let ssmlScript = '';
+      
+      if (mode === 'dialogue') {
+        // Parse dialogue format and assign different voices
+        const lines = script.split('\n').filter(line => line.trim());
+        let ssmlParts = [];
+        
+        for (const line of lines) {
+          if (line.startsWith('HOST:')) {
+            const text = line.replace('HOST:', '').trim();
+            ssmlParts.push(`<voice name="en-US-BrianNeural">${text}</voice>`);
+          } else if (line.startsWith('GUEST:')) {
+            const text = line.replace('GUEST:', '').trim();
+            ssmlParts.push(`<voice name="en-US-EmmaNeural">${text}</voice>`);
+          } else if (line.trim()) {
+            ssmlParts.push(`<voice name="en-US-BrianNeural">${line.trim()}</voice>`);
+          }
+        }
+        
+        ssmlScript = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+          ${ssmlParts.join('\n<break time="1s"/>\n')}
+        </speak>`;
+        
+        speechConfig.speechSynthesisVoiceName = "en-US-BrianNeural"; // Default voice
+      } else {
+        // Single person or custom mode
+        speechConfig.speechSynthesisVoiceName = "en-US-JennyNeural";
+        ssmlScript = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+          <voice name="en-US-JennyNeural">${script}</voice>
+        </speak>`;
+      }
+      
+      speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
+      
+      // Create synthesizer
+      const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+      
+      // Generate audio
+      const result = await new Promise((resolve, reject) => {
+        synthesizer.speakSsmlAsync(
+          ssmlScript,
+          (result) => {
+            synthesizer.close();
+            resolve(result);
+          },
+          (error) => {
+            synthesizer.close();
+            reject(error);
+          }
+        );
+      });
+      
+      if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+        // Return the audio file URL
+        const audioUrl = `/uploads/${path.basename(audioFile)}`;
+        res.json({ audioUrl });
+      } else {
+        throw new Error(`Speech synthesis failed: ${result.errorDetails}`);
+      }
+      
+    } catch (error) {
+      console.error("Podcast audio generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate podcast audio" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
