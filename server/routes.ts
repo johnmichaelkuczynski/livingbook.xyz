@@ -1902,6 +1902,211 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
     }
   });
 
+  // Generate test endpoint
+  app.post("/api/generate-test", async (req, res) => {
+    try {
+      const { selectedText, totalQuestions = 5, multipleChoiceCount = 3, shortAnswerCount = 2, provider = 'deepseek' } = req.body;
+      
+      if (!selectedText || selectedText.trim().length === 0) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log(`🧪 GENERATING TEST - Provider: ${provider}, Total: ${totalQuestions}, MC: ${multipleChoiceCount}, SA: ${shortAnswerCount}`);
+
+      const prompt = `Based on the following passage, create a comprehensive test with exactly ${totalQuestions} questions. Generate ${multipleChoiceCount} multiple choice questions and ${shortAnswerCount} short answer questions.
+
+For each question, provide:
+1. A clear, specific question about the content
+2. For multiple choice: 4 answer options (A, B, C, D) with only one correct answer
+3. For short answer: the expected correct answer (1-3 sentences)
+4. A detailed explanation of why the answer is correct
+
+Format your response as a JSON object with this exact structure:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "What is...",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "Option A",
+      "explanation": "This is correct because..."
+    },
+    {
+      "id": 2,
+      "type": "short_answer",
+      "question": "Explain...",
+      "correct_answer": "The expected answer...",
+      "explanation": "This answer is correct because..."
+    }
+  ]
+}
+
+Make sure questions test comprehension, analysis, and application of the key concepts in the passage. Avoid trivial details and focus on meaningful understanding.
+
+Passage:
+"""
+${selectedText}
+"""
+
+Return only the JSON object, no additional text.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, selectedText, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      // Parse JSON response
+      let testData;
+      try {
+        // Clean the response to extract JSON
+        let jsonStr = response.message.trim();
+        
+        // Remove any markdown code block markers
+        if (jsonStr.startsWith('```json')) {
+          jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        testData = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.error("JSON parsing error:", parseError);
+        console.error("Raw response:", response.message);
+        return res.status(500).json({ error: "Failed to parse test data from AI response" });
+      }
+      
+      // Validate test structure
+      if (!testData.questions || !Array.isArray(testData.questions)) {
+        return res.status(500).json({ error: "Invalid test structure received" });
+      }
+      
+      console.log(`✅ TEST GENERATED - Provider: ${provider}, Questions: ${testData.questions.length}`);
+      
+      res.json(testData);
+      
+    } catch (error) {
+      console.error("Test generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate test"
+      });
+    }
+  });
+
+  // Grade test endpoint
+  app.post("/api/grade-test", async (req, res) => {
+    try {
+      const { questions, userAnswers, selectedText, provider = 'deepseek' } = req.body;
+      
+      if (!questions || !userAnswers) {
+        return res.status(400).json({ error: "Questions and user answers are required" });
+      }
+
+      console.log(`📝 GRADING TEST - Provider: ${provider}, Questions: ${questions.length}`);
+
+      // Calculate basic score for multiple choice
+      let score = 0;
+      const feedback = [];
+
+      for (const question of questions) {
+        const userAnswer = userAnswers[question.id] || '';
+        let isCorrect = false;
+        let detailedExplanation = question.explanation;
+
+        if (question.type === 'multiple_choice') {
+          isCorrect = userAnswer.trim() === question.correct_answer.trim();
+        } else {
+          // For short answer, use AI to evaluate
+          const evaluationPrompt = `Evaluate this short answer question response:
+
+Question: ${question.question}
+Expected Answer: ${question.correct_answer}
+Student Answer: ${userAnswer}
+
+Context passage: ${selectedText.substring(0, 500)}...
+
+Determine if the student's answer demonstrates understanding of the concept, even if worded differently. 
+Respond with only "CORRECT" or "INCORRECT" followed by a detailed explanation of your evaluation.`;
+
+          // Select AI service for evaluation
+          let generateChatResponse;
+          switch (provider.toLowerCase()) {
+            case 'openai':
+              generateChatResponse = openaiService.generateChatResponse;
+              break;
+            case 'anthropic':
+              generateChatResponse = anthropicService.generateChatResponse;
+              break;
+            case 'perplexity':
+              generateChatResponse = perplexityService.generateChatResponse;
+              break;
+            case 'deepseek':
+            default:
+              generateChatResponse = deepseekService.generateChatResponse;
+              break;
+          }
+
+          try {
+            const evalResponse = await generateChatResponse(evaluationPrompt, selectedText, []);
+            if (!evalResponse.error) {
+              isCorrect = evalResponse.message.trim().toUpperCase().startsWith('CORRECT');
+              detailedExplanation = evalResponse.message.replace(/^(CORRECT|INCORRECT)\s*/, '');
+            }
+          } catch (evalError) {
+            console.error("Short answer evaluation error:", evalError);
+            // Fallback: basic keyword matching
+            isCorrect = userAnswer.toLowerCase().includes(question.correct_answer.toLowerCase().substring(0, 20));
+          }
+        }
+
+        if (isCorrect) score++;
+
+        feedback.push({
+          questionId: question.id,
+          userAnswer,
+          correctAnswer: question.correct_answer,
+          isCorrect,
+          explanation: detailedExplanation
+        });
+      }
+
+      const result = {
+        score,
+        totalQuestions: questions.length,
+        feedback
+      };
+
+      console.log(`✅ TEST GRADED - Score: ${score}/${questions.length} (${Math.round(score/questions.length*100)}%)`);
+      
+      res.json(result);
+      
+    } catch (error) {
+      console.error("Test grading error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to grade test"
+      });
+    }
+  });
+
   // Generate podcast script
   app.post("/api/generate-podcast-script", async (req, res) => {
     try {
