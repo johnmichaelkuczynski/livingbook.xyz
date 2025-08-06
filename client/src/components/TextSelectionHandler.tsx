@@ -142,7 +142,11 @@ export default function TextSelectionHandler({
           }}
           onSummaryThesis={() => onSummaryThesis(selectedText)}
           onThesisDeepDive={() => onThesisDeepDive(selectedText)}
-          onSuggestedReadings={() => onSuggestedReadings(selectedText)}
+          onSuggestedReadings={() => {
+            console.log('📚 SUGGESTED READINGS CLICKED - Text length:', selectedText.length);
+            console.log('📚 HANDLE SUGGESTED READINGS - Called with text:', selectedText.slice(0, 100) + '...');
+            onSuggestedReadings(selectedText);
+          }}
           onClose={handleClose}
         />
       )}
