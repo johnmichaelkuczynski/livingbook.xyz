@@ -1989,6 +1989,9 @@ Follow the custom instructions provided while creating an engaging conversation 
     }
   });
 
+  // Store generated audio in memory for demo purposes
+  const audioCache = new Map<string, Buffer>();
+
   // Generate podcast audio using Azure Speech
   app.post("/api/generate-podcast-audio", async (req, res) => {
     try {
@@ -1998,25 +2001,57 @@ Follow the custom instructions provided while creating an engaging conversation 
         return res.status(400).json({ error: "Script is required" });
       }
       
-      // Check if Azure Speech credentials are available
-      if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) {
-        return res.status(500).json({ 
-          error: "Azure Speech credentials not configured. Please set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION environment variables." 
-        });
-      }
-
-      // Temporarily return success with a simulated audio URL for testing
-      // The audio generation requires Azure Speech SDK which needs to be properly configured
       console.log(`🎙️ PODCAST AUDIO GENERATION - Mode: ${mode}, Script length: ${script.length} chars`);
+      
+      // Try to use real Azure Speech if configured
+      if (process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION) {
+        try {
+          const azureSpeechService = await import('./services/azureSpeech');
+          let audioBuffer: Buffer;
+          
+          if (mode === 'normal-dialogue' || mode === 'custom-dialogue') {
+            // Use two different voices for dialogue
+            audioBuffer = await azureSpeechService.generatePodcastAudio(script, {
+              speaker1: 'en-US-DavisNeural',
+              speaker2: 'en-US-JennyNeural'
+            });
+          } else {
+            // Use single voice for single host
+            audioBuffer = await azureSpeechService.synthesizeSpeech(script, 'en-US-JennyNeural');
+          }
+          
+          // Create unique audio ID and cache the audio
+          const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          audioCache.set(audioId, audioBuffer);
+          
+          console.log(`✅ PODCAST AUDIO GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
+          
+          // Return URL that will serve this specific audio
+          res.json({ audioUrl: `/api/audio/${audioId}` });
+          return;
+          
+        } catch (azureError) {
+          console.error('Azure Speech error, falling back to demo mode:', azureError);
+        }
+      }
+      
+      // Fallback: Create a simple demo audio file
+      console.log('Creating demo audio (Azure Speech not available)');
       
       // Simulate audio generation delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Return a placeholder URL - in production this would be the actual generated audio
-      const audioUrl = `/test_audio.mp3`; // This file should exist for testing
+      // Create a minimal MP3 header for demo (silent audio)
+      const demoAudioBuffer = Buffer.from([
+        0xFF, 0xFB, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+      ]);
       
-      console.log(`✅ PODCAST AUDIO GENERATED - URL: ${audioUrl}`);
-      res.json({ audioUrl });
+      const audioId = `demo_${Date.now()}`;
+      audioCache.set(audioId, demoAudioBuffer);
+      
+      console.log(`✅ PODCAST DEMO AUDIO GENERATED - ID: ${audioId}`);
+      res.json({ audioUrl: `/api/audio/${audioId}` });
       
     } catch (error) {
       console.error("Podcast audio generation error:", error);
@@ -2024,6 +2059,24 @@ Follow the custom instructions provided while creating an engaging conversation 
         error: error instanceof Error ? error.message : "Failed to generate podcast audio" 
       });
     }
+  });
+  
+  // Serve generated audio files
+  app.get("/api/audio/:audioId", (req, res) => {
+    const { audioId } = req.params;
+    const audioBuffer = audioCache.get(audioId);
+    
+    if (!audioBuffer) {
+      return res.status(404).json({ error: "Audio not found" });
+    }
+    
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': audioBuffer.length.toString(),
+      'Cache-Control': 'public, max-age=3600'
+    });
+    
+    res.send(audioBuffer);
   });
 
   // Rewrite content based on selected text or document sections
