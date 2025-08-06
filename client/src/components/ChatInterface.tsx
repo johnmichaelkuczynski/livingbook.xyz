@@ -289,7 +289,6 @@ export default function ChatInterface({ document, showInputInline = true, onMess
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-              <p className="text-xs text-gray-500">Ask questions about your document</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -325,23 +324,6 @@ export default function ChatInterface({ document, showInputInline = true, onMess
       <div className="flex-1 overflow-hidden min-h-0">
         <ScrollArea className="h-full">
           <div className="p-6 space-y-4 pb-4">
-            {/* Welcome Message */}
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-700">
-                    Hi! I'm your AI assistant. {document 
-                      ? "I've analyzed your document and I'm ready to help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
-                      : "Once you upload a document, I can help you understand its content, explain mathematical concepts, solve problems, or answer any questions you have about the material."
-                    }
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Just now</p>
-              </div>
-            </div>
 
             {/* Chat Messages */}
             {messages.map((msg) => (
