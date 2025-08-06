@@ -99,9 +99,9 @@ export async function generatePodcastAudio(
     for (const segment of segments) {
       let voiceName: string;
       
-      if (segment.speaker === 'Speaker 1' || segment.speaker === 'Host') {
+      if (segment.speaker === 'Speaker 1' || segment.speaker === 'HOST' || segment.speaker === 'Host') {
         voiceName = speakerVoices.speaker1;
-      } else if (segment.speaker === 'Speaker 2' || segment.speaker === 'Guest') {
+      } else if (segment.speaker === 'Speaker 2' || segment.speaker === 'GUEST' || segment.speaker === 'Guest') {
         voiceName = speakerVoices.speaker2;
       } else {
         // Narrator or other text

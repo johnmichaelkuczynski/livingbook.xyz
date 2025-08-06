@@ -2003,43 +2003,96 @@ Follow the custom instructions provided while creating an engaging conversation 
       
       console.log(`🎙️ PODCAST AUDIO GENERATION - Mode: ${mode}, Script length: ${script.length} chars`);
       
-      // Use OpenAI TTS with Alloy voice as primary option
+      // Use OpenAI TTS for high-quality voice generation
       if (process.env.OPENAI_API_KEY) {
         try {
-          console.log('🎤 Using OpenAI TTS with Alloy voice...');
-          
-          // Clean script for better TTS
-          const cleanScript = script
-            .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markdown
-            .replace(/\*([^*]+)\*/g, '$1')     // Remove italic markdown
-            .replace(/#{1,6}\s*/g, '')         // Remove headers
-            .replace(/\[([^\]]*)\]/g, '')      // Remove brackets
-            .replace(/\([^)]*\)/g, '')         // Remove parentheses
-            .replace(/\s+/g, ' ')              // Normalize whitespace
-            .trim();
-          
-          // Create OpenAI client directly for TTS
           const OpenAI = (await import('openai')).default;
           const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
           
-          const response = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "alloy", // High-quality Alloy voice as requested
-            input: cleanScript,
-            response_format: "mp3"
-          });
-          
-          const audioBuffer = Buffer.from(await response.arrayBuffer());
-          
-          // Create unique audio ID and cache the audio
-          const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          audioCache.set(audioId, audioBuffer);
-          
-          console.log(`✅ OPENAI ALLOY PODCAST GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
-          
-          // Return URL that will serve this specific audio
-          res.json({ audioUrl: `/api/audio/${audioId}` });
-          return;
+          if (mode === 'normal-dialogue' || mode === 'custom-dialogue') {
+            console.log('🎤 Using OpenAI TTS with dual voices for dialogue...');
+            
+            // Parse dialogue and generate with different voices
+            const lines = script.split('\n').filter(line => line.trim());
+            const audioBuffers: Buffer[] = [];
+            
+            for (const line of lines) {
+              const speakerMatch = line.match(/^(HOST|GUEST):\s*(.*)$/);
+              
+              if (speakerMatch) {
+                const [, speaker, text] = speakerMatch;
+                const cleanText = text.trim()
+                  .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markdown
+                  .replace(/\*([^*]+)\*/g, '$1')     // Remove italic markdown
+                  .replace(/#{1,6}\s*/g, '')         // Remove headers
+                  .replace(/\[([^\]]*)\]/g, '')      // Remove brackets
+                  .replace(/\([^)]*\)/g, '')         // Remove parentheses
+                  .replace(/\s+/g, ' ')              // Normalize whitespace
+                  .trim();
+                
+                if (cleanText.length > 0) {
+                  // Use different voices for HOST and GUEST
+                  const voice = speaker === 'HOST' ? 'alloy' : 'nova';
+                  
+                  const response = await openai.audio.speech.create({
+                    model: "tts-1",
+                    voice: voice,
+                    input: cleanText,
+                    response_format: "mp3"
+                  });
+                  
+                  const segmentBuffer = Buffer.from(await response.arrayBuffer());
+                  audioBuffers.push(segmentBuffer);
+                  
+                  // Add brief pause between speakers
+                  const silenceBuffer = Buffer.alloc(8000); // Approximate pause
+                  audioBuffers.push(silenceBuffer);
+                }
+              }
+            }
+            
+            const finalAudio = Buffer.concat(audioBuffers);
+            
+            // Create unique audio ID and cache the audio
+            const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            audioCache.set(audioId, finalAudio);
+            
+            console.log(`✅ OPENAI DUAL-VOICE PODCAST GENERATED - ID: ${audioId}, Size: ${finalAudio.length} bytes`);
+            
+            res.json({ audioUrl: `/api/audio/${audioId}` });
+            return;
+            
+          } else {
+            console.log('🎤 Using OpenAI TTS with single Alloy voice...');
+            
+            // Single voice mode - clean script for better TTS
+            const cleanScript = script
+              .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markdown
+              .replace(/\*([^*]+)\*/g, '$1')     // Remove italic markdown
+              .replace(/#{1,6}\s*/g, '')         // Remove headers
+              .replace(/\[([^\]]*)\]/g, '')      // Remove brackets
+              .replace(/\([^)]*\)/g, '')         // Remove parentheses
+              .replace(/\s+/g, ' ')              // Normalize whitespace
+              .trim();
+            
+            const response = await openai.audio.speech.create({
+              model: "tts-1",
+              voice: "alloy", // High-quality Alloy voice
+              input: cleanScript,
+              response_format: "mp3"
+            });
+            
+            const audioBuffer = Buffer.from(await response.arrayBuffer());
+            
+            // Create unique audio ID and cache the audio
+            const audioId = `podcast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            audioCache.set(audioId, audioBuffer);
+            
+            console.log(`✅ OPENAI SINGLE-VOICE PODCAST GENERATED - ID: ${audioId}, Size: ${audioBuffer.length} bytes`);
+            
+            res.json({ audioUrl: `/api/audio/${audioId}` });
+            return;
+          }
           
         } catch (openaiError) {
           console.error('OpenAI TTS error, trying fallback:', openaiError);
