@@ -12,6 +12,7 @@ import FileUpload from '@/components/FileUpload';
 import DocumentViewer from '@/components/DocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
+import TextSelectionHandler from '@/components/TextSelectionHandler';
 // Removed RewritePanel
 // import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
 // Removed all text selection - just basic document viewing
@@ -898,21 +899,28 @@ Speaker 1: [dialogue]
           <div className="flex-1 relative">
             {currentDocument ? (
               <div>
-                <DocumentViewer 
-                  content={currentDocument.content}
-                  onTextSelection={(text) => {
+                <TextSelectionHandler
+                  onDiscuss={(text) => {
                     setSelectedText(text);
-                    console.log('Text selected:', text.substring(0, 100) + '...');
-                    // Show visual feedback
-                    toast({
-                      title: "Text Selected",
-                      description: `"${text.substring(0, 80)}..."`,
-                      duration: 3000,
-                    });
+                    setMessage(`Tell me more about: "${text.substring(0, 100)}..."`);
                   }}
-                />
-                
-                {/* All modals removed */}
+                  onRewrite={() => setShowRewriteModal(true)}
+                  onStudyGuide={handleStudyGuide}
+                  onTestMe={() => setShowTestModal(true)}
+                  onPodcast={() => setShowPodcastModal(true)}
+                  onCognitiveMap={() => setShowCognitiveMap(true)}
+                  onSummaryThesis={() => {}}
+                  onThesisDeepDive={() => {}}
+                  onSuggestedReadings={() => {}}
+                >
+                  <DocumentViewer 
+                    content={currentDocument.content}
+                    onTextSelection={(text) => {
+                      setSelectedText(text);
+                      console.log('Text selected:', text.substring(0, 100) + '...');
+                    }}
+                  />
+                </TextSelectionHandler>
               </div>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
@@ -1078,38 +1086,6 @@ Speaker 1: [dialogue]
                 </SelectContent>
               </Select>
               <div className="flex flex-col space-y-2">
-                {/* Make buttons much more prominent when text is selected */}
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => setShowPodcastModal(true)}
-                    variant={selectedText ? "default" : "outline"}
-                    size="default"
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${
-                      selectedText 
-                        ? 'bg-green-600 hover:bg-green-700 text-white border-green-600 ring-2 ring-green-300' 
-                        : 'border-gray-300'
-                    }`}
-                    disabled={!currentDocument}
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    {selectedText ? 'Create Podcast' : 'Podcast'}
-                  </Button>
-                  <Button
-                    onClick={() => setShowRewriteModal(true)}
-                    variant={selectedText ? "default" : "outline"}
-                    size="default"
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${
-                      selectedText 
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600 ring-2 ring-purple-300' 
-                        : 'border-gray-300'
-                    }`}
-                    disabled={!currentDocument}
-                  >
-                    <FileEdit className="w-4 h-4" />
-                    {selectedText ? 'Rewrite Text' : 'Rewrite'}
-                  </Button>
-                </div>
-                
                 <button 
                   onClick={handleSendMessage}
                   disabled={!message.trim() || sendMessageMutation.isPending}

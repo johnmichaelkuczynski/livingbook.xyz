@@ -24,7 +24,7 @@ interface TextSelectionToolbarProps {
   onRewrite: () => void;
   onStudyGuide: () => void;
   onTestMe: () => void;
-  onPodcast: (type: 'standard' | 'modern') => void;
+  onPodcast: () => void;
   onCognitiveMap: () => void;
   onSummaryThesis: () => void;
   onThesisDeepDive: () => void;
