@@ -10,7 +10,7 @@ import {
   Library,
   Bookmark,
   X,
-  ChevronDown,
+
   Play,
   Pause,
   Volume2,
@@ -47,7 +47,7 @@ export default function TextSelectionToolbar({
   onClose
 }: TextSelectionToolbarProps) {
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [showPodcastDropdown, setShowPodcastDropdown] = useState(false);
+
   const [podcastProgress, setPodcastProgress] = useState<{
     isVisible: boolean;
     message: string;
@@ -57,8 +57,7 @@ export default function TextSelectionToolbar({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPodcastType, setCurrentPodcastType] = useState<string>('');
   const audioRef = useRef<HTMLAudioElement>(null);
-  const podcastButtonRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (selectionRect) {
@@ -277,10 +276,9 @@ Speaker 1: [dialogue]
     },
     {
       label: 'Podcast',
-      icon: Mic,
-      onClick: () => setShowPodcastDropdown(!showPodcastDropdown),
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-      isDropdown: true
+      icon: Volume2,
+      onClick: onPodcast,
+      color: 'bg-green-500 hover:bg-green-600'
     },
     {
       label: 'Cognitive Map',
@@ -332,92 +330,6 @@ Speaker 1: [dialogue]
         <div className="flex items-center space-x-2">
           {toolbarButtons.slice(0, 5).map((button, index) => {
             const IconComponent = button.icon;
-            
-            if (button.label === 'Podcast') {
-              return (
-                <div key={index} style={{ position: 'relative' }}>
-                  <Button
-                    ref={podcastButtonRef}
-                    onClick={button.onClick}
-                    size="sm"
-                    className={`${button.color} text-white px-3 py-2 h-9 rounded transition-all duration-200 hover:scale-105 shadow-sm flex items-center space-x-1`}
-                  >
-                    <IconComponent className="w-4 h-4" />
-                    <span className="text-xs font-medium">{button.label}</span>
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </Button>
-                  
-                  {showPodcastDropdown && (
-                    <div
-                      ref={dropdownRef}
-                      style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        marginTop: '4px',
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                        zIndex: 99999,
-                        minWidth: '220px',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <button
-                        onClick={() => handlePodcastClick('standard')}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          backgroundColor: 'transparent',
-                          textAlign: 'left',
-                          fontSize: '14px',
-                          color: '#374151',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          borderBottom: '1px solid #f3f4f6'
-                        }}
-                        onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f9fafb'}
-                        onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
-                      >
-                        <div style={{ fontWeight: '500', marginBottom: '2px' }}>
-                          Standard Summary Dialogue
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                          Conversational summary with Q&A
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => handlePodcastClick('modern')}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          backgroundColor: 'transparent',
-                          textAlign: 'left',
-                          fontSize: '14px',
-                          color: '#374151',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f9fafb'}
-                        onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
-                      >
-                        <div style={{ fontWeight: '500', marginBottom: '2px' }}>
-                          Modern Reconstruction (5 min)
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                          Academic reconstruction with modern insights
-                        </div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-            
             return (
               <Button
                 key={index}
