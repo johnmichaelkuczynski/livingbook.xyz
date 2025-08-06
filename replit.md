@@ -8,13 +8,16 @@ DocMath AI is a streamlined document processing web application focused on text 
 
 - **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
 - **Podcast Generation Added**: Implemented comprehensive podcast system with three modes (single person, two person dialogue, custom instructions)
-- **OpenAI Alloy Voice Integration**: Replaced robotic Azure TTS with high-quality OpenAI Alloy voice for premium audio generation
+- **OpenAI Dual-Voice Integration**: Enhanced podcast system with dual voices - HOST uses "alloy" voice, GUEST uses "nova" voice for natural conversations
+- **Popup Toolbar System**: Redesigned UI from permanent buttons to clean popup toolbar that appears on text selection, accommodating 10+ action buttons
+- **Voice Quality Fixed**: Eliminated identical voices and removed awkward "HOST:"/"GUEST:" prefixes from spoken audio for professional podcast quality
 - **UI Button Visibility Fixed**: Resolved critical issue where podcast/rewrite buttons were hidden by notifications - made buttons prominent and always visible
 - **Rewrite Text Readability**: Fixed light gray text issue - now uses dark, readable text with proper contrast
 - **Rewrite Function Added**: Created comprehensive rewrite system that works with selected text or document sections specified in instructions
 - **Visual Feedback**: Added toast notifications and input styling to indicate when text is selected with colored buttons
 - **Data Flow**: Fixed client-to-server communication to properly pass selected text context
 - **Smart Content Selection**: Both podcast and rewrite functions work with either selected text passages or full documents/specified sections
+- **Error Handling**: Fixed critical runtime errors in popup toolbar system and streamlined code architecture
 
 ## User Preferences
 
