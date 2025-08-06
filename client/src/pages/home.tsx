@@ -241,15 +241,20 @@ export default function Home() {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (messageContent: string) => {
+    mutationFn: async (messageData: { content: string; selectedText: string }) => {
       const endpoint = currentDocument 
         ? `/api/chat/${currentDocument.id}/message`
         : '/api/chat/message';
+      
+      console.log('🔍 MUTATION - Sending to server:', {
+        message: messageData.content,
+        selectedText: messageData.selectedText ? `"${messageData.selectedText.substring(0, 100)}..."` : 'null'
+      });
         
       const response = await apiRequest('POST', endpoint, {
-        message: messageContent,
+        message: messageData.content,
         provider: selectedProvider,
-        selectedText: selectedText || null,
+        selectedText: messageData.selectedText || null,
       });
       return response.json();
     },
@@ -278,8 +283,19 @@ export default function Home() {
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
-    console.log('🔍 SENDING MESSAGE WITH SELECTED TEXT:', selectedText ? `"${selectedText.substring(0, 100)}..."` : 'null');
-    sendMessageMutation.mutate(message.trim());
+    
+    // Capture selected text at the moment of sending
+    const currentSelectedText = selectedText;
+    console.log('🔍 SENDING MESSAGE WITH SELECTED TEXT:', currentSelectedText ? `"${currentSelectedText.substring(0, 100)}..."` : 'null');
+    console.log('🔍 FULL SELECTED TEXT LENGTH:', currentSelectedText ? currentSelectedText.length : 0);
+    
+    // Store the selected text to be used in the mutation
+    const messageData = {
+      content: message.trim(),
+      selectedText: currentSelectedText
+    };
+    
+    sendMessageMutation.mutate(messageData);
     // Clear message and selected text after sending
     setMessage('');
     setSelectedText('');

@@ -1044,6 +1044,12 @@ Please provide a helpful response based on the selected text. Keep your response
     try {
       const documentId = parseInt(req.params.documentId);
       const { message, provider = 'deepseek', selectedText } = req.body;
+    
+    console.log('🔍 REQUEST BODY DEBUG:', {
+      message: message ? `"${message.substring(0, 50)}..."` : 'null',
+      provider,
+      selectedText: selectedText ? `"${selectedText.substring(0, 100)}..."` : 'null'
+    });
       
       console.log(`🔍 PROVIDER DEBUG - Document Chat: Provider received: "${provider}"`);
       
