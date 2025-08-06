@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { X, Play, FileText, CheckCircle } from 'lucide-react';
+import { X, FileText, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Question {
   id: number;
-  type: 'multiple_choice' | 'short_answer';
+  type: 'multiple_choice' | 'short_answer' | 'long_answer';
   question: string;
   options?: string[];
   correct_answer: string;
@@ -43,19 +42,30 @@ export default function TestMeModal({
   selectedText,
   isGenerating
 }: TestMeModalProps) {
-  const [step, setStep] = useState<'configure' | 'generated' | 'taking' | 'results'>('configure');
+  const [view, setView] = useState<'config' | 'generated' | 'test' | 'results'>('config');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<{[key: number]: string}>({});
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   
   // Configuration state
-  const [totalQuestions, setTotalQuestions] = useState([5]);
-  const [multipleChoiceCount, setMultipleChoiceCount] = useState([3]);
+  const [questionTypes, setQuestionTypes] = useState({
+    multipleChoice: true,
+    shortAnswer: false,
+    longAnswer: false
+  });
+  const [numberOfQuestions, setNumberOfQuestions] = useState('5');
+  const [customInstructions, setCustomInstructions] = useState('');
   const [isSubmittingTest, setIsSubmittingTest] = useState(false);
 
-  const shortAnswerCount = totalQuestions[0] - multipleChoiceCount[0];
-
   const generateTest = async () => {
+    const activeTypes = [];
+    if (questionTypes.multipleChoice) activeTypes.push('multiple_choice');
+    if (questionTypes.shortAnswer) activeTypes.push('short_answer');
+    if (questionTypes.longAnswer) activeTypes.push('long_answer');
+
+    const mcCount = questionTypes.multipleChoice ? Math.ceil(parseInt(numberOfQuestions) * 0.7) : 0;
+    const saCount = parseInt(numberOfQuestions) - mcCount;
+
     try {
       const response = await fetch('/api/generate-test', {
         method: 'POST',
@@ -64,9 +74,10 @@ export default function TestMeModal({
         },
         body: JSON.stringify({
           selectedText,
-          totalQuestions: totalQuestions[0],
-          multipleChoiceCount: multipleChoiceCount[0],
-          shortAnswerCount
+          totalQuestions: parseInt(numberOfQuestions),
+          multipleChoiceCount: mcCount,
+          shortAnswerCount: saCount,
+          customInstructions
         }),
       });
 
@@ -76,15 +87,15 @@ export default function TestMeModal({
 
       const data = await response.json();
       setQuestions(data.questions);
-      setStep('generated');
+      setView('generated');
     } catch (error) {
       console.error('Test generation error:', error);
     }
   };
 
-  const startTest = () => {
+  const takeTest = () => {
     setUserAnswers({});
-    setStep('taking');
+    setView('test');
   };
 
   const submitTest = async () => {
@@ -108,7 +119,7 @@ export default function TestMeModal({
 
       const result = await response.json();
       setTestResult(result);
-      setStep('results');
+      setView('results');
     } catch (error) {
       console.error('Test grading error:', error);
     } finally {
@@ -116,8 +127,8 @@ export default function TestMeModal({
     }
   };
 
-  const resetTest = () => {
-    setStep('configure');
+  const generateNewTest = () => {
+    setView('config');
     setQuestions([]);
     setUserAnswers({});
     setTestResult(null);
@@ -127,305 +138,333 @@ export default function TestMeModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-lg w-full max-w-5xl h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b shrink-0">
           <div className="flex items-center gap-3">
-            <FileText className="w-6 h-6 text-primary" />
-            <div>
-              <h2 className="text-xl font-semibold">Test Me</h2>
-              <p className="text-sm text-gray-600">
-                {step === 'configure' && 'Configure your test'}
-                {step === 'generated' && 'Test generated successfully'}
-                {step === 'taking' && 'Taking test'}
-                {step === 'results' && 'Test results'}
-              </p>
-            </div>
+            <FileText className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900">
+              Test Me - Student Practice Test
+            </h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
         </div>
 
-        <ScrollArea className="max-h-[70vh]">
-          <div className="p-6">
-            {/* Configuration Step */}
-            {step === 'configure' && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Selected Text Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
-                      <p className="text-sm text-gray-700">
-                        {selectedText.substring(0, 300)}
-                        {selectedText.length > 300 && '...'}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Test Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label className="text-base font-medium">
-                        Total Questions: {totalQuestions[0]}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Panel - Configuration */}
+          <div className="w-1/2 border-r bg-gray-50">
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
+                {/* Question Types */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Question Types</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="multiple-choice"
+                        checked={questionTypes.multipleChoice}
+                        onCheckedChange={(checked) =>
+                          setQuestionTypes(prev => ({ ...prev, multipleChoice: !!checked }))
+                        }
+                      />
+                      <Label htmlFor="multiple-choice" className="font-medium">
+                        Multiple Choice
                       </Label>
-                      <div className="mt-3">
-                        <Slider
-                          value={totalQuestions}
-                          onValueChange={setTotalQuestions}
-                          min={3}
-                          max={10}
-                          step={1}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>3</span>
-                          <span>10</span>
-                        </div>
-                      </div>
                     </div>
-
-                    <div>
-                      <Label className="text-base font-medium">
-                        Multiple Choice Questions: {multipleChoiceCount[0]}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="short-answer"
+                        checked={questionTypes.shortAnswer}
+                        onCheckedChange={(checked) =>
+                          setQuestionTypes(prev => ({ ...prev, shortAnswer: !!checked }))
+                        }
+                      />
+                      <Label htmlFor="short-answer" className="font-medium">
+                        Short Answer (1-3 sentences)
                       </Label>
-                      <div className="mt-3">
-                        <Slider
-                          value={multipleChoiceCount}
-                          onValueChange={(value) => {
-                            if (value[0] <= totalQuestions[0]) {
-                              setMultipleChoiceCount(value);
-                            }
-                          }}
-                          min={0}
-                          max={totalQuestions[0]}
-                          step={1}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>0</span>
-                          <span>{totalQuestions[0]}</span>
-                        </div>
-                      </div>
                     </div>
-
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">Test Summary</h4>
-                      <div className="text-sm text-blue-800 space-y-1">
-                        <p>• Total Questions: {totalQuestions[0]}</p>
-                        <p>• Multiple Choice: {multipleChoiceCount[0]}</p>
-                        <p>• Short Answer: {shortAnswerCount}</p>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="long-answer"
+                        checked={questionTypes.longAnswer}
+                        onCheckedChange={(checked) =>
+                          setQuestionTypes(prev => ({ ...prev, longAnswer: !!checked }))
+                        }
+                      />
+                      <Label htmlFor="long-answer" className="font-medium">
+                        Long Answer (paragraph)
+                      </Label>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button onClick={generateTest} disabled={isGenerating}>
-                    {isGenerating ? 'Generating...' : 'Generate Test'}
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Generated Test Step */}
-            {step === 'generated' && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      Test Generated Successfully
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-green-50 p-4 rounded-lg mb-4">
-                      <p className="text-green-800">
-                        Your test with {questions.length} questions has been generated based on the selected text.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Question Preview:</h4>
-                      {questions.slice(0, 2).map((question, index) => (
-                        <div key={question.id} className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-medium">
-                            {index + 1}. {question.question}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Type: {question.type === 'multiple_choice' ? 'Multiple Choice' : 'Short Answer'}
-                          </p>
-                        </div>
+                {/* Number of Questions */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Number of Questions</h3>
+                  <Select value={numberOfQuestions} onValueChange={setNumberOfQuestions}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[3, 5, 7, 10, 15].map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} Questions
+                        </SelectItem>
                       ))}
-                      {questions.length > 2 && (
-                        <p className="text-sm text-gray-600">
-                          ...and {questions.length - 2} more questions
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={resetTest}>
-                    Configure New Test
-                  </Button>
-                  <Button onClick={startTest} className="flex items-center gap-2">
-                    <Play className="w-4 h-4" />
-                    Take Test
-                  </Button>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            )}
 
-            {/* Taking Test Step */}
-            {step === 'taking' && (
-              <div className="space-y-6">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-blue-900 mb-1">Taking Test</h3>
-                  <p className="text-sm text-blue-800">
-                    Answer all {questions.length} questions below. You can review and change your answers before submitting.
+                {/* Custom Instructions */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Custom Instructions (Optional)</h3>
+                  <Textarea
+                    placeholder="e.g., 'Focus on logical reasoning, moderate difficulty, include practical examples'"
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e.target.value)}
+                    className="h-20 resize-none"
+                  />
+                  <p className="text-sm text-gray-600 mt-1">
+                    Specify difficulty level, topics to focus on, or other requirements.
                   </p>
                 </div>
 
-                {questions.map((question, index) => (
-                  <Card key={question.id}>
-                    <CardContent className="pt-6">
-                      <h4 className="font-medium mb-3">
-                        {index + 1}. {question.question}
-                      </h4>
+                {/* Selected Text Preview */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Selected Text Preview</h3>
+                  <div className="bg-white border rounded-lg p-4 max-h-32 overflow-y-auto">
+                    <p className="text-sm text-gray-700">
+                      {selectedText.substring(0, 500)}
+                      {selectedText.length > 500 && '...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
 
-                      {question.type === 'multiple_choice' ? (
-                        <RadioGroup
-                          value={userAnswers[question.id] || ''}
-                          onValueChange={(value) => 
-                            setUserAnswers(prev => ({...prev, [question.id]: value}))
-                          }
-                        >
-                          {question.options?.map((option, optionIndex) => (
-                            <div key={optionIndex} className="flex items-center space-x-2">
-                              <RadioGroupItem 
-                                value={option} 
-                                id={`q${question.id}-${optionIndex}`}
-                              />
-                              <Label htmlFor={`q${question.id}-${optionIndex}`}>
-                                {option}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      ) : (
-                        <Textarea
-                          placeholder="Type your answer here..."
-                          value={userAnswers[question.id] || ''}
-                          onChange={(e) => 
-                            setUserAnswers(prev => ({...prev, [question.id]: e.target.value}))
-                          }
-                          className="min-h-20"
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setStep('generated')}>
-                    Back to Preview
-                  </Button>
+          {/* Right Panel - Generated Test/Results */}
+          <div className="w-1/2 bg-white flex flex-col">
+            {view === 'config' && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-6">
+                    Generate a practice test to see it here
+                  </p>
                   <Button 
-                    onClick={submitTest}
-                    disabled={isSubmittingTest || Object.keys(userAnswers).length < questions.length}
+                    onClick={generateTest} 
+                    disabled={isGenerating || !Object.values(questionTypes).some(Boolean)}
+                    className="w-full max-w-xs"
                   >
-                    {isSubmittingTest ? 'Grading...' : 'Submit Test'}
+                    {isGenerating ? 'Generating Test...' : 'Generate Practice Test'}
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Results Step */}
-            {step === 'results' && testResult && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      Test Results
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg mb-6">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-gray-900 mb-2">
-                          {Math.round((testResult.score / testResult.totalQuestions) * 100)}%
+            {view === 'generated' && (
+              <div className="flex-1 flex flex-col">
+                <div className="p-6 border-b">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CheckSquare className="w-6 h-6 text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Generated Practice Test</h3>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      onClick={generateNewTest}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Generate New Test
+                    </Button>
+                    <Button
+                      onClick={takeTest}
+                      className="flex items-center gap-2"
+                    >
+                      Take Test
+                    </Button>
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-4">
+                    {questions.map((question, index) => (
+                      <div key={question.id} className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="font-medium text-gray-900 mb-2">
+                          {index + 1}. {question.question}
+                        </h4>
+                        
+                        {question.type === 'multiple_choice' && question.options && (
+                          <div className="space-y-2 ml-4">
+                            {question.options.map((option, optionIndex) => (
+                              <div key={optionIndex} className="text-sm text-gray-700">
+                                {String.fromCharCode(65 + optionIndex)}) {option}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="mt-2">
+                          <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                            {question.type === 'multiple_choice' ? 'Multiple Choice' : 
+                             question.type === 'short_answer' ? 'Short Answer' : 'Long Answer'}
+                          </span>
                         </div>
-                        <p className="text-lg text-gray-700">
-                          {testResult.score} out of {testResult.totalQuestions} correct
-                        </p>
-                        <div className="mt-3">
-                          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
-                              style={{width: `${(testResult.score / testResult.totalQuestions) * 100}%`}}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {view === 'test' && (
+              <div className="flex-1 flex flex-col">
+                <div className="p-6 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Take Your Practice Test</h3>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      onClick={generateNewTest}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Generate New Test
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      {Object.keys(userAnswers).length} of {questions.length} questions answered
+                    </span>
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-6">
+                    {questions.map((question, index) => (
+                      <div key={question.id} className="border-b pb-6 last:border-b-0">
+                        <h4 className="font-medium text-gray-900 mb-3">
+                          {index + 1}. {question.question}
+                        </h4>
+                        
+                        {question.type === 'multiple_choice' && question.options ? (
+                          <div className="space-y-2">
+                            <span className="text-sm text-gray-600 font-medium">Multiple Choice</span>
+                            <RadioGroup
+                              value={userAnswers[question.id] || ''}
+                              onValueChange={(value) => 
+                                setUserAnswers(prev => ({...prev, [question.id]: value}))
+                              }
+                            >
+                              {question.options.map((option, optionIndex) => (
+                                <div key={optionIndex} className="flex items-start space-x-2">
+                                  <RadioGroupItem 
+                                    value={option} 
+                                    id={`q${question.id}-${optionIndex}`}
+                                    className="mt-1"
+                                  />
+                                  <Label 
+                                    htmlFor={`q${question.id}-${optionIndex}`} 
+                                    className="text-sm cursor-pointer"
+                                  >
+                                    {String.fromCharCode(65 + optionIndex)}) {option}
+                                  </Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <span className="text-sm text-gray-600 font-medium">
+                              {question.type === 'short_answer' ? 'Short Answer' : 'Long Answer'}
+                            </span>
+                            <Textarea
+                              placeholder={`Type your ${question.type === 'short_answer' ? 'short' : 'detailed'} answer here...`}
+                              value={userAnswers[question.id] || ''}
+                              onChange={(e) => 
+                                setUserAnswers(prev => ({...prev, [question.id]: e.target.value}))
+                              }
+                              className={question.type === 'long_answer' ? "min-h-24" : "min-h-16"}
                             />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                <div className="p-6 border-t bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      {Object.keys(userAnswers).length} of {questions.length} questions answered
+                    </span>
+                    <Button 
+                      onClick={submitTest}
+                      disabled={isSubmittingTest || Object.keys(userAnswers).length < questions.length}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {isSubmittingTest ? 'Submitting...' : 'Submit & Grade Test'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {view === 'results' && testResult && (
+              <div className="flex-1 flex flex-col">
+                <div className="p-6 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">Test Results</h3>
+                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {Math.round((testResult.score / testResult.totalQuestions) * 100)}%
+                      </div>
+                      <p className="text-gray-700">
+                        {testResult.score} out of {testResult.totalQuestions} correct
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-4">
+                    {testResult.feedback.map((feedback, index) => (
+                      <div 
+                        key={feedback.questionId}
+                        className={`p-4 rounded-lg border-l-4 ${
+                          feedback.isCorrect 
+                            ? 'bg-green-50 border-green-500' 
+                            : 'bg-red-50 border-red-500'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                            feedback.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                          }`}>
+                            {feedback.isCorrect ? '✓' : '✗'}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <p className="font-medium">Question {index + 1}</p>
+                            <p className="text-sm"><strong>Your answer:</strong> {feedback.userAnswer}</p>
+                            {!feedback.isCorrect && (
+                              <p className="text-sm"><strong>Correct answer:</strong> {feedback.correctAnswer}</p>
+                            )}
+                            <p className="text-sm"><strong>Explanation:</strong> {feedback.explanation}</p>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </ScrollArea>
 
-                    <h4 className="font-medium mb-4">Detailed Feedback:</h4>
-                    <div className="space-y-4">
-                      {testResult.feedback.map((feedback, index) => (
-                        <div 
-                          key={feedback.questionId}
-                          className={`p-4 rounded-lg border-l-4 ${
-                            feedback.isCorrect 
-                              ? 'bg-green-50 border-green-500' 
-                              : 'bg-red-50 border-red-500'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm ${
-                              feedback.isCorrect ? 'bg-green-500' : 'bg-red-500'
-                            }`}>
-                              {feedback.isCorrect ? '✓' : '✗'}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium mb-2">Question {index + 1}</p>
-                              <div className="text-sm space-y-2">
-                                <p><span className="font-medium">Your answer:</span> {feedback.userAnswer}</p>
-                                {!feedback.isCorrect && (
-                                  <p><span className="font-medium">Correct answer:</span> {feedback.correctAnswer}</p>
-                                )}
-                                <p><span className="font-medium">Explanation:</span> {feedback.explanation}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={resetTest}>
+                <div className="p-6 border-t">
+                  <Button onClick={generateNewTest} className="w-full">
                     Generate New Test
-                  </Button>
-                  <Button onClick={onClose}>
-                    Close
                   </Button>
                 </div>
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
