@@ -2,7 +2,15 @@
 
 ## Overview
 
-DocMath AI is a full-stack web application for uploading and interacting with documents via an AI-powered chat interface. It specializes in processing mathematical content with proper notation rendering, catering to educational and academic use cases. The project aims to provide comprehensive tools for document analysis, content generation, and structured information extraction, enhancing accessibility and readability of complex texts.
+DocMath AI is a streamlined document processing web application focused on text selection and AI-powered contextual analysis. The application now prioritizes core functionality: users can upload documents, select specific text passages, and ask AI questions about their selections. All complex modal features have been removed to focus on the essential text selection workflow.
+
+## Recent Changes (January 2025)
+
+- **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
+- **Simplified UI**: Removed all complex modals, study guides, podcast generation, and other advanced features
+- **Core Functionality**: Now focuses exclusively on document viewing and contextual AI chat based on text selection
+- **Visual Feedback**: Added toast notifications and input styling to indicate when text is selected
+- **Data Flow**: Fixed client-to-server communication to properly pass selected text context
 
 ## User Preferences
 
@@ -31,20 +39,15 @@ Preferred communication style: Simple, everyday language.
 - **Development**: In-memory storage option
 
 ### Core Features & Design Patterns
-- **Document Processing Pipeline**: Handles file upload, text extraction, math notation formatting, and storage. Includes robust HTML preservation to maintain document structure and styling.
-- **AI Chat System**: Manages chat sessions, message threading, context-aware responses, and math-focused prompting.
-- **Content Analysis Tools**:
-    - **Summary+Thesis**: Extracts concise thesis statements and structured summaries.
-    - **Cognitive Map**: Generates visual concept maps using Mermaid.js from text, with dual visual/text hierarchy views.
-    - **Thesis Deep-Dive**: Provides detailed scholarly analysis, extracting core theses, original wording, modern applications, and cross-comparison analysis.
-    - **Suggested Readings**: Generates academic bibliographies based on text themes.
-- **Content Generation**: Includes text rewriting and podcast generation using Azure TTS with in-app playback.
-- **Dual Document Comparison**: Allows side-by-side comparison of two documents with AI analysis.
-- **Output & Download**: Supports PDF (with KaTeX rendering), DOCX (genuine .docx files), and TXT downloads for all AI responses and processed content.
-- **Modals**: Analysis modals are draggable and resizable with position persistence.
-- **Input Flexibility**: Supports both file uploads and direct text input.
-- **Scalability**: Designed with automatic content truncation and chunking for large documents to manage API token limits.
-- **User Experience**: Focus on clean, readable AI responses, fixed input box positioning, and mobile compatibility.
+- **Document Processing Pipeline**: Handles file upload, text extraction, math notation formatting, and storage with HTML preservation for document structure.
+- **Text Selection System**: Users can highlight specific passages in documents for targeted AI analysis.
+- **Contextual AI Chat**: AI analyzes only the selected text passage instead of the entire document when text is highlighted.
+- **Visual Feedback**: Toast notifications and input styling provide clear indication when text is selected.
+- **Multi-Provider AI**: Supports DeepSeek, OpenAI, Anthropic, and Perplexity for chat responses.
+- **Math Rendering**: KaTeX integration for proper mathematical notation display.
+- **Input Flexibility**: Supports both file uploads (PDF, DOCX, TXT) and direct text input.
+- **Clean Interface**: Minimal, focused UI without complex modals or advanced features.
+- **Fixed Input**: Bottom-positioned chat input that stays accessible while browsing documents.
 
 ## External Dependencies
 
