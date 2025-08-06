@@ -6,7 +6,7 @@ interface TextSelectionHandlerProps {
   onDiscuss: (text: string) => void;
   onRewrite: (text: string) => void;
   onStudyGuide: (text: string) => void;
-  onTestMe: (text: string) => void;
+
   onPodcast: (text: string) => void;
   onCognitiveMap: (text: string) => void;
   onSummaryThesis: (text: string) => void;
@@ -19,7 +19,7 @@ export default function TextSelectionHandler({
   onDiscuss,
   onRewrite,
   onStudyGuide,
-  onTestMe,
+
   onPodcast,
   onCognitiveMap,
   onSummaryThesis,
@@ -133,7 +133,7 @@ export default function TextSelectionHandler({
             console.log('🎯 STUDY GUIDE CLICKED - Text length:', selectedText.length);
             onStudyGuide(selectedText);
           }}
-          onTestMe={() => onTestMe(selectedText)}
+
           onPodcast={() => onPodcast(selectedText)}
           onCognitiveMap={() => {
             console.log('🧠 COGNITIVE MAP CLICKED - Text length:', selectedText.length);
