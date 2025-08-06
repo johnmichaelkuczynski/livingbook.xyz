@@ -137,6 +137,7 @@ export default function TextSelectionHandler({
           onPodcast={() => onPodcast(selectedText)}
           onCognitiveMap={() => {
             console.log('🧠 COGNITIVE MAP CLICKED - Text length:', selectedText.length);
+            console.log('🧠 HANDLE COGNITIVE MAP - Called with text:', selectedText.slice(0, 100) + '...');
             onCognitiveMap(selectedText);
           }}
           onSummaryThesis={() => onSummaryThesis(selectedText)}
