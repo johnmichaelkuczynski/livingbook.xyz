@@ -16,10 +16,10 @@ interface PodcastModalProps {
   selectedText?: string;
 }
 
-type PodcastMode = 'single' | 'dialogue' | 'custom';
+type PodcastMode = 'normal-single' | 'normal-dialogue' | 'custom-single' | 'custom-dialogue';
 
 export default function PodcastModal({ isOpen, onClose, document, selectedText }: PodcastModalProps) {
-  const [mode, setMode] = useState<PodcastMode>('single');
+  const [mode, setMode] = useState<PodcastMode>('normal-single');
   const [customInstructions, setCustomInstructions] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [podcastScript, setPodcastScript] = useState('');
@@ -31,7 +31,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
   const { toast } = useToast();
 
   const handleGeneratePodcast = async () => {
-    if (mode === 'custom' && !customInstructions.trim()) {
+    if ((mode === 'custom-single' || mode === 'custom-dialogue') && !customInstructions.trim()) {
       toast({
         title: "Custom instructions required",
         description: "Please provide custom instructions for the podcast.",
@@ -49,7 +49,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
         documentId: document.id,
         selectedText: selectedText || null,
         mode,
-        customInstructions: mode === 'custom' ? customInstructions : null,
+        customInstructions: (mode === 'custom-single' || mode === 'custom-dialogue') ? customInstructions : null,
       });
       
       const scriptData = await scriptResponse.json();
@@ -146,44 +146,61 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
           {/* Podcast Mode Selection */}
           <div className="space-y-4">
             <Label className="text-base font-medium">Podcast Mode</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <Card 
-                className={`cursor-pointer transition-all ${mode === 'single' ? 'ring-2 ring-primary' : ''}`}
-                onClick={() => setMode('single')}
+                className={`cursor-pointer transition-all ${mode === 'normal-single' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('normal-single')}
               >
                 <CardContent className="p-4 text-center">
                   <User className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <h3 className="font-medium">Single Person</h3>
-                  <p className="text-sm text-gray-600 mt-1">One narrator explaining the content</p>
+                  <h3 className="font-medium">Normal Mode (One Host)</h3>
+                  <p className="text-sm text-gray-600 mt-1">Single narrator discussing the content</p>
                 </CardContent>
               </Card>
               
               <Card 
-                className={`cursor-pointer transition-all ${mode === 'dialogue' ? 'ring-2 ring-primary' : ''}`}
-                onClick={() => setMode('dialogue')}
+                className={`cursor-pointer transition-all ${mode === 'normal-dialogue' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('normal-dialogue')}
               >
                 <CardContent className="p-4 text-center">
                   <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <h3 className="font-medium">Two Person Dialogue</h3>
-                  <p className="text-sm text-gray-600 mt-1">Conversation between two speakers</p>
+                  <h3 className="font-medium">Normal Mode (Two Hosts)</h3>
+                  <p className="text-sm text-gray-600 mt-1">Two hosts having a conversation</p>
                 </CardContent>
               </Card>
-              
+
               <Card 
-                className={`cursor-pointer transition-all ${mode === 'custom' ? 'ring-2 ring-primary' : ''}`}
-                onClick={() => setMode('custom')}
+                className={`cursor-pointer transition-all ${mode === 'custom-single' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('custom-single')}
               >
                 <CardContent className="p-4 text-center">
-                  <Settings className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <h3 className="font-medium">Custom</h3>
-                  <p className="text-sm text-gray-600 mt-1">Your own instructions</p>
+                  <div className="flex items-center justify-center mb-2">
+                    <User className="w-6 h-6 text-primary" />
+                    <Settings className="w-4 h-4 text-primary ml-1" />
+                  </div>
+                  <h3 className="font-medium">Custom (One Host)</h3>
+                  <p className="text-sm text-gray-600 mt-1">Single host with custom instructions</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className={`cursor-pointer transition-all ${mode === 'custom-dialogue' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setMode('custom-dialogue')}
+              >
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Users className="w-6 h-6 text-primary" />
+                    <Settings className="w-4 h-4 text-primary ml-1" />
+                  </div>
+                  <h3 className="font-medium">Custom (Two Hosts)</h3>
+                  <p className="text-sm text-gray-600 mt-1">Two hosts with custom instructions</p>
                 </CardContent>
               </Card>
             </div>
           </div>
 
           {/* Custom Instructions */}
-          {mode === 'custom' && (
+          {(mode === 'custom-single' || mode === 'custom-dialogue') && (
             <div className="space-y-2">
               <Label htmlFor="custom-instructions">Custom Instructions</Label>
               <Textarea

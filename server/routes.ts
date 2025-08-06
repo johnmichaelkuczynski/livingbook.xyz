@@ -1924,15 +1924,15 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
       let prompt = '';
       
       switch (mode) {
-        case 'single':
+        case 'normal-single':
           prompt = `Create an engaging single-person podcast script about the following content. The script should be conversational, informative, and suitable for audio narration. Include natural pauses and emphasis where appropriate.
 
 Content: ${contentToUse}
 
-Format the script as a natural monologue with clear sections and smooth transitions.`;
+Format the script as a natural monologue with clear sections and smooth transitions. Keep it engaging and educational.`;
           break;
           
-        case 'dialogue':
+        case 'normal-dialogue':
           prompt = `Create an engaging two-person podcast dialogue about the following content. Format it as a conversation between HOST and GUEST, with natural back-and-forth discussion. Make it informative yet conversational.
 
 Content: ${contentToUse}
@@ -1941,15 +1941,27 @@ Format:
 HOST: [dialogue]
 GUEST: [dialogue]
 
-Make the conversation flow naturally with questions, explanations, and insights.`;
+Make the conversation flow naturally with questions, explanations, and insights. The hosts should build on each other's points and create an engaging discussion.`;
           break;
           
-        case 'custom':
-          prompt = `Create a podcast script based on these custom instructions: ${customInstructions}
+        case 'custom-single':
+          prompt = `Create a single-person podcast script based on these custom instructions: ${customInstructions}
 
 Content to discuss: ${contentToUse}
 
-Follow the custom instructions provided while creating an engaging audio script.`;
+Follow the custom instructions provided while creating an engaging audio script suitable for one narrator. Maintain a conversational and engaging tone.`;
+          break;
+          
+        case 'custom-dialogue':
+          prompt = `Create a two-person podcast dialogue based on these custom instructions: ${customInstructions}
+
+Content to discuss: ${contentToUse}
+
+Format:
+HOST: [dialogue]
+GUEST: [dialogue]
+
+Follow the custom instructions provided while creating an engaging conversation between two hosts. Make sure both hosts contribute meaningfully to the discussion.`;
           break;
           
         default:
@@ -2009,7 +2021,7 @@ Follow the custom instructions provided while creating an engaging audio script.
       
       let ssmlScript = '';
       
-      if (mode === 'dialogue') {
+      if (mode === 'normal-dialogue' || mode === 'custom-dialogue') {
         // Parse dialogue format and assign different voices
         const lines = script.split('\n').filter(line => line.trim());
         let ssmlParts = [];
@@ -2032,7 +2044,7 @@ Follow the custom instructions provided while creating an engaging audio script.
         
         speechConfig.speechSynthesisVoiceName = "en-US-BrianNeural"; // Default voice
       } else {
-        // Single person or custom mode
+        // Single person modes
         speechConfig.speechSynthesisVoiceName = "en-US-JennyNeural";
         ssmlScript = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
           <voice name="en-US-JennyNeural">${script}</voice>
