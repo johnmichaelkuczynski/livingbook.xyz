@@ -642,7 +642,7 @@ Speaker 1: [dialogue]
     setShowSummaryThesis(true); // Open modal immediately with loading state
 
     try {
-      const response = await fetch('/api/generate-summary-thesis', {
+      const response = await fetch('/api/summary-thesis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1131,6 +1131,13 @@ Speaker 1: [dialogue]
         onClose={() => setShowCognitiveMap(false)}
         content={cognitiveMapContent}
         isLoading={isGeneratingCognitiveMap}
+        selectedText={selectedText}
+      />
+
+      {/* Summary+Thesis Modal */}
+      <SummaryThesisModal
+        isOpen={showSummaryThesis}
+        onClose={() => setShowSummaryThesis(false)}
         selectedText={selectedText}
       />
 
