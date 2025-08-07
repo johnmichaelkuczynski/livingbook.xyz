@@ -812,17 +812,16 @@ Speaker 1: [dialogue]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Discrete Contact Us link at top left */}
-      <a 
-        href="mailto:contact@zhisystems.ai"
-        className="fixed top-4 left-4 z-50 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-      >
-        Contact Us
-      </a>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            <a 
+              href="mailto:contact@zhisystems.ai"
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+            >
+              Contact Us
+            </a>
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

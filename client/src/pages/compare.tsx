@@ -769,15 +769,14 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-      {/* Discrete Contact Us link at top left */}
-      <a 
-        href="mailto:contact@zhisystems.ai"
-        className="fixed top-4 left-4 z-50 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-      >
-        Contact Us
-      </a>
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
+          <a 
+            href="mailto:contact@zhisystems.ai"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+          >
+            Contact Us
+          </a>
           <div className="text-center flex-1">
             <div className="flex items-center justify-center gap-4">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
