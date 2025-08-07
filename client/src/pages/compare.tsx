@@ -887,7 +887,7 @@ export default function ComparePage() {
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                           }`}>
-                            <KaTeXRenderer content={msg.content} className="prose" />
+                            <KaTeXRenderer content={msg.content} className="text-sm leading-6 text-gray-900 dark:text-gray-100" />
                             {msg.role === 'assistant' && (
                               <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a
