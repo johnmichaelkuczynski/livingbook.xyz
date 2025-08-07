@@ -10,6 +10,7 @@ import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Set
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
+import SmartDocumentViewer from "@/components/SmartDocumentViewer";
 import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
 
@@ -395,7 +396,7 @@ export default function ComparePage() {
       provider,
       documentAId: documentA?.id,
       documentBId: documentB?.id,
-      sessionId: sessionId,
+      sessionId: sessionId || undefined,
     });
   }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
 
@@ -748,9 +749,10 @@ export default function ComparePage() {
                     lineHeight: '1.6'
                   }}
                 >
-                  <KaTeXRenderer 
-                    content={doc.content} 
-                    className="text-sm leading-6 text-gray-900 dark:text-gray-100" 
+                  <SmartDocumentViewer
+                    content={doc.content}
+                    className="text-sm leading-6 text-gray-900 dark:text-gray-100"
+                    onTextSelection={(selectedText) => handleTextSelection(`Document ${column}`)}
                   />
                 </div>
               </div>

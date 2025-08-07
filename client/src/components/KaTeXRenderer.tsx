@@ -4,6 +4,7 @@ import parse from 'html-react-parser';
 interface KaTeXRendererProps {
   content: string;
   className?: string;
+  isChunked?: boolean;
 }
 
 // Helper function to clean markdown formatting and metadata
@@ -130,12 +131,15 @@ function renderMathContent(content: string): string {
   return processedContent;
 }
 
-export default function KaTeXRenderer({ content, className = '' }: KaTeXRendererProps) {
+export default function KaTeXRenderer({ content, className = '', isChunked = false }: KaTeXRendererProps) {
   // Check if content is HTML (contains tags) or plain text
   const isHtml = content.includes('<') && content.includes('>');
   
-  console.log('KaTeXRenderer received content:', content.substring(0, 200) + '...');
-  console.log('Is HTML detected:', isHtml);
+  // Only log for non-chunked content to reduce console spam
+  if (!isChunked) {
+    console.log('KaTeXRenderer received content:', content.substring(0, 200) + '...');
+    console.log('Is HTML detected:', isHtml);
+  }
   
   if (isHtml) {
     // Sanitize HTML content to prevent XSS while preserving formatting
@@ -147,7 +151,9 @@ export default function KaTeXRenderer({ content, className = '' }: KaTeXRenderer
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
       .replace(/javascript:/gi, '');
     
-    console.log('Sanitized HTML:', sanitizedContent.substring(0, 200) + '...');
+    if (!isChunked) {
+      console.log('Sanitized HTML:', sanitizedContent.substring(0, 200) + '...');
+    }
     
     // Use dangerouslySetInnerHTML to force HTML rendering
     return (
