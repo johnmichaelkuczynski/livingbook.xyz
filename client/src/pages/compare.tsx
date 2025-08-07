@@ -16,8 +16,12 @@ import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 // Using any type to match existing codebase pattern
 type Document = any;
 
-// Memoized SmartDocumentViewer to prevent re-renders on every keystroke
-const MemoizedSmartDocumentViewer = memo(SmartDocumentViewer);
+// Heavily memoized components to prevent re-renders from chat state
+const MemoizedSmartDocumentViewer = memo(SmartDocumentViewer, (prevProps, nextProps) => {
+  // Only re-render if content actually changes
+  return prevProps.content === nextProps.content && 
+         prevProps.className === nextProps.className;
+});
 
 
 interface DocumentChunk {
@@ -73,7 +77,7 @@ export default function ComparePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Stable text selection handlers to prevent re-renders
+  // Completely stable handlers - no dependencies
   const handleTextSelectionA = useCallback((text: string) => {
     if (text.length > 10) {
       setSelectedText(text);
@@ -88,6 +92,27 @@ export default function ComparePage() {
       setSelectionDocument("Document B");
       setShowSelectionPopup(true);
     }
+  }, []);
+
+  // Stable file upload handlers
+  const stableHandleFileUpload = useCallback((file: File, column: 'A' | 'B') => {
+    handleFileUpload(file, column);
+  }, []);
+
+  const stableHandleTextSubmit = useCallback((column: 'A' | 'B') => {
+    handleTextSubmit(column);
+  }, []);
+
+  const stableHandleDragEnter = useCallback((e: React.DragEvent, column: 'A' | 'B') => {
+    handleDragEnter(e, column);
+  }, []);
+
+  const stableHandleDragLeave = useCallback((e: React.DragEvent, column: 'A' | 'B') => {
+    handleDragLeave(e, column);
+  }, []);
+
+  const stableHandleDragOver = useCallback((e: React.DragEvent) => {
+    handleDragOver(e);
   }, []);
 
   // Text selection handler
@@ -515,18 +540,35 @@ export default function ComparePage() {
     title, 
     document: doc, 
     isUploading, 
-    column 
+    column,
+    textInput,
+    setTextInput,
+    inputMode,
+    setInputMode,
+    dragActive,
+    onFileUpload,
+    onTextSubmit,
+    onDragEnter,
+    onDragLeave,
+    onDragOver,
+    onTextSelection
   }: { 
     title: string; 
     document: Document | null; 
     isUploading: boolean; 
     column: 'A' | 'B';
+    textInput: string;
+    setTextInput: (value: string) => void;
+    inputMode: 'upload' | 'text';
+    setInputMode: (mode: 'upload' | 'text') => void;
+    dragActive: boolean;
+    onFileUpload: (file: File, column: 'A' | 'B') => void;
+    onTextSubmit: (column: 'A' | 'B') => void;
+    onDragEnter: (e: React.DragEvent, column: 'A' | 'B') => void;
+    onDragLeave: (e: React.DragEvent, column: 'A' | 'B') => void;
+    onDragOver: (e: React.DragEvent) => void;
+    onTextSelection: (docTitle: string) => void;
   }) => {
-    const textInput = column === 'A' ? textInputA : textInputB;
-    const setTextInput = column === 'A' ? setTextInputA : setTextInputB;
-    const inputMode = column === 'A' ? inputModeA : inputModeB;
-    const setInputMode = column === 'A' ? setInputModeA : setInputModeB;
-    const dragActive = column === 'A' ? dragActiveA : dragActiveB;
     
     return (
     <div className="flex-1">
@@ -561,7 +603,11 @@ export default function ComparePage() {
                     id={`file-input-${column}`}
                     type="file"
                     accept=".pdf,.docx,.txt"
-                    onChange={(e) => handleFileSelect(e, column)}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        onFileUpload(e.target.files[0], column);
+                      }
+                    }}
                     className="hidden"
                   />
                   <div
@@ -571,10 +617,17 @@ export default function ComparePage() {
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                     }`}
                     onClick={() => document.getElementById(`file-input-${column}`)?.click()}
-                    onDrop={(e) => handleDrop(e, column)}
-                    onDragEnter={(e) => handleDragEnter(e, column)}
-                    onDragLeave={(e) => handleDragLeave(e, column)}
-                    onDragOver={handleDragOver}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const files = Array.from(e.dataTransfer.files);
+                      if (files.length > 0) {
+                        onFileUpload(files[0], column);
+                      }
+                    }}
+                    onDragEnter={(e) => onDragEnter(e, column)}
+                    onDragLeave={(e) => onDragLeave(e, column)}
+                    onDragOver={onDragOver}
                   >
                     {isUploading ? (
                       <div className="space-y-2">
@@ -628,7 +681,7 @@ export default function ComparePage() {
                     {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
                   </p>
                   <Button 
-                    onClick={() => handleTextSubmit(column)} 
+                    onClick={() => onTextSubmit(column)} 
                     disabled={!textInput.trim() || isUploading}
                     className="flex items-center gap-2"
                   >
@@ -652,7 +705,7 @@ export default function ComparePage() {
                       accept=".pdf,.docx,.txt"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                          handleFileUpload(e.target.files[0], column);
+                          onFileUpload(e.target.files[0], column);
                           e.target.value = ''; // Reset input
                         }
                       }}
@@ -686,8 +739,8 @@ export default function ComparePage() {
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
                 <div 
                   className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
-                  onMouseUp={() => handleTextSelection(`Document ${column}`)}
-                  onTouchEnd={() => handleTextSelection(`Document ${column}`)}
+                  onMouseUp={() => onTextSelection(`Document ${column}`)}
+                  onTouchEnd={() => onTextSelection(`Document ${column}`)}
                   style={{ 
                     textAlign: 'justify',
                     textIndent: '2em',
@@ -772,6 +825,17 @@ export default function ComparePage() {
               document={documentA}
               isUploading={isUploadingA}
               column="A"
+              textInput={textInputA}
+              setTextInput={setTextInputA}
+              inputMode={inputModeA}
+              setInputMode={setInputModeA}
+              dragActive={dragActiveA}
+              onFileUpload={stableHandleFileUpload}
+              onTextSubmit={stableHandleTextSubmit}
+              onDragEnter={stableHandleDragEnter}
+              onDragLeave={stableHandleDragLeave}
+              onDragOver={stableHandleDragOver}
+              onTextSelection={handleTextSelectionA}
             />
           </div>
           
@@ -782,6 +846,17 @@ export default function ComparePage() {
               document={documentB}
               isUploading={isUploadingB}
               column="B"
+              textInput={textInputB}
+              setTextInput={setTextInputB}
+              inputMode={inputModeB}
+              setInputMode={setInputModeB}
+              dragActive={dragActiveB}
+              onFileUpload={stableHandleFileUpload}
+              onTextSubmit={stableHandleTextSubmit}
+              onDragEnter={stableHandleDragEnter}
+              onDragLeave={stableHandleDragLeave}
+              onDragOver={stableHandleDragOver}
+              onTextSelection={handleTextSelectionB}
             />
           </div>
           
