@@ -1,8 +1,8 @@
-# DocMath AI - Document Processing & AI Chat
+# Living Book Creator - Document Processing & AI Chat
 
 ## Overview
 
-DocMath AI is a streamlined document processing web application focused on text selection and AI-powered contextual analysis. The application now prioritizes core functionality: users can upload documents, select specific text passages, and ask AI questions about their selections. All complex modal features have been removed to focus on the essential text selection workflow.
+Living Book Creator is a streamlined document processing web application focused on text selection and AI-powered contextual analysis. The application now prioritizes core functionality: users can upload documents, select specific text passages, and ask AI questions about their selections. All complex modal features have been removed to focus on the essential text selection workflow.
 
 ## Recent Changes (January 2025)
 

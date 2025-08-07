@@ -771,10 +771,18 @@ export default function ComparePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Document Comparison
-            </h1>
+          <div className="text-center flex-1">
+            <div className="flex items-center justify-center gap-4">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Living Book Creator - Document Comparison
+              </h1>
+              <a 
+                href="mailto:contact@zhisystems.ai" 
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Contact Us
+              </a>
+            </div>
             <p className="text-gray-600 dark:text-gray-400">
               Upload two documents and chat with AI about both simultaneously
             </p>
