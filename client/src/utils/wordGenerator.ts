@@ -247,8 +247,8 @@ export async function downloadAIResponseAsWord(content: string, responseId: stri
     title: title || 'AI Response',
     content,
     filename: `ai-response-${responseId}.docx`,
-    author: 'DocMath AI',
-    description: `AI-generated response from DocMath AI (ID: ${responseId})`,
+    author: 'Living Book Creator',
+    description: `AI-generated response from Living Book Creator (ID: ${responseId})`,
   });
 }
 
@@ -258,8 +258,8 @@ export async function downloadChunkAsWord(content: string, chunkId: string | num
     title: `${documentTitle || 'Document'} - Chunk ${chunkId}`,
     content,
     filename: `${documentTitle?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document'}_chunk_${chunkId}.docx`,
-    author: 'DocMath AI',
-    description: `Document chunk ${chunkId} processed by DocMath AI`,
+    author: 'Living Book Creator',
+    description: `Document chunk ${chunkId} processed by Living Book Creator`,
   });
 }
 
@@ -269,7 +269,7 @@ export async function downloadRewrittenContentAsWord(content: string, documentTi
     title: `${documentTitle || 'Document'} - Rewritten`,
     content,
     filename: `${documentTitle?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document'}_rewritten.docx`,
-    author: 'DocMath AI',
-    description: `Rewritten document content processed by DocMath AI`,
+    author: 'Living Book Creator',
+    description: `Rewritten document content processed by Living Book Creator`,
   });
 }

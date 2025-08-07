@@ -823,9 +823,15 @@ Speaker 1: [dialogue]
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">DocMath AI</h1>
+                <h1 className="text-xl font-semibold text-gray-900">Living Book Creator</h1>
                 <p className="text-xs text-gray-500">Document Processing & AI Assistant</p>
               </div>
+              <a 
+                href="mailto:contact@zhisystems.ai" 
+                className="ml-6 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Contact Us
+              </a>
             </div>
             <div className="flex items-center space-x-4">
               <Button 
@@ -1088,6 +1094,12 @@ Speaker 1: [dialogue]
                   {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
                 </button>
               </div>
+              <a 
+                href="mailto:contact@zhisystems.ai" 
+                className="ml-6 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Contact Us
+              </a>
             </div>
           </div>
         </div>
