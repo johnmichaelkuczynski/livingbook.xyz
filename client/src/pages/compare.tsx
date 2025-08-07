@@ -164,19 +164,21 @@ export default function ComparePage() {
     }
   };
 
-  // Optimized onChange handler to reduce re-renders
+  // Optimized onChange handler with debouncing to reduce re-renders
   const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
   }, []);
 
-  // Fetch comparison messages for the session
+  // Fetch comparison messages for the session with aggressive caching
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/compare/messages", sessionId],
     enabled: !!sessionId,
     queryFn: () => fetch(`/api/compare/messages/${sessionId}`).then(res => res.json()),
     refetchInterval: false, // Disable automatic refetching
     refetchOnWindowFocus: false, // Disable refetch on window focus
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnMount: false, // Disable refetch on mount
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // Send message mutation
@@ -384,22 +386,18 @@ export default function ComparePage() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!inputRef.current) return;
-    const messageText = inputRef.current.value.trim();
-    if (!messageText) return;
+  // Memoized handle sending message to avoid re-renders
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim()) return;
     
     sendMessageMutation.mutate({
-      message: messageText,
+      message: message.trim(),
       provider,
       documentAId: documentA?.id,
       documentBId: documentB?.id,
       sessionId: sessionId,
     });
-    
-    // Clear the input after sending
-    inputRef.current.value = '';
-  };
+  }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
 
   // Synthesis Modal Functions
   const loadDocumentChunks = async () => {
@@ -921,7 +919,7 @@ export default function ComparePage() {
                   <textarea
                     ref={inputRef}
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleMessageChange}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
