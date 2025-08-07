@@ -697,11 +697,6 @@ export default function ComparePage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{doc.title}</h3>
-                  {sessionId && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      ✓ Chat history preserved when replacing documents
-                    </p>
-                  )}
                 </div>
                 <div className="flex gap-2 ml-4">
                   <div className="relative">
