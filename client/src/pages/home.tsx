@@ -882,9 +882,9 @@ Speaker 1: [dialogue]
       </header>
 
       {/* Main Content */}
-      <div className="grid grid-cols-5 gap-0" style={{ height: 'calc(100vh - 160px)', maxHeight: 'calc(100vh - 160px)', overflow: 'hidden' }}>
+      <div className="grid grid-cols-5 gap-0 h-[calc(100vh-120px)] pb-32">
         {/* Left Side: Document Area - Takes 3/5 of the width */}
-        <div className="col-span-3 flex flex-col p-8" style={{ height: '100%', overflow: 'hidden' }}>
+        <div className="col-span-3 flex flex-col p-8">
           {/* Hidden file input */}
           <input
             type="file"
@@ -894,7 +894,7 @@ Speaker 1: [dialogue]
             className="hidden"
           />
           
-          <div className="flex-1 relative" style={{ height: '100%', maxHeight: '100%', overflow: 'hidden' }}>
+          <div className="flex-1 relative" style={{ minHeight: '600px', maxHeight: '80vh' }}>
             {currentDocument ? (
               <div className="h-full">
                 <TextSelectionHandler
@@ -1037,7 +1037,7 @@ Speaker 1: [dialogue]
         </div>
 
         {/* Right Side: AI Chat Messages - Takes 2/5 of the width */}
-        <div className="col-span-2 border-l border-gray-200 flex flex-col" style={{ height: '100%', maxHeight: '100%', overflow: 'hidden' }}>
+        <div className="col-span-2 border-l border-gray-200 flex flex-col">
           <ChatInterface 
             document={currentDocument} 
             showInputInline={false} 
