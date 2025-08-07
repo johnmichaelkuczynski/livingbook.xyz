@@ -901,8 +901,8 @@ Speaker 1: [dialogue]
                   onTestMe={handleTestMe}
                   onPodcast={() => setShowPodcastModal(true)}
                   onCognitiveMap={handleCognitiveMap}
-                  onSummaryThesis={() => {}}
-                  onThesisDeepDive={() => {}}
+                  onSummaryThesis={handleSummaryThesis}
+                  onThesisDeepDive={handleThesisDeepDive}
                   onSuggestedReadings={handleSuggestedReadings}
                 >
                   <DocumentViewer 
@@ -1139,6 +1139,16 @@ Speaker 1: [dialogue]
         isOpen={showSummaryThesis}
         onClose={() => setShowSummaryThesis(false)}
         selectedText={selectedText}
+      />
+
+      {/* Thesis Deep-Dive Modal */}
+      <ThesisDeepDiveModal
+        isOpen={showThesisDeepDive}
+        onClose={() => setShowThesisDeepDive(false)}
+        selectedText={selectedText}
+        content={thesisDeepDiveContent}
+        isLoading={isGeneratingThesisDeepDive}
+        onRegenerate={handleThesisDeepDive}
       />
 
       {/* Suggested Readings Modal */}
