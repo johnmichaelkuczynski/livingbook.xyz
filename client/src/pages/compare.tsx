@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, memo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SmartDocumentViewer from "@/components/SmartDocumentViewer";
@@ -73,6 +74,11 @@ export default function ComparePage() {
   const [synthesizedContent, setSynthesizedContent] = useState<string>("");
   const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false);
   const [synthesisInstructions, setSynthesisInstructions] = useState<string>("");
+  
+  // Chat state moved from ComparisonChatInterface
+  const [message, setMessage] = useState('');
+  const [provider, setProvider] = useState('deepseek');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -204,6 +210,74 @@ export default function ComparePage() {
   const handleSessionIdChange = useCallback((newSessionId: number) => {
     setSessionId(newSessionId);
   }, []);
+
+  // Send message mutation (moved from ComparisonChatInterface)
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number; sessionId?: number }) => {
+      try {
+        console.log('Sending comparison message:', messageData);
+        const response = await fetch("/api/compare/message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messageData),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', response.status, errorText);
+          throw new Error(`Failed to send message: ${response.status} ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API Response:', result);
+        return result;
+      } catch (error) {
+        console.error('Network/Parse Error:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data: any) => {
+      if (!sessionId && data.sessionId) {
+        handleSessionIdChange(data.sessionId);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/compare/messages", sessionId || data.sessionId] });
+      setMessage("");
+    },
+    onError: (error: any) => {
+      console.error('Send message mutation error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message. Check console for details.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Chat handlers (moved from ComparisonChatInterface)
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+  }, []);
+
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim()) return;
+    
+    sendMessageMutation.mutate({
+      message: message.trim(),
+      provider,
+      documentAId: documentA?.id,
+      documentBId: documentB?.id,
+      sessionId: sessionId || undefined,
+    });
+  }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
 
 
@@ -867,10 +941,60 @@ export default function ComparePage() {
               documentB={documentB}
               sessionId={sessionId}
               onSessionIdChange={handleSessionIdChange}
+              message={message}
+              onMessageChange={(msg) => setMessage(msg)}
+              provider={provider}
+              onProviderChange={setProvider}
+              onSendMessage={handleSendMessage}
+              isPending={sendMessageMutation.isPending}
             />
           </div>
         </div>
 
+        {/* Chat Input Section - Below All Three Columns */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Compare Documents
+                </div>
+                <Select value={provider} onValueChange={setProvider}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deepseek">DeepSeek</SelectItem>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="anthropic">Anthropic</SelectItem>
+                    <SelectItem value="perplexity">Perplexity</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Textarea
+                  ref={inputRef}
+                  value={message}
+                  onChange={handleMessageChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Compare documents or ask questions..."
+                  className="flex-1 min-h-[80px] resize-none"
+                  disabled={sendMessageMutation.isPending}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!message.trim() || sendMessageMutation.isPending}
+                  className="self-end"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Synthesis Modal */}
         {showSynthesisModal && (
