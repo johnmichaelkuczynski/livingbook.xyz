@@ -6,6 +6,15 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
+### Complete Application Rebranding - COMPLETED (January 7, 2025)
+- **Full Rebranding**: Complete application rebranding from "DocMath AI" to "Living Book Creator" across all files
+- **Contact Integration**: Added discrete "Contact Us" link in blue at top left of all pages linking to contact@zhisystems.ai
+- **UI Text Consistency**: Fixed AI chat text sizing to match document text boxes - reduced from large prose to consistent small text
+- **Visual Cleanup**: Removed "Chat history preserved when..." message to eliminate visual clutter
+- **Contact Link Positioning**: Moved contact links from annoying fixed positioning to natural page flow to prevent content blocking
+- **Files Updated**: home.tsx, compare.tsx, wordGenerator.ts, email.ts service, and project documentation
+- **User Confirmed**: Complete satisfaction with "BETTER. NOTE PROGRESS" - all rebranding objectives achieved
+
 ### Document Viewer Scrolling - FIXED (January 6, 2025) 
 - **Critical Document Scrolling Fixed**: Applied explicit height constraints (600px, max 80vh) with overflow-y: auto
 - **Independent Scrolling**: Document viewer now scrolls independently from rest of application
