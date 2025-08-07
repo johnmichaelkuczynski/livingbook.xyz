@@ -12,6 +12,13 @@ Living Book Creator is a streamlined document processing web application focused
 - **Visual Improvements**: Added subtle border to clearly indicate scrollable area
 - **User Confirmed**: Scrolling problem completely resolved and working perfectly
 
+### Chat Interface Scrolling Layout - FIXED (January 8, 2025)
+- **Critical Chat Scrolling Fixed**: Fixed issue where long AI responses pushed user far down page away from document
+- **Independent Chat Scrolling**: Chat interface now has constrained height with internal scrolling
+- **Document Position Preserved**: Users no longer lose their place in documents when AI responds
+- **Viewport-Based Layout**: Both document and chat areas use fixed viewport-relative heights for consistent experience
+- **User Experience Improved**: No more scrolling back up after asking questions - stay exactly where you were reading
+
 ### Test Me Function - Fully Completed (January 6, 2025)
 - **Difficulty Slider Feature Added**: Interactive sliding scale from 1-10 with dramatically expanded range
 - **Extreme Difficulty Range**: Level 1 creates extremely basic questions for beginners (simple facts directly stated), Level 10 creates expert-level questions challenging PhD scholars with theoretical frameworks
