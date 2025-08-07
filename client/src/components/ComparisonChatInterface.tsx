@@ -22,17 +22,26 @@ interface ComparisonChatInterfaceProps {
   documentB: any | null;
   sessionId: number | null;
   onSessionIdChange: (sessionId: number) => void;
+  message: string;
+  onMessageChange: (message: string) => void;
+  provider: string;
+  onProviderChange: (provider: string) => void;
+  onSendMessage: () => void;
+  isPending: boolean;
 }
 
 export default function ComparisonChatInterface({ 
   documentA, 
   documentB, 
   sessionId, 
-  onSessionIdChange 
+  onSessionIdChange,
+  message,
+  onMessageChange,
+  provider,
+  onProviderChange,
+  onSendMessage,
+  isPending
 }: ComparisonChatInterfaceProps) {
-  const [message, setMessage] = useState('');
-  const [provider, setProvider] = useState('deepseek');
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -48,72 +57,7 @@ export default function ComparisonChatInterface({
     gcTime: 10 * 60 * 1000,
   });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number; sessionId?: number }) => {
-      try {
-        console.log('Sending comparison message:', messageData);
-        const response = await fetch("/api/compare/message", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(messageData),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', response.status, errorText);
-          throw new Error(`Failed to send message: ${response.status} ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('API Response:', result);
-        return result;
-      } catch (error) {
-        console.error('Network/Parse Error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (data: any) => {
-      if (!sessionId && data.sessionId) {
-        onSessionIdChange(data.sessionId);
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/compare/messages", sessionId || data.sessionId] });
-      setMessage("");
-    },
-    onError: (error: any) => {
-      console.error('Send message mutation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message. Check console for details.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-  }, []);
-
-  const handleSendMessage = useCallback(() => {
-    if (!message.trim()) return;
-    
-    sendMessageMutation.mutate({
-      message: message.trim(),
-      provider,
-      documentAId: documentA?.id,
-      documentBId: documentB?.id,
-      sessionId: sessionId || undefined,
-    });
-  }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -139,7 +83,7 @@ export default function ComparisonChatInterface({
             <MessageSquare className="w-5 h-5" />
             Comparison Chat
           </div>
-          <Select value={provider} onValueChange={setProvider}>
+          <Select value={provider} onValueChange={onProviderChange}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -191,7 +135,7 @@ export default function ComparisonChatInterface({
                 </div>
               ))}
 
-              {sendMessageMutation.isPending && (
+              {isPending && (
                 <div className="flex items-start gap-3">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex space-x-1">
@@ -204,28 +148,6 @@ export default function ComparisonChatInterface({
               )}
             </div>
           </ScrollArea>
-        </div>
-
-        {/* Chat Input */}
-        <div className="border-t p-4">
-          <div className="flex gap-2">
-            <Textarea
-              ref={inputRef}
-              value={message}
-              onChange={handleMessageChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Compare documents or ask questions..."
-              className="flex-1 min-h-[80px] resize-none"
-              disabled={sendMessageMutation.isPending}
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!message.trim() || sendMessageMutation.isPending}
-              className="self-end"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>

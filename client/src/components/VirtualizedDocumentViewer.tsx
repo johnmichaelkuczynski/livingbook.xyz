@@ -30,7 +30,7 @@ const ChunkRenderer = memo(({
     <div style={style} className="px-6 py-2">
       <KaTeXRenderer 
         content={chunk.content}
-        className="text-gray-700 leading-relaxed text-lg select-text max-w-full"
+        className="text-gray-700 leading-relaxed text-sm select-text max-w-full"
         isChunked={true}
       />
     </div>
@@ -144,7 +144,7 @@ export default function VirtualizedDocumentViewer({
           <div key={chunk.id} className="mb-4">
             <KaTeXRenderer 
               content={chunk.content}
-              className="text-gray-700 leading-relaxed text-lg select-text max-w-full"
+              className="text-gray-700 leading-relaxed text-sm select-text max-w-full"
               isChunked={true}
             />
           </div>

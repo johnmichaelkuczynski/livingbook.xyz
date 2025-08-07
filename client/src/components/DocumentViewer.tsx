@@ -55,7 +55,7 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
     >
       <KaTeXRenderer 
         content={content} 
-        className="text-gray-700 leading-relaxed text-lg select-text max-w-full"
+        className="text-gray-700 leading-relaxed text-sm select-text max-w-full"
       />
     </div>
   );
