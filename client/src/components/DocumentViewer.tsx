@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 import KaTeXRenderer from './KaTeXRenderer';
 
 interface DocumentViewerProps {
@@ -6,13 +6,13 @@ interface DocumentViewerProps {
   onTextSelection?: (selectedText: string) => void;
 }
 
-export default function DocumentViewer({ content, onTextSelection }: DocumentViewerProps) {
+function DocumentViewer({ content, onTextSelection }: DocumentViewerProps) {
   useEffect(() => {
     const handleSelection = () => {
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim() || '';
       
-      console.log('🔍 DOCUMENT VIEWER - Selection detected:', selectedText.length > 0 ? `"${selectedText.substring(0, 100)}..."` : 'empty');
+      // console.log('🔍 DOCUMENT VIEWER - Selection detected:', selectedText.length > 0 ? `"${selectedText.substring(0, 100)}..."` : 'empty'); // Reduced logging
       
       // Only pass selection if it's substantial text and came from the document viewer
       if (selectedText.length > 10 && onTextSelection) {
@@ -21,7 +21,7 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
         if (docViewer && selection && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
           if (docViewer.contains(range.commonAncestorContainer)) {
-            console.log('✅ DOCUMENT VIEWER - Calling onTextSelection with text');
+            // console.log('✅ DOCUMENT VIEWER - Calling onTextSelection with text'); // Reduced logging
             onTextSelection(selectedText);
           }
         }
@@ -60,3 +60,9 @@ export default function DocumentViewer({ content, onTextSelection }: DocumentVie
     </div>
   );
 }
+
+// Memoized version to prevent unnecessary re-renders
+export default memo(DocumentViewer, (prevProps, nextProps) => {
+  // Only re-render if content changes, ignore callback changes
+  return prevProps.content === nextProps.content;
+});

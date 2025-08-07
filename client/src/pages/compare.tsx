@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, memo } from "react";
+import { useState, useCallback, useRef, memo, useMemo } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,15 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Memoized document content to prevent unnecessary recalculations
+  const memoizedDocumentAContent = useMemo(() => {
+    return documentA?.content || '';
+  }, [documentA?.content]);
+
+  const memoizedDocumentBContent = useMemo(() => {
+    return documentB?.content || '';
+  }, [documentB?.content]);
 
   // Completely stable handlers - no dependencies
   const handleTextSelectionA = useCallback((text: string) => {
@@ -821,7 +830,7 @@ export default function ComparePage() {
                   }}
                 >
                   <MemoizedSmartDocumentViewer
-                    content={doc.content}
+                    content={column === 'A' ? memoizedDocumentAContent : memoizedDocumentBContent}
                     className="text-sm leading-6 text-gray-900 dark:text-gray-100"
                     onTextSelection={column === 'A' ? handleTextSelectionA : handleTextSelectionB}
                   />
