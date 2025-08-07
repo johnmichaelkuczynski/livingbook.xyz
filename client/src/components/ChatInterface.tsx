@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import katex from 'katex';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { downloadAIResponseAsWord } from '@/utils/wordGenerator';
+import { useDebouncedCallback } from '@/hooks/useDebounce';
 
 interface ChatInterfaceProps {
   document: any | null;
@@ -57,6 +58,12 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Debounced message update to prevent excessive re-renders during typing
+  const debouncedSetMessage = useDebouncedCallback((value: string) => {
+    // This is already handled by the controlled input, but we can add 
+    // any additional logic here if needed for performance
+  }, 100);
 
   // Fetch chat messages for the current document or global chat
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({

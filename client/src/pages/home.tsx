@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
-import DocumentViewer from '@/components/DocumentViewer';
+import SmartDocumentViewer from '@/components/SmartDocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import TextSelectionHandler from '@/components/TextSelectionHandler';
@@ -912,7 +912,7 @@ Speaker 1: [dialogue]
                   onThesisDeepDive={handleThesisDeepDive}
                   onSuggestedReadings={handleSuggestedReadings}
                 >
-                  <DocumentViewer 
+                  <SmartDocumentViewer 
                     content={currentDocument.content}
                     onTextSelection={(text) => {
                       setSelectedText(text);
