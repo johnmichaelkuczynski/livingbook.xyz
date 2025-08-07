@@ -172,7 +172,7 @@ const ComparePage = memo(function ComparePage() {
       provider,
       documentAId: documentA?.id,
       documentBId: documentB?.id,
-      sessionId: sessionId,
+      sessionId: sessionId || undefined,
     });
   }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
 
@@ -522,13 +522,7 @@ const ComparePage = memo(function ComparePage() {
       </Card>
     </div>
     );
-  }, [
-    // Only re-render when these specific props change, not when message state changes
-    'title',
-    'document',
-    'isUploading', 
-    'column'
-  ]);
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
