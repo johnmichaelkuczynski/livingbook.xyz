@@ -40,7 +40,7 @@ interface ChunkPair {
   rewrittenContent?: string;
 }
 
-export default function ComparePage() {
+const ComparePage = memo(function ComparePage() {
   const [documentA, setDocumentA] = useState<Document | null>(null);
   const [documentB, setDocumentB] = useState<Document | null>(null);
   const [isUploadingA, setIsUploadingA] = useState(false);
@@ -164,12 +164,12 @@ export default function ComparePage() {
     }
   };
 
-  // Optimized onChange handler with debouncing to reduce re-renders
+  // Direct state update with no additional operations to prevent typing delay
   const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
   }, []);
 
-  // Fetch comparison messages for the session with aggressive caching
+  // Fetch comparison messages for the session with aggressive caching to prevent re-renders
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/compare/messages", sessionId],
     enabled: !!sessionId,
@@ -177,8 +177,10 @@ export default function ComparePage() {
     refetchInterval: false, // Disable automatic refetching
     refetchOnWindowFocus: false, // Disable refetch on window focus
     refetchOnMount: false, // Disable refetch on mount
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnReconnect: false, // Disable refetch on reconnect
+    staleTime: 10 * 60 * 1000, // Consider data fresh for 10 minutes
+    gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
+    notifyOnChangeProps: [], // Only update when data actually changes
   });
 
   // Send message mutation
@@ -565,7 +567,7 @@ export default function ComparePage() {
     }
   };
 
-  const DocumentColumn = ({ 
+  const DocumentColumn = memo(({ 
     title, 
     document: doc, 
     isUploading, 
@@ -765,7 +767,7 @@ export default function ComparePage() {
       </Card>
     </div>
     );
-  };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
@@ -1194,4 +1196,6 @@ export default function ComparePage() {
       </div>
     </div>
   );
-}
+});
+
+export default ComparePage;
