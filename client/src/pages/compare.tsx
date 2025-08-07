@@ -545,7 +545,7 @@ const ComparePage = memo(function ComparePage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[900px] pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
           {/* Document A Column */}
           <div className="lg:col-span-2">
             <DocumentColumn 
@@ -565,11 +565,10 @@ const ComparePage = memo(function ComparePage() {
               column="B"
             />
           </div>
-        </div>
 
-        {/* Chat Section - Below documents */}
-        <div className="mt-6">
-          <Card className="h-[600px] flex flex-col">
+          {/* Chat Column - Right of B */}
+          <div className="lg:col-span-2">
+            <Card className="h-[800px] flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
@@ -641,6 +640,7 @@ const ComparePage = memo(function ComparePage() {
                 )}
               </CardContent>
             </Card>
+          </div>
         </div>
 
         {/* Fixed Chat Input at Bottom of Screen */}
