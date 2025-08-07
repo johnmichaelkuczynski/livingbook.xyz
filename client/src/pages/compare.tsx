@@ -609,8 +609,8 @@ export default function ComparePage() {
     }
   };
 
-  // Memoized Document Column to prevent unnecessary re-renders
-  const DocumentColumn = memo(({ 
+  // Heavily memoized Document Column to prevent unnecessary re-renders from chat state
+  const MemoizedDocumentColumn = memo(({  
     title, 
     document: doc, 
     isUploading, 
@@ -643,7 +643,6 @@ export default function ComparePage() {
     onDragOver: (e: React.DragEvent) => void;
     onTextSelection: (docTitle: string) => void;
   }) => {
-    
     return (
     <div className="flex-1">
       <Card className="h-[800px] flex flex-col">
@@ -834,6 +833,24 @@ export default function ComparePage() {
       </Card>
     </div>
     );
+  }, (prevProps, nextProps) => {
+    // Only re-render if document-related props actually change, ignore chat state
+    const propsEqual = (
+      prevProps.title === nextProps.title &&
+      prevProps.document?.id === nextProps.document?.id &&
+      prevProps.document?.content === nextProps.document?.content &&
+      prevProps.isUploading === nextProps.isUploading &&
+      prevProps.column === nextProps.column &&
+      prevProps.textInput === nextProps.textInput &&
+      prevProps.inputMode === nextProps.inputMode &&
+      prevProps.dragActive === nextProps.dragActive
+    );
+    
+    if (!propsEqual) {
+      console.log('🔄 DocumentColumn will re-render:', prevProps.title, 'due to prop changes');
+    }
+    
+    return propsEqual;
   });
 
   return (
@@ -894,7 +911,7 @@ export default function ComparePage() {
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
           {/* Document A - Takes 2/6 */}
           <div className="lg:col-span-2">
-            <DocumentColumn
+            <MemoizedDocumentColumn
               title="Document A"
               document={documentA}
               isUploading={isUploadingA}
@@ -915,7 +932,7 @@ export default function ComparePage() {
           
           {/* Document B - Takes 2/6 */}
           <div className="lg:col-span-2">
-            <DocumentColumn
+            <MemoizedDocumentColumn
               title="Document B"
               document={documentB}
               isUploading={isUploadingB}
