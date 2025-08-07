@@ -883,7 +883,7 @@ export default function ComparePage() {
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} data-message-id={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
-                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-relaxed relative ${
+                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-6 relative ${
                             msg.role === 'user' 
                               ? 'bg-blue-600 text-white' 
                               : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
