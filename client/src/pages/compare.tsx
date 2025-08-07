@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, memo } from "react";
+import { useState, useCallback, useRef, memo, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import TextSelectionPopup from "@/components/TextSelectionPopup";
 
 // Using any type to match existing codebase pattern
 type Document = any;
+
+// Memoized SmartDocumentViewer to prevent re-renders on every keystroke
+const MemoizedSmartDocumentViewer = memo(SmartDocumentViewer);
 
 interface ChatMessage {
   id: number;
@@ -79,6 +82,23 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Stable text selection handlers to prevent re-renders
+  const handleTextSelectionA = useCallback((text: string) => {
+    if (text.length > 10) {
+      setSelectedText(text);
+      setSelectionDocument("Document A");
+      setShowSelectionPopup(true);
+    }
+  }, []);
+
+  const handleTextSelectionB = useCallback((text: string) => {
+    if (text.length > 10) {
+      setSelectedText(text);
+      setSelectionDocument("Document B");
+      setShowSelectionPopup(true);
+    }
+  }, []);
 
   // Text selection handler
   const handleTextSelection = useCallback((docTitle: string) => {
@@ -566,7 +586,8 @@ export default function ComparePage() {
     }
   };
 
-  const DocumentColumn = ({ 
+  // Memoized Document Column to prevent unnecessary re-renders
+  const DocumentColumn = memo(({ 
     title, 
     document: doc, 
     isUploading, 
@@ -749,10 +770,10 @@ export default function ComparePage() {
                     lineHeight: '1.6'
                   }}
                 >
-                  <SmartDocumentViewer
+                  <MemoizedSmartDocumentViewer
                     content={doc.content}
                     className="text-sm leading-6 text-gray-900 dark:text-gray-100"
-                    onTextSelection={(selectedText) => handleTextSelection(`Document ${column}`)}
+                    onTextSelection={column === 'A' ? handleTextSelectionA : handleTextSelectionB}
                   />
                 </div>
               </div>
@@ -762,7 +783,7 @@ export default function ComparePage() {
       </Card>
     </div>
     );
-  };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
