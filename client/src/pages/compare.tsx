@@ -1,18 +1,17 @@
-import { useState, useCallback, useRef, memo, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useRef, memo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import KaTeXRenderer from "@/components/KaTeXRenderer";
 import SmartDocumentViewer from "@/components/SmartDocumentViewer";
-import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
+import ComparisonChatInterface from "@/components/ComparisonChatInterface";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
+import KaTeXRenderer from "@/components/KaTeXRenderer";
+import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -20,12 +19,6 @@ type Document = any;
 // Memoized SmartDocumentViewer to prevent re-renders on every keystroke
 const MemoizedSmartDocumentViewer = memo(SmartDocumentViewer);
 
-interface ChatMessage {
-  id: number;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
 
 interface DocumentChunk {
   id: string;
@@ -49,9 +42,6 @@ export default function ComparePage() {
   const [documentB, setDocumentB] = useState<Document | null>(null);
   const [isUploadingA, setIsUploadingA] = useState(false);
   const [isUploadingB, setIsUploadingB] = useState(false);
-  const [message, setMessage] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [provider, setProvider] = useState("deepseek");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("documents");
   const [dragActiveA, setDragActiveA] = useState(false);
@@ -185,66 +175,12 @@ export default function ComparePage() {
     }
   };
 
-  // Optimized onChange handler with debouncing to reduce re-renders
-  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
+  // Handler for session ID changes from chat interface
+  const handleSessionIdChange = useCallback((newSessionId: number) => {
+    setSessionId(newSessionId);
   }, []);
 
-  // Fetch comparison messages for the session with aggressive caching
-  const { data: messages = [] } = useQuery<ChatMessage[]>({
-    queryKey: ["/api/compare/messages", sessionId],
-    enabled: !!sessionId,
-    queryFn: () => fetch(`/api/compare/messages/${sessionId}`).then(res => res.json()),
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnWindowFocus: false, // Disable refetch on window focus
-    refetchOnMount: false, // Disable refetch on mount
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-  });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { message: string; provider: string; documentAId?: number; documentBId?: number; sessionId?: number }) => {
-      try {
-        console.log('Sending comparison message:', messageData);
-        const response = await fetch("/api/compare/message", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(messageData),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', response.status, errorText);
-          throw new Error(`Failed to send message: ${response.status} ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('API Response:', result);
-        return result;
-      } catch (error) {
-        console.error('Network/Parse Error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (data: any) => {
-      if (!sessionId && data.sessionId) {
-        setSessionId(data.sessionId);
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/compare/messages", sessionId || data.sessionId] });
-      setMessage("");
-    },
-    onError: (error: any) => {
-      console.error('Send message mutation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message. Check console for details.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleFileUpload = async (file: File, column: 'A' | 'B') => {
     const setUploading = column === 'A' ? setIsUploadingA : setIsUploadingB;
@@ -407,18 +343,6 @@ export default function ComparePage() {
     }
   };
 
-  // Memoized handle sending message to avoid re-renders
-  const handleSendMessage = useCallback(() => {
-    if (!message.trim()) return;
-    
-    sendMessageMutation.mutate({
-      message: message.trim(),
-      provider,
-      documentAId: documentA?.id,
-      documentBId: documentB?.id,
-      sessionId: sessionId || undefined,
-    });
-  }, [message, provider, documentA?.id, documentB?.id, sessionId, sendMessageMutation]);
 
   // Synthesis Modal Functions
   const loadDocumentChunks = async () => {
@@ -502,7 +426,7 @@ export default function ComparePage() {
         chunkBIndexes: selectedChunksB,
         instructions: synthesisInstructions,
         useChatData,
-        provider,
+        provider: 'deepseek',
         sessionId,
         documentAId: documentA?.id,
         documentBId: documentB?.id
@@ -518,7 +442,7 @@ export default function ComparePage() {
           chunkBIndexes: selectedChunksB,
           instructions: synthesisInstructions,
           useChatData,
-          provider,
+          provider: 'deepseek',
           sessionId,
           documentAId: documentA?.id,
           documentBId: documentB?.id
@@ -819,7 +743,6 @@ export default function ComparePage() {
                   setDocumentA(null);
                   setDocumentB(null);
                   setSessionId(null);
-                  setMessage('');
                   queryClient.invalidateQueries({ queryKey: ["/api/compare/messages"] });
                 }}
                 className="flex items-center gap-2"
@@ -864,135 +787,15 @@ export default function ComparePage() {
           
           {/* AI Chat Column - Takes 2/6 (much wider) */}
           <div className="lg:col-span-2">
-            <Card className="h-[800px] flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <MessageSquare className="w-4 h-4" />
-                  AI Comparison Chat
-                  {(documentA || documentB) && (
-                    <div className="flex gap-1 ml-auto">
-                      {documentA && <Badge variant="outline" className="text-xs">A</Badge>}
-                      {documentB && <Badge variant="outline" className="text-xs">B</Badge>}
-                    </div>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4">
-                {!documentA && !documentB && (
-                  <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-center text-sm">
-                    Upload documents to start AI comparison chat
-                  </div>
-                )}
-                
-                {(documentA || documentB) && (
-                  <div className="flex-1 overflow-y-auto space-y-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800 h-[600px] mb-4">
-                    {messages.length === 0 ? (
-                      <div className="text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          Ask AI to compare your documents!
-                        </p>
-                        {sessionId && (
-                          <p className="text-xs text-gray-400 mt-2">
-                            Session ID: {sessionId}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      messages.map((msg) => (
-                        <div key={msg.id} data-message-id={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
-                          <div className={`max-w-[95%] p-3 rounded-lg text-sm leading-6 relative ${
-                            msg.role === 'user' 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                          }`}>
-                            <KaTeXRenderer content={msg.content} className="text-sm leading-6 text-gray-900 dark:text-gray-100" />
-                            {msg.role === 'assistant' && (
-                              <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a
-                                  href={`data:text/plain;charset=utf-8,${encodeURIComponent(msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'))}`}
-                                  download={`comparison-ai-response-${msg.id}.txt`}
-                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 inline-flex items-center justify-center rounded-md"
-                                  title="Download as TXT"
-                                >
-                                  <Download className="w-3 h-3" />
-                                </a>
-                                <button
-                                  onClick={() => downloadAIResponseAsWord(msg.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'), msg.id, 'Document Comparison Response')}
-                                  className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 inline-flex items-center justify-center rounded-md"
-                                  title="Download as Word"
-                                >
-                                  <Download className="w-3 h-3" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ComparisonChatInterface 
+              documentA={documentA}
+              documentB={documentB}
+              sessionId={sessionId}
+              onSessionIdChange={handleSessionIdChange}
+            />
           </div>
         </div>
 
-        {/* Fixed Chat Input at Bottom of Screen */}
-        {(documentA || documentB) && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600 shadow-lg z-50">
-            <div className="p-4">
-              <div className="flex space-x-3 max-w-7xl mx-auto">
-                <div className="flex-1">
-                  <textarea
-                    ref={inputRef}
-                    value={message}
-                    onChange={handleMessageChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Type your message..."
-                    className="w-full h-20 resize-none text-lg border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                    disabled={sendMessageMutation.isPending}
-                    autoComplete="off"
-                    spellCheck="false"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    data-gramm="false"
-                  />
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <select
-                    value={provider}
-                    onChange={(e) => setProvider(e.target.value)}
-                    className="w-32 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="deepseek">DeepSeek</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="anthropic">Anthropic</option>
-                    <option value="perplexity">Perplexity</option>
-                  </select>
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={sendMessageMutation.isPending}
-                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    type="button"
-                  >
-                    {sendMessageMutation.isPending ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Send
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Synthesis Modal */}
         {showSynthesisModal && (
