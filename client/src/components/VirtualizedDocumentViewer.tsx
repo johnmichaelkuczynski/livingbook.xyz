@@ -39,7 +39,7 @@ const ChunkRenderer = memo(({
 
 ChunkRenderer.displayName = 'ChunkRenderer';
 
-export default function VirtualizedDocumentViewer({ 
+function VirtualizedDocumentViewer({ 
   content, 
   onTextSelection,
   className = '' 
@@ -176,3 +176,12 @@ export default function VirtualizedDocumentViewer({
     </div>
   );
 }
+
+// Memoized version to prevent unnecessary re-renders
+export default memo(VirtualizedDocumentViewer, (prevProps, nextProps) => {
+  // Only re-render if content changes, ignore callback changes
+  const contentEqual = prevProps.content === nextProps.content;
+  const classNameEqual = prevProps.className === nextProps.className;
+  
+  return contentEqual && classNameEqual;
+});

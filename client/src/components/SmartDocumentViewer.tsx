@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import DocumentViewer from './DocumentViewer';
 import VirtualizedDocumentViewer from './VirtualizedDocumentViewer';
 
@@ -8,7 +8,7 @@ interface SmartDocumentViewerProps {
   className?: string;
 }
 
-export default function SmartDocumentViewer({ 
+function SmartDocumentViewer({ 
   content, 
   onTextSelection, 
   className = '' 
@@ -25,7 +25,8 @@ export default function SmartDocumentViewer({
     const isLargeByWords = wordCount > 2000;
     const isLargeBySize = content.length > 50000; // 50KB
     
-    console.log(`📊 SMART DOCUMENT VIEWER - Word count: ${wordCount}, Size: ${content.length} chars, Virtualizing: ${isLargeByWords || isLargeBySize}`);
+    // Reduced console logging to prevent spam during re-renders
+    // console.log(`📊 SMART DOCUMENT VIEWER - Word count: ${wordCount}, Size: ${content.length} chars, Virtualizing: ${isLargeByWords || isLargeBySize}`);
     
     return isLargeByWords || isLargeBySize;
   }, [content]);
@@ -48,3 +49,20 @@ export default function SmartDocumentViewer({
     />
   );
 }
+
+// Memoized version to prevent unnecessary re-renders from chat state changes
+export default memo(SmartDocumentViewer, (prevProps, nextProps) => {
+  // Only re-render if content changes, ignore callback changes for text selection
+  const contentEqual = prevProps.content === nextProps.content;
+  const classNameEqual = prevProps.className === nextProps.className;
+  
+  // Debug logging for re-render tracking
+  if (!contentEqual || !classNameEqual) {
+    console.log('🔄 SmartDocumentViewer re-rendering due to props change:', {
+      contentChanged: !contentEqual,
+      classNameChanged: !classNameEqual
+    });
+  }
+  
+  return contentEqual && classNameEqual;
+});
