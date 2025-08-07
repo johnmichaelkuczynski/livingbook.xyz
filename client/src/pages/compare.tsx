@@ -544,10 +544,10 @@ const ComparePage = memo(function ComparePage() {
           </p>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
-          {/* Document A Column */}
-          <div className="lg:col-span-2">
+        {/* Main Content - Documents A and B wider */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[700px] pb-8">
+          {/* Document A Column - Wider */}
+          <div className="lg:col-span-1">
             <DocumentColumn 
               title="Document A" 
               document={documentA} 
@@ -556,8 +556,8 @@ const ComparePage = memo(function ComparePage() {
             />
           </div>
 
-          {/* Document B Column */}
-          <div className="lg:col-span-2">
+          {/* Document B Column - Wider */}
+          <div className="lg:col-span-1">
             <DocumentColumn 
               title="Document B" 
               document={documentB} 
@@ -565,10 +565,11 @@ const ComparePage = memo(function ComparePage() {
               column="B"
             />
           </div>
+        </div>
 
-          {/* Chat Column - Right of B */}
-          <div className="lg:col-span-2">
-            <Card className="h-[800px] flex flex-col">
+        {/* AI Chat at Bottom */}
+        <div className="mt-6 pb-32">
+          <Card className="h-[400px] flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
@@ -593,7 +594,7 @@ const ComparePage = memo(function ComparePage() {
                     {messages.length === 0 ? (
                       <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                         <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-sm">Start a conversation to compare your documents</p>
+                        <p className="text-xs">Start a conversation to compare your documents</p>
                       </div>
                     ) : (
                       messages.map((msg) => (
@@ -608,7 +609,7 @@ const ComparePage = memo(function ComparePage() {
                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                                   {msg.role === 'user' ? 'You' : 'AI'}
                                 </div>
-                                <div className="text-sm text-gray-800 dark:text-gray-200">
+                                <div className="text-xs text-gray-800 dark:text-gray-200">
                                   <KaTeXRenderer content={msg.content} />
                                 </div>
                               </div>
@@ -640,7 +641,6 @@ const ComparePage = memo(function ComparePage() {
                 )}
               </CardContent>
             </Card>
-          </div>
         </div>
 
         {/* Fixed Chat Input at Bottom of Screen */}
