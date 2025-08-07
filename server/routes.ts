@@ -2164,7 +2164,7 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
       console.log(`📝 GENERATING TEST - Provider: ${provider}, Difficulty: ${difficulty}/10, Text length: ${selectedText.length}`);
 
       // Create difficulty-aware test generation prompt
-      const getDifficultyInstruction = (level) => {
+      const getDifficultyInstruction = (level: number) => {
         switch (level) {
           case 1:
           case 2: return "Create EXTREMELY BASIC questions for complete beginners. Use the simplest possible language, ask only about obvious facts directly stated in the text. Questions should be answerable by someone with minimal reading comprehension. Focus on 'what', 'who', 'when' questions with answers literally spelled out in the passage.";
@@ -2288,7 +2288,7 @@ IMPORTANT: Return only valid JSON. No additional text.`;
         
       } catch (parseError) {
         console.error('Failed to parse test JSON:', parseError);
-        console.error('Attempted to parse:', cleanResponse?.substring(0, 500));
+        console.error('Attempted to parse:', testResponse.message?.substring(0, 500));
         return res.status(500).json({ error: 'Failed to generate valid test format. Please try again.' });
       }
 
