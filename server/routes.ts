@@ -2167,7 +2167,7 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
       const getDifficultyInstruction = (level) => {
         switch (level) {
           case 1:
-          case 2: return "Create REMEDIAL level questions focusing on basic definitions and simple recall. Use straightforward language and ask about the most fundamental concepts only.";
+          case 2: return "Create EXTREMELY BASIC questions for complete beginners. Use the simplest possible language, ask only about obvious facts directly stated in the text. Questions should be answerable by someone with minimal reading comprehension. Focus on 'what', 'who', 'when' questions with answers literally spelled out in the passage.";
           case 3:
           case 4: return "Create ELEMENTARY to INTERMEDIATE level questions that test basic understanding and simple applications of concepts.";
           case 5: return "Create STANDARD level questions that test comprehension, analysis, and application of key concepts.";
@@ -2175,7 +2175,7 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
           case 7: return "Create ADVANCED level questions requiring deeper analysis, synthesis, and critical thinking about complex relationships.";
           case 8:
           case 9: return "Create GRADUATE level questions that demand sophisticated analysis, evaluation, and synthesis of advanced concepts.";
-          case 10: return "Create PhD LEVEL questions requiring expert-level analysis, original thinking, and mastery of highly complex theoretical concepts.";
+          case 10: return "Create EXPERT-LEVEL questions that would challenge PhD scholars and research specialists. Require deep theoretical understanding, synthesis across multiple domains, critical evaluation of methodological assumptions, analysis of implicit philosophical frameworks, and original scholarly reasoning. Questions should demand expertise in advanced academic concepts, theoretical foundations, and sophisticated intellectual frameworks that go far beyond the basic text.";
           default: return "Create STANDARD level questions that test comprehension, analysis, and application of key concepts.";
         }
       };
