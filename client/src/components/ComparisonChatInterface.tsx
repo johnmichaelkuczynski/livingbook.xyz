@@ -100,7 +100,17 @@ export default function ComparisonChatInterface({
       <CardContent className="flex-1 flex flex-col p-0">
         {/* Chat Messages */}
         <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
+          <ScrollArea 
+            className="h-full" 
+            style={{ 
+              height: '600px',
+              maxHeight: '80vh', 
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              scrollBehavior: 'smooth',
+              border: '1px solid #e5e7eb'
+            }}
+          >
             <div className="p-4 space-y-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex items-start gap-3 ${
