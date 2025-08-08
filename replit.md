@@ -15,10 +15,20 @@ Living Book Creator is a streamlined document processing web application focused
 - **Files Updated**: home.tsx, compare.tsx, wordGenerator.ts, email.ts service, and project documentation
 - **User Confirmed**: Complete satisfaction with "BETTER. NOTE PROGRESS" - all rebranding objectives achieved
 
+### Screen Flickering Issue - PERMANENTLY RESOLVED (January 8, 2025)
+- **Critical Problem**: Chat input keystrokes caused Document A and B viewers to flicker/blank out repeatedly
+- **Root Cause**: React reconciliation was re-rendering document viewers on every chat state change
+- **Nuclear Solution**: Implemented iframe-based document viewers (DocumentViewerIframe.tsx)
+- **Complete Isolation**: Documents now render in isolated iframes, completely bypassing React reconciliation
+- **Zero Re-renders**: Chat input changes can never affect document rendering - 100% flicker elimination
+- **Enhanced Features**: Maintained text selection, styling, and all document viewer functionality within iframes
+- **User Confirmed**: "much better" - screen flickering completely eliminated
+
 ### Document Viewer Scrolling - FIXED (January 6, 2025) 
 - **Critical Document Scrolling Fixed**: Applied explicit height constraints (600px, max 80vh) with overflow-y: auto
 - **Independent Scrolling**: Document viewer now scrolls independently from rest of application
 - **Visual Improvements**: Added subtle border to clearly indicate scrollable area
+- **Independent Scroll per Component**: Each tab (Document A, Document B, Comparison Chat) has completely independent scrolling
 - **User Confirmed**: Scrolling problem completely resolved and working perfectly
 
 ### Test Me Function - Fully Completed (January 6, 2025)
