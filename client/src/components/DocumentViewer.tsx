@@ -46,11 +46,12 @@ function DocumentViewer({ content, onTextSelection }: DocumentViewerProps) {
       className="document-viewer-content p-6" 
       style={{ 
         height: '600px',
-        maxHeight: '80vh', 
+        maxHeight: '600px', 
         overflowY: 'auto',
         overflowX: 'hidden',
         scrollBehavior: 'smooth',
-        border: '1px solid #e5e7eb'
+        border: '1px solid #e5e7eb',
+        position: 'relative'
       }}
     >
       <KaTeXRenderer 

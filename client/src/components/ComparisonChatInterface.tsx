@@ -76,7 +76,7 @@ export default function ComparisonChatInterface({
   };
 
   return (
-    <Card className="h-[800px] flex flex-col">
+    <Card className="h-[800px] flex flex-col overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -97,18 +97,19 @@ export default function ComparisonChatInterface({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         {/* Chat Messages */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
           <ScrollArea 
             className="h-full" 
             style={{ 
               height: '600px',
-              maxHeight: '80vh', 
+              maxHeight: '600px', 
               overflowY: 'auto',
               overflowX: 'hidden',
               scrollBehavior: 'smooth',
-              border: '1px solid #e5e7eb'
+              border: '1px solid #e5e7eb',
+              position: 'relative'
             }}
           >
             <div className="p-4 space-y-4">
