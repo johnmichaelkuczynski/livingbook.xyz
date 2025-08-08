@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Upload, MessageSquare, Send, X, BookOpen, Download, Plus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import SmartDocumentViewer from "@/components/SmartDocumentViewer";
+import DocumentViewerIframe from "@/components/DocumentViewerIframe";
 import ComparisonChatInterface from "@/components/ComparisonChatInterface";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
@@ -17,12 +17,8 @@ import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 // Using any type to match existing codebase pattern
 type Document = any;
 
-// Heavily memoized components to prevent re-renders from chat state
-const MemoizedSmartDocumentViewer = memo(SmartDocumentViewer, (prevProps, nextProps) => {
-  // Only re-render if content actually changes
-  return prevProps.content === nextProps.content && 
-         prevProps.className === nextProps.className;
-});
+// NUCLEAR OPTION: Use iframe-based document viewers to completely bypass React reconciliation
+// This ensures ZERO re-renders of document content regardless of chat state changes
 
 
 interface DocumentChunk {
@@ -833,9 +829,8 @@ export default function ComparePage() {
                     lineHeight: '1.6'
                   }}
                 >
-                  <MemoizedSmartDocumentViewer
+                  <DocumentViewerIframe
                     content={column === 'A' ? memoizedDocumentAContent : memoizedDocumentBContent}
-                    className="text-sm leading-6 text-gray-900 dark:text-gray-100"
                     onTextSelection={column === 'A' ? stableTextSelectionA : stableTextSelectionB}
                   />
                 </div>
