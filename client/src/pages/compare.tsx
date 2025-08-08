@@ -658,14 +658,14 @@ export default function ComparePage() {
   }) => {
     return (
     <div className="flex-1">
-      <Card className="h-[800px] flex flex-col">
+      <Card className="h-[800px] flex flex-col overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
+        <CardContent className="flex-1 flex flex-col overflow-hidden">
           {!doc ? (
             <Tabs 
               value={inputMode} 
@@ -919,7 +919,7 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32 overflow-visible">
           {/* Document A - Takes 2/6 */}
           <div className="lg:col-span-2">
             <MemoizedDocumentColumn

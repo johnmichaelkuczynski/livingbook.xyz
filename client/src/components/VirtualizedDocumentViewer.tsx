@@ -133,11 +133,12 @@ function VirtualizedDocumentViewer({
         className={`virtualized-document-content p-6 ${className}`}
         style={{ 
           height: '600px',
-          maxHeight: '80vh', 
+          maxHeight: '600px', 
           overflowY: 'auto',
           overflowX: 'hidden',
           scrollBehavior: 'smooth',
-          border: '1px solid #e5e7eb'
+          border: '1px solid #e5e7eb',
+          position: 'relative'
         }}
       >
         {chunks.map((chunk) => (
@@ -159,8 +160,10 @@ function VirtualizedDocumentViewer({
       className={`virtualized-document-content ${className}`}
       style={{ 
         height: '600px',
-        maxHeight: '80vh', 
-        border: '1px solid #e5e7eb'
+        maxHeight: '600px', 
+        border: '1px solid #e5e7eb',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
       <List
