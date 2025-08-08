@@ -6,6 +6,13 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
+### Podcast Duration Optimization - COMPLETED (January 8, 2025)
+- **Complete Episode Generation**: Modified all podcast generation prompts to create complete, self-contained episodes that fit within 3.5 minutes
+- **Word Count Constraints**: Added 450-500 word maximum limits to ensure proper timing without content cutoff
+- **All Podcast Types Updated**: Applied constraints to normal single/dialogue, custom single/dialogue, standard, and modern reconstruction podcast modes
+- **Natural Conclusion**: Episodes now naturally conclude within timeframe rather than being truncated
+- **TypeScript Error Fixes**: Resolved error handling type issues in PodcastModal component
+
 ### Complete Application Rebranding - COMPLETED (January 7, 2025)
 - **Full Rebranding**: Complete application rebranding from "DocMath AI" to "Living Book Creator" across all files
 - **Contact Integration**: Added discrete "Contact Us" link in blue at top left of all pages linking to contact@zhisystems.ai

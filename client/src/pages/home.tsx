@@ -492,7 +492,9 @@ export default function Home() {
       });
 
       const prompt = type === 'standard' 
-        ? `Create a podcast-style dialogue between two speakers discussing the ideas in the selected passage. One speaker should summarize the main points; the other should ask clarifying or challenging questions. Keep the tone intelligent, focused, and conversational. Duration: approx. 5 minutes of dialogue.
+        ? `Create a podcast-style dialogue between two speakers discussing the ideas in the selected passage. One speaker should summarize the main points; the other should ask clarifying or challenging questions. Keep the tone intelligent, focused, and conversational.
+
+IMPORTANT: Keep the total dialogue to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
 
 Selected passage:
 """
@@ -504,7 +506,9 @@ Speaker 1: [dialogue]
 Speaker 2: [dialogue]
 Speaker 1: [dialogue]
 ...`
-        : `Create a 5-minute podcast-style dialogue. One speaker reconstructs the author's position based on the selected text; the other evaluates or updates that position using modern cognitive science, philosophy of mind, or adjacent fields. Avoid fluff. Focus on structure, function, and explanatory power.
+        : `Create a podcast-style dialogue between two speakers. One speaker reconstructs the author's position based on the selected text; the other evaluates or updates that position using modern cognitive science, philosophy of mind, or adjacent fields. Avoid fluff. Focus on structure, function, and explanatory power.
+
+IMPORTANT: Keep the total dialogue to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
 
 Selected passage:
 """

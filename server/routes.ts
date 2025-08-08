@@ -1790,6 +1790,8 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
         case 'normal-single':
           prompt = `Create an engaging single-person podcast script about the following content. The script should be conversational, informative, and suitable for audio narration. Include natural pauses and emphasis where appropriate.
 
+IMPORTANT: Keep the script to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
+
 Content: ${contentToUse}
 
 Format the script as a natural monologue with clear sections and smooth transitions. Keep it engaging and educational.`;
@@ -1797,6 +1799,8 @@ Format the script as a natural monologue with clear sections and smooth transiti
           
         case 'normal-dialogue':
           prompt = `Create an engaging two-person podcast dialogue about the following content. Format it as a conversation between HOST and GUEST, with natural back-and-forth discussion. Make it informative yet conversational.
+
+IMPORTANT: Keep the total dialogue to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
 
 Content: ${contentToUse}
 
@@ -1810,6 +1814,8 @@ Make the conversation flow naturally with questions, explanations, and insights.
         case 'custom-single':
           prompt = `Create a single-person podcast script based on these custom instructions: ${customInstructions}
 
+IMPORTANT: Keep the script to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
+
 Content to discuss: ${contentToUse}
 
 Follow the custom instructions provided while creating an engaging audio script suitable for one narrator. Maintain a conversational and engaging tone.`;
@@ -1817,6 +1823,8 @@ Follow the custom instructions provided while creating an engaging audio script 
           
         case 'custom-dialogue':
           prompt = `Create a two-person podcast dialogue based on these custom instructions: ${customInstructions}
+
+IMPORTANT: Keep the total dialogue to approximately 450-500 words maximum to fit within a 3.5 minute podcast episode. Make it a complete, self-contained episode that naturally concludes within this timeframe.
 
 Content to discuss: ${contentToUse}
 
