@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import parse from 'html-react-parser';
 
 interface KaTeXRendererProps {
@@ -131,15 +131,11 @@ function renderMathContent(content: string): string {
   return processedContent;
 }
 
-export default function KaTeXRenderer({ content, className = '', isChunked = false }: KaTeXRendererProps) {
+function KaTeXRenderer({ content, className = '', isChunked = false }: KaTeXRendererProps) {
   // Check if content is HTML (contains tags) or plain text
   const isHtml = content.includes('<') && content.includes('>');
   
-  // Only log for non-chunked content to reduce console spam
-  if (!isChunked) {
-    console.log('KaTeXRenderer received content:', content.substring(0, 200) + '...');
-    console.log('Is HTML detected:', isHtml);
-  }
+  // Removed console logging to prevent re-render spam
   
   if (isHtml) {
     // Sanitize HTML content to prevent XSS while preserving formatting
@@ -151,9 +147,7 @@ export default function KaTeXRenderer({ content, className = '', isChunked = fal
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
       .replace(/javascript:/gi, '');
     
-    if (!isChunked) {
-      console.log('Sanitized HTML:', sanitizedContent.substring(0, 200) + '...');
-    }
+    // Removed console logging to prevent spam
     
     // Use dangerouslySetInnerHTML to force HTML rendering
     return (
@@ -195,3 +189,11 @@ export default function KaTeXRenderer({ content, className = '', isChunked = fal
     />
   );
 }
+
+// Memoized version to prevent unnecessary re-renders
+export default memo(KaTeXRenderer, (prevProps, nextProps) => {
+  // Only re-render if content or className changes
+  return prevProps.content === nextProps.content && 
+         prevProps.className === nextProps.className &&
+         prevProps.isChunked === nextProps.isChunked;
+});

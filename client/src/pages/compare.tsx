@@ -92,7 +92,7 @@ export default function ComparePage() {
     return documentB?.content || '';
   }, [documentB?.content]);
 
-  // Completely stable handlers - no dependencies
+  // Completely stable handlers - no dependencies, fully isolated from chat state
   const handleTextSelectionA = useCallback((text: string) => {
     if (text.length > 10) {
       setSelectedText(text);
@@ -108,6 +108,10 @@ export default function ComparePage() {
       setShowSelectionPopup(true);
     }
   }, []);
+
+  // Create stable references to prevent prop changes
+  const stableTextSelectionA = useCallback(handleTextSelectionA, [handleTextSelectionA]);
+  const stableTextSelectionB = useCallback(handleTextSelectionB, [handleTextSelectionB]);
 
   // Stable file upload handlers
   const stableHandleFileUpload = useCallback((file: File, column: 'A' | 'B') => {
@@ -832,7 +836,7 @@ export default function ComparePage() {
                   <MemoizedSmartDocumentViewer
                     content={column === 'A' ? memoizedDocumentAContent : memoizedDocumentBContent}
                     className="text-sm leading-6 text-gray-900 dark:text-gray-100"
-                    onTextSelection={column === 'A' ? handleTextSelectionA : handleTextSelectionB}
+                    onTextSelection={column === 'A' ? stableTextSelectionA : stableTextSelectionB}
                   />
                 </div>
               </div>
@@ -843,23 +847,21 @@ export default function ComparePage() {
     </div>
     );
   }, (prevProps, nextProps) => {
-    // Only re-render if document-related props actually change, ignore chat state
-    const propsEqual = (
-      prevProps.title === nextProps.title &&
-      prevProps.document?.id === nextProps.document?.id &&
-      prevProps.document?.content === nextProps.document?.content &&
-      prevProps.isUploading === nextProps.isUploading &&
-      prevProps.column === nextProps.column &&
-      prevProps.textInput === nextProps.textInput &&
-      prevProps.inputMode === nextProps.inputMode &&
-      prevProps.dragActive === nextProps.dragActive
-    );
+    // Ultra-aggressive memoization: only re-render for actual document content changes
+    // Ignore ALL other state changes including chat state
+    const documentIdEqual = prevProps.document?.id === nextProps.document?.id;
+    const documentContentEqual = prevProps.document?.content === nextProps.document?.content;
+    const isUploadingEqual = prevProps.isUploading === nextProps.isUploading;
+    const inputModeEqual = prevProps.inputMode === nextProps.inputMode;
     
-    if (!propsEqual) {
-      console.log('🔄 DocumentColumn will re-render:', prevProps.title, 'due to prop changes');
-    }
+    // For text input, only care if we're in text mode and uploading
+    const textInputEqual = (prevProps.inputMode === 'text') ? 
+      (prevProps.textInput === nextProps.textInput) : true;
     
-    return propsEqual;
+    const shouldNotRerender = documentIdEqual && documentContentEqual && 
+                             isUploadingEqual && inputModeEqual && textInputEqual;
+    
+    return shouldNotRerender;
   });
 
   return (
