@@ -94,9 +94,25 @@ export default function ChatInterface({ document, showInputInline = true, onMess
     },
     onError: (error) => {
       console.error('Chat error:', error);
+      
+      let errorTitle = "Failed to send message";
+      let errorDescription = "Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Document not found")) {
+          errorTitle = "Document not found";
+          errorDescription = "The document you're trying to chat with no longer exists. Please refresh the page and upload your document again.";
+        } else if (error.message.includes("Invalid document ID")) {
+          errorTitle = "Invalid document";
+          errorDescription = "There's an issue with the document. Please refresh the page and try again.";
+        } else {
+          errorDescription = error.message;
+        }
+      }
+      
       toast({
-        title: "Failed to send message",
-        description: error instanceof Error ? error.message : "Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
       setIsTyping(false);

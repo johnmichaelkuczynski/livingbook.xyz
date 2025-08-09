@@ -905,6 +905,7 @@ Please provide a helpful response based on the selected text. Keep your response
       const { message, provider = 'deepseek', selectedText } = req.body;
     
     console.log('🔍 REQUEST BODY DEBUG:', {
+      documentId,
       message: message ? `"${message.substring(0, 50)}..."` : 'null',
       provider,
       selectedText: selectedText ? `"${selectedText.substring(0, 100)}..."` : 'null'
@@ -915,11 +916,21 @@ Please provide a helpful response based on the selected text. Keep your response
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
+
+      // Validate document ID
+      if (isNaN(documentId) || documentId <= 0) {
+        console.error(`❌ Invalid document ID: ${documentId}`);
+        return res.status(400).json({ error: "Invalid document ID" });
+      }
       
       // Get document
       const document = await storage.getDocument(documentId);
       if (!document) {
-        return res.status(404).json({ error: "Document not found" });
+        console.error(`❌ Document not found for ID: ${documentId}`);
+        return res.status(404).json({ 
+          error: "Document not found",
+          details: `Document with ID ${documentId} does not exist. Please refresh the page and try uploading your document again.`
+        });
       }
       
       // Get or create chat session
@@ -994,6 +1005,7 @@ CONTEXT: The user has selected a specific passage from their document. Answer th
 "${selectedText}"`;
       } else {
         console.log('❌ NO SELECTED TEXT - using regular message');
+      console.log('🔍 DOCUMENT DEBUG:', { id: document.id, filename: document.filename, contentLength: document.content?.length || 0 });
       }
 
       // Generate AI response
