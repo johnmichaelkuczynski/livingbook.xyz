@@ -277,9 +277,29 @@ export default function Home() {
       }
     },
     onError: (error: any) => {
+      console.error('Send message error:', error);
+      
+      let errorTitle = "Error sending message";
+      let errorDescription = "Failed to send message. Please try again.";
+      
+      if (error.message?.includes("Document not found")) {
+        errorTitle = "Document not found";
+        errorDescription = "The document you're trying to chat with no longer exists. Please refresh the page and upload your document again.";
+        // Clear the current document to prevent further errors
+        setCurrentDocument(null);
+        setDocumentChunks(null);
+      } else if (error.message?.includes("Invalid document ID")) {
+        errorTitle = "Invalid document";
+        errorDescription = "There's an issue with the document. Please refresh the page and try again.";
+        setCurrentDocument(null);
+        setDocumentChunks(null);
+      } else {
+        errorDescription = error.message || errorDescription;
+      }
+      
       toast({
-        title: "Error sending message",
-        description: error.message || "Failed to send message. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     },
@@ -288,10 +308,23 @@ export default function Home() {
   const handleSendMessage = () => {
     if (!message.trim()) return;
     
+    // Check if we have a current document and it's valid
+    if (currentDocument && (!currentDocument.id || isNaN(currentDocument.id))) {
+      toast({
+        title: "Invalid document",
+        description: "There's an issue with the current document. Please refresh the page and upload your document again.",
+        variant: "destructive",
+      });
+      setCurrentDocument(null);
+      setDocumentChunks(null);
+      return;
+    }
+    
     // Capture selected text at the moment of sending
     const currentSelectedText = selectedText;
     console.log('🔍 SENDING MESSAGE WITH SELECTED TEXT:', currentSelectedText ? `"${currentSelectedText.substring(0, 100)}..."` : 'null');
     console.log('🔍 FULL SELECTED TEXT LENGTH:', currentSelectedText ? currentSelectedText.length : 0);
+    console.log('🔍 CURRENT DOCUMENT ID:', currentDocument?.id);
     
     // Store the selected text to be used in the mutation
     const messageData = {

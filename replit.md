@@ -6,6 +6,14 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
+### Document Not Found Error Handling - FIXED (January 9, 2025)
+- **Issue**: Users periodically experienced "404: Document not found" errors when sending chat messages in deployment
+- **Root Cause**: Frontend attempting to send messages to documents that no longer exist or have invalid IDs
+- **Server-Side Fixes**: Added comprehensive document ID validation, improved error logging, and enhanced error messages with actionable details
+- **Client-Side Fixes**: Enhanced error handling with specific messaging for document-related issues, automatic document state cleanup on errors
+- **User Experience**: Clear error messages now guide users to refresh and re-upload documents when issues occur
+- **Debugging**: Added extensive logging to track document state and identify when errors occur
+
 ### Podcast Duration Optimization - COMPLETED (January 8, 2025)
 - **Complete Episode Generation**: Modified all podcast generation prompts to create complete, self-contained episodes that fit within 3.5 minutes
 - **Word Count Constraints**: Added 450-500 word maximum limits to ensure proper timing without content cutoff
