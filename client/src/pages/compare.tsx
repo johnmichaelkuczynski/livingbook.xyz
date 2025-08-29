@@ -211,6 +211,57 @@ export default function ComparePage() {
     e.stopPropagation();
   };
 
+  // Handle sending chat messages
+  const handleSendMessage = async () => {
+    if (!message.trim() || !documentA || !documentB) return;
+    
+    const userMessage = message.trim();
+    setMessage(''); // Clear input immediately
+    
+    try {
+      const response = await fetch('/api/compare/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          documentA: documentA.id,
+          documentB: documentB.id,
+          provider: provider,
+          sessionId: sessionId
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Chat failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      // Set session ID if it's a new session
+      if (result.sessionId && !sessionId) {
+        setSessionId(result.sessionId);
+      }
+      
+      toast({
+        title: "Message sent",
+        description: "AI response received successfully.",
+      });
+      
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast({
+        title: "Chat failed",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Restore the message if it failed
+      setMessage(userMessage);
+    }
+  };
+
   // Document Column component - SUPPORTS BOTH FILE UPLOAD AND TEXT INPUT
   const DocumentColumn = ({  
     title, 
@@ -497,10 +548,70 @@ export default function ComparePage() {
           <div className="lg:col-span-2">
             <Card className="h-[1400px] flex flex-col">
               <CardHeader className="py-0 px-2 h-8 min-h-0">
-                <CardTitle className="text-xs">AI Chat</CardTitle>
+                <CardTitle className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-3 h-3" />
+                    AI Chat
+                  </div>
+                  <Select value={provider} onValueChange={setProvider}>
+                    <SelectTrigger className="w-20 h-6 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Anthropic</SelectItem>
+                      <SelectItem value="perplexity">Perplexity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 p-2">
-                <p className="text-sm text-gray-500">Chat interface will be implemented here.</p>
+              <CardContent className="flex-1 flex flex-col p-2 space-y-2">
+                {/* Chat Messages Area */}
+                <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border overflow-y-auto p-2">
+                  {!documentA && !documentB ? (
+                    <p className="text-sm text-gray-500 text-center mt-8">
+                      Upload or enter text for both documents to start chatting
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center mt-8">
+                      Chat messages will appear here
+                    </p>
+                  )}
+                </div>
+                
+                {/* Chat Input */}
+                <div className="flex-shrink-0">
+                  <div className="flex gap-2">
+                    <Textarea
+                      ref={inputRef}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Ask about both documents..."
+                      className="flex-1 min-h-[80px] resize-none"
+                      disabled={!documentA || !documentB}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!message.trim() || !documentA || !documentB}
+                      className="self-end"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {documentA && documentB 
+                      ? "Press Enter to send, Shift+Enter for new line"
+                      : "Upload both documents to enable chat"
+                    }
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
