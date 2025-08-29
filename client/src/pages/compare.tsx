@@ -34,7 +34,8 @@ export default function ComparePage() {
   const [activeTab, setActiveTab] = useState("documents");
   const [dragActiveA, setDragActiveA] = useState(false);
   const [dragActiveB, setDragActiveB] = useState(false);
-  // Text input mode removed - comparison page only supports file uploads
+  const [textInputA, setTextInputA] = useState('');
+  const [textInputB, setTextInputB] = useState('');
   
   // Document chunking states for large documents
   const [documentChunksA, setDocumentChunksA] = useState<any>(null);
@@ -63,14 +64,161 @@ export default function ComparePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Document Column component - FILE UPLOAD ONLY
+  // Handle text submission
+  const handleTextSubmit = async (column: 'A' | 'B') => {
+    const textInput = column === 'A' ? textInputA : textInputB;
+    
+    // Proper validation - check if there's any text (even one character)
+    if (!textInput || textInput.trim().length === 0) {
+      toast({
+        title: "Empty text",
+        description: `Please enter some text for Document ${column} before submitting.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Set uploading state
+    if (column === 'A') {
+      setIsUploadingA(true);
+    } else {
+      setIsUploadingB(true);
+    }
+    
+    try {
+      // Send text to backend for processing
+      const response = await fetch('/api/documents/create-from-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: textInput.trim(),
+          title: `Text Input ${column} (${new Date().toLocaleTimeString()})`
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Text processing failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      // Set the document
+      if (column === 'A') {
+        setDocumentA(result.document);
+        setTextInputA(''); // Clear text input after successful processing
+      } else {
+        setDocumentB(result.document);
+        setTextInputB(''); // Clear text input after successful processing
+      }
+      
+      toast({
+        title: "Text processed successfully",
+        description: `Document ${column} created from your text input.`,
+      });
+      
+    } catch (error) {
+      console.error('Text processing error:', error);
+      toast({
+        title: "Processing failed",
+        description: `Failed to process text for Document ${column}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      // Clear uploading state
+      if (column === 'A') {
+        setIsUploadingA(false);
+      } else {
+        setIsUploadingB(false);
+      }
+    }
+  };
+
+  // Handle file upload  
+  const handleFileUpload = async (file: File, column: 'A' | 'B') => {
+    // Set uploading state
+    if (column === 'A') {
+      setIsUploadingA(true);
+    } else {
+      setIsUploadingB(true);
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      // Set the document
+      if (column === 'A') {
+        setDocumentA(result.document);
+      } else {
+        setDocumentB(result.document);
+      }
+      
+      toast({
+        title: "File uploaded successfully",
+        description: `Document ${column} uploaded and processed.`,
+      });
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload file for Document ${column}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      // Clear uploading state
+      if (column === 'A') {
+        setIsUploadingA(false);
+      } else {
+        setIsUploadingB(false);
+      }
+    }
+  };
+
+  // Handle drag events
+  const handleDragEnter = (e: React.DragEvent, column: 'A' | 'B') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (column === 'A') setDragActiveA(true);
+    else setDragActiveB(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent, column: 'A' | 'B') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (column === 'A') setDragActiveA(false);
+    else setDragActiveB(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Document Column component - SUPPORTS BOTH FILE UPLOAD AND TEXT INPUT
   const DocumentColumn = ({  
     title, 
     document: doc, 
     isUploading, 
     column,
     dragActive,
+    textInput,
+    setTextInput,
     onFileUpload,
+    onTextSubmit,
     onDragEnter,
     onDragLeave,
     onDragOver,
@@ -81,7 +229,10 @@ export default function ComparePage() {
     isUploading: boolean; 
     column: 'A' | 'B';
     dragActive: boolean;
+    textInput: string;
+    setTextInput: (value: string) => void;
     onFileUpload: (file: File, column: 'A' | 'B') => void;
+    onTextSubmit: (column: 'A' | 'B') => void;
     onDragEnter: (e: React.DragEvent, column: 'A' | 'B') => void;
     onDragLeave: (e: React.DragEvent, column: 'A' | 'B') => void;
     onDragOver: (e: React.DragEvent) => void;
@@ -96,83 +247,107 @@ export default function ComparePage() {
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col overflow-hidden p-0" style={{ height: 'calc(100% - 32px)' }}>
+        <CardContent className="flex-1 flex flex-col overflow-hidden p-2" style={{ height: 'calc(100% - 32px)' }}>
           {!doc ? (
-            <div className="flex-1 flex flex-col space-y-0" style={{ height: 'calc(100% - 0px)' }}>
-              <div 
-                className={`flex-1 flex items-center justify-center border-2 border-dashed rounded-lg mx-2 mb-2 cursor-pointer transition-colors ${
-                  isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' :
-                  dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 
-                  'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                }`}
-                onDragEnter={(e) => onDragEnter(e, column)}
-                onDragLeave={(e) => onDragLeave(e, column)}
-                onDragOver={onDragOver}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const files = Array.from(e.dataTransfer.files);
-                  if (files.length > 0) {
-                    onFileUpload(files[0], column);
-                  }
-                }}
-                onClick={() => {
-                  document.getElementById(`file-input-${column}`)?.click();
-                }}
-                style={{ minHeight: '1200px', height: 'calc(100% - 32px)' }}
-              >
-                <input
-                  id={`file-input-${column}`}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      onFileUpload(e.target.files[0], column);
-                      e.target.value = ''; // Reset input
+            <div className="flex-1 flex flex-col space-y-2">
+              {/* File Upload Section */}
+              <div className="flex-shrink-0">
+                <div 
+                  className={`flex items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${
+                    isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' :
+                    dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 
+                    'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  }`}
+                  onDragEnter={(e) => onDragEnter(e, column)}
+                  onDragLeave={(e) => onDragLeave(e, column)}
+                  onDragOver={onDragOver}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const files = Array.from(e.dataTransfer.files);
+                    if (files.length > 0) {
+                      onFileUpload(files[0], column);
                     }
                   }}
-                  className="hidden"
-                />
-                <div className="text-center">
-                  {isUploading ? (
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 mx-auto border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-lg font-medium text-blue-600 dark:text-blue-400">
-                        Uploading Document {column}...
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Please wait while we process your file
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className={`w-12 h-12 mx-auto ${
-                        dragActive ? 'text-blue-500' : 'text-gray-400'
-                      }`} />
-                      <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                        {dragActive ? `Drop Document ${column} here` : `Upload Document ${column}`}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {dragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
-                      </p>
-                      {!dragActive && (
-                        <>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
-                            Supports PDF, Word, and TXT files
-                          </p>
+                  onClick={() => {
+                    document.getElementById(`file-input-${column}`)?.click();
+                  }}
+                  style={{ minHeight: '100px' }}
+                >
+                  <input
+                    id={`file-input-${column}`}
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        onFileUpload(e.target.files[0], column);
+                        e.target.value = ''; // Reset input
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <div className="text-center">
+                    {isUploading ? (
+                      <div className="space-y-2">
+                        <div className="w-8 h-8 mx-auto border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          Uploading Document {column}...
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Upload className={`w-8 h-8 mx-auto ${
+                          dragActive ? 'text-blue-500' : 'text-gray-400'
+                        }`} />
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {dragActive ? `Drop file here` : `Upload Document ${column}`}
+                        </p>
+                        {!dragActive && (
                           <Button 
                             onClick={(e) => {
                               e.stopPropagation();
                               document.getElementById(`file-input-${column}`)?.click();
                             }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-3 touch-manipulation"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs"
                           >
                             Select File
                           </Button>
-                        </>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* OR Divider */}
+              <div className="flex items-center justify-center py-2">
+                <div className="border-t border-gray-300 flex-1"></div>
+                <span className="px-3 text-xs text-gray-500 bg-gray-50 dark:bg-gray-900">OR</span>
+                <div className="border-t border-gray-300 flex-1"></div>
+              </div>
+              
+              {/* Text Input Section */}
+              <div className="flex-1 flex flex-col space-y-2">
+                <Textarea
+                  placeholder={`Type or paste your text for Document ${column} here...`}
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  className="flex-1 resize-none min-h-[400px]"
+                  disabled={isUploading}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
+                  </p>
+                  <Button 
+                    onClick={() => onTextSubmit(column)} 
+                    disabled={!textInput.trim() || isUploading}
+                    className="flex items-center gap-2"
+                    size="sm"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Process Text
+                  </Button>
                 </div>
               </div>
             </div>
@@ -285,10 +460,13 @@ export default function ComparePage() {
               isUploading={isUploadingA}
               column="A"
               dragActive={dragActiveA}
-              onFileUpload={() => {}}
-              onDragEnter={() => {}}
-              onDragLeave={() => {}}
-              onDragOver={() => {}}
+              textInput={textInputA}
+              setTextInput={setTextInputA}
+              onFileUpload={handleFileUpload}
+              onTextSubmit={handleTextSubmit}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
               onTextSelection={() => {}}
             />
           </div>
@@ -301,10 +479,13 @@ export default function ComparePage() {
               isUploading={isUploadingB}
               column="B"
               dragActive={dragActiveB}
-              onFileUpload={() => {}}
-              onDragEnter={() => {}}
-              onDragLeave={() => {}}
-              onDragOver={() => {}}
+              textInput={textInputB}
+              setTextInput={setTextInputB}
+              onFileUpload={handleFileUpload}
+              onTextSubmit={handleTextSubmit}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
               onTextSelection={() => {}}
             />
           </div>
