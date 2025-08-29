@@ -2160,9 +2160,12 @@ IMPORTANT: Return ONLY the rewritten content. Do not include explanations, intro
         return res.status(500).json({ error: rewriteResponse.error });
       }
       
-      console.log(`✅ REWRITE COMPLETED - Output length: ${rewriteResponse.message.length} chars`);
+      // Clean the response of any markdown formatting
+      const cleanedRewrittenContent = removeMarkupSymbols(rewriteResponse.message);
       
-      res.json({ rewrittenContent: rewriteResponse.message });
+      console.log(`✅ REWRITE COMPLETED - Output length: ${cleanedRewrittenContent.length} chars`);
+      
+      res.json({ rewrittenContent: cleanedRewrittenContent });
       
     } catch (error) {
       console.error("Content rewrite error:", error);

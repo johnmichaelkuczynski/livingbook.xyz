@@ -89,20 +89,40 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
   };
 
   const handleDownloadContent = () => {
-    const blob = new Blob([rewrittenContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${document?.originalName || 'document'}_rewritten.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Downloaded",
-      description: "Rewritten content saved to your device.",
-    });
+    try {
+      // Create download using a more robust approach
+      const element = document.createElement('a');
+      const file = new Blob([rewrittenContent], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `${document?.originalName || 'document'}_rewritten.txt`;
+      element.style.display = 'none';
+      
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      URL.revokeObjectURL(element.href);
+      
+      toast({
+        title: "Downloaded",
+        description: "Rewritten content saved to your device.",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback: copy to clipboard
+      try {
+        navigator.clipboard.writeText(rewrittenContent);
+        toast({
+          title: "Content Copied",
+          description: "Download failed, but content was copied to clipboard.",
+        });
+      } catch (clipboardError) {
+        toast({
+          title: "Download Failed",
+          description: "Could not download or copy the file. Please try selecting and copying the text manually.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleClose = () => {
