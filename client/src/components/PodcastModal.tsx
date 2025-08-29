@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Play, Pause, Download, Volume2, Users, User, Settings, Loader2 } from 'lucide-react';
+import { Play, Pause, Volume2, Users, User, Settings, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -107,41 +107,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     setIsPlaying(!isPlaying);
   };
 
-  const handleDownload = () => {
-    if (!audioUrl) {
-      toast({
-        title: "No audio available",
-        description: "Please generate a podcast first.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    try {
-      // Direct link to server download endpoint
-      const link = document.createElement('a');
-      link.href = audioUrl;
-      link.style.display = 'none';
-      
-      // Add to DOM, trigger download, then remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({
-        title: "Download started",
-        description: "Your podcast is being downloaded.",
-      });
-      
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: "Download failed", 
-        description: "Please try again or contact support.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const resetModal = () => {
     setMode('normal-single');
@@ -308,15 +274,9 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
                     {isPlaying ? 'Pause' : 'Play'}
                   </Button>
                   
-                  <Button
-                    onClick={handleDownload}
-                    variant="outline"
-                    size="default"
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download
-                  </Button>
+                  <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded border">
+                    <strong>To save:</strong> Right-click the audio player below and select "Save audio as..."
+                  </div>
                 </div>
                 
                 <audio
