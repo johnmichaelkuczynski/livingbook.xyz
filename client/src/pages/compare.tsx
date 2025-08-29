@@ -16,6 +16,7 @@ import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
 import StudyGuideModal from "@/components/StudyGuideModal";
 import TestMeModal from "@/components/TestMeModal";
 import PodcastModal from "@/components/PodcastModal";
+import { TwoDocumentPodcastModal } from "@/components/TwoDocumentPodcastModal";
 import RewriteModal from "@/components/RewriteModal";
 import CognitiveMapModal from "@/components/CognitiveMapModal";
 import SummaryThesisModal from "@/components/SummaryThesisModal";
@@ -65,6 +66,7 @@ export default function ComparePage() {
   const [showThesisDeepDiveModal, setShowThesisDeepDiveModal] = useState(false);
   const [showSuggestedReadingsModal, setShowSuggestedReadingsModal] = useState(false);
   const [showSynthesizeModal, setShowSynthesizeModal] = useState(false);
+  const [showTwoDocumentPodcastModal, setShowTwoDocumentPodcastModal] = useState(false);
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
   const [isGeneratingDualMap, setIsGeneratingDualMap] = useState(false);
   const [dualMapProgress, setDualMapProgress] = useState(0);
@@ -585,57 +587,15 @@ ${metaData.cognitiveMap}`;
     }
   };
 
-  // Handle dual document podcast generation - consolidate into single document first
+  // Handle dual document podcast generation - open two-document podcast modal
   const handleDualDocumentPodcast = async (textA: string, textB: string) => {
     try {
-      // Step 1: Create a consolidated document with both texts
-      const consolidatedContent = `COMPARATIVE ANALYSIS REQUEST:
-
-DOCUMENT A (${documentA?.title || 'Document A'}):
-${textA}
-
-DOCUMENT B (${documentB?.title || 'Document B'}):
-${textB}
-
-ANALYSIS PROTOCOL:
-Please generate a comparative podcast with the following structure:
-I. INTRO - Welcome listeners and introduce the comparative analysis
-II. SUMMARY OF DOCUMENT A - Comprehensive summary of Document A's key points, arguments, and content
-III. SUMMARY OF DOCUMENT B - Comprehensive summary of Document B's key points, arguments, and content
-IV. SIMILARITIES - Analyze similarities in content, style, mentality, target-audience, author-agenda
-V. DISSIMILARITIES - Analyze differences in content, style, mentality, target-audience, author-agenda  
-VI. CONCLUSION - Synthesize the comparative analysis and provide final thoughts
-
-Keep the episode to exactly 3.5 minutes (450-500 words maximum).`;
-
-      // Step 2: Create a temporary document from the consolidated content
-      const tempDocResponse = await fetch('/api/documents/create-from-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: consolidatedContent,
-          title: `Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`
-        })
-      });
-
-      if (!tempDocResponse.ok) {
-        throw new Error('Failed to create consolidated document');
-      }
-
-      const tempDoc = await tempDocResponse.json();
-
-      // Step 3: Set up the consolidated document and selected text for podcast modal
-      setSelectedText(consolidatedContent);
-      setSelectionDocument(`Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`);
-      
-      // Step 4: Open podcast modal with the consolidated document
-      setShowPodcastModal(true);
-
+      setShowTwoDocumentPodcastModal(true);
     } catch (error) {
       console.error('Dual document podcast error:', error);
       toast({
-        title: "Error setting up dual podcast",
-        description: "Failed to prepare comparative podcast. Please try again.",
+        title: "Error opening dual podcast modal",
+        description: "Failed to open comparative podcast interface. Please try again.",
         variant: "destructive",
       });
     }
@@ -1241,6 +1201,15 @@ Keep the episode to exactly 3.5 minutes (450-500 words maximum).`;
             id: `temp-${Date.now()}`
           }}
           selectedText={selectedText}
+        />
+
+        <TwoDocumentPodcastModal
+          isOpen={showTwoDocumentPodcastModal}
+          onClose={() => setShowTwoDocumentPodcastModal(false)}
+          documentA={documentA}
+          documentB={documentB}
+          selectedTextA={selectedTextA}
+          selectedTextB={selectedTextB}
         />
 
         <RewriteModal
