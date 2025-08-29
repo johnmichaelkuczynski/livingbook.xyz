@@ -13,7 +13,7 @@ Living Book Creator is a streamlined document processing web application focused
 - **Document Context**: Text selections now properly identify source document (Document A vs Document B) for contextual analysis
 - **Maximum Text Area Size**: Text input areas use calc(100% - 60px) to fill entire available card space  
 - **Layout Structure**: Completely restructured layout with h-full flex containers and minimal padding/margins
-- **Card Height**: Increased comparison document cards to 1200px for maximum text input visibility
+- **Card Height**: Increased comparison document cards to 1400px for maximum text input visibility with 800px minimum text area height
 - **User Experience**: Both document viewers now have identical functionality to single document mode
 
 ### Rewrite Download and Markdown Issues - FIXED (January 9, 2025)
