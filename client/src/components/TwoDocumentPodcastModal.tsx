@@ -37,16 +37,32 @@ export function TwoDocumentPodcastModal({
     setIsConsolidating(true);
     
     try {
+      // Determine which text to use
+      let textA = selectedTextA;
+      let textB = selectedTextB;
+      
+      // Auto-complete for short documents if no text is selected
+      const isDocumentAShort = !documentA || documentA.chunkCount <= 1;
+      const isDocumentBShort = !documentB || documentB.chunkCount <= 1;
+      
+      if (!textA && isDocumentAShort && documentA?.content) {
+        textA = documentA.content;
+      }
+      
+      if (!textB && isDocumentBShort && documentB?.content) {
+        textB = documentB.content;
+      }
+      
       // Create consolidated document with clear labels
       const consolidatedContent = `DOCUMENT A: ${documentA?.title || 'Document A'}
 
-${selectedTextA}
+${textA}
 
 ${'-'.repeat(80)}
 
 DOCUMENT B: ${documentB?.title || 'Document B'}
 
-${selectedTextB}`;
+${textB}`;
 
       setConsolidatedDocument(consolidatedContent);
       setIsConsolidated(true);
@@ -115,7 +131,7 @@ ${selectedTextB}`;
               <div className="flex justify-center pt-4">
                 <Button 
                   onClick={handleConsolidate} 
-                  disabled={isConsolidating || !selectedTextA || !selectedTextB}
+                  disabled={isConsolidating || (!selectedTextA && !selectedTextB && (!documentA?.content || !documentB?.content))}
                   className="px-8"
                 >
                   {isConsolidating ? 'Consolidating...' : 'Consolidate into One Document'}
