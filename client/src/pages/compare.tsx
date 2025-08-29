@@ -209,6 +209,23 @@ export default function ComparePage() {
     e.stopPropagation();
   };
 
+  // Handle clearing all documents and chat
+  const handleClearAll = () => {
+    setDocumentA(null);
+    setDocumentB(null);
+    setMessages([]);
+    setSessionId(null);
+    setTextInputA('');
+    setTextInputB('');
+    setDocumentChunksA(null);
+    setDocumentChunksB(null);
+    
+    toast({
+      title: "Cleared all content",
+      description: "Documents and chat history have been cleared.",
+    });
+  };
+
   // Handle sending chat messages
   const handleSendMessage = async () => {
     if (!message.trim() || !documentA || !documentB) return;
@@ -516,9 +533,19 @@ export default function ComparePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-          Living Book Creator - Document Comparison
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Living Book Creator - Document Comparison
+          </h1>
+          <Button
+            onClick={handleClearAll}
+            variant="outline"
+            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 border-red-300 dark:border-red-600"
+          >
+            <X className="w-4 h-4" />
+            Clear All
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32 overflow-visible">
           {/* Document A - Takes 2/6 */}
