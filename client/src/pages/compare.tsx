@@ -1128,9 +1128,7 @@ ${metaData.cognitiveMap}`;
                       <Button onClick={handleDualCognitiveMap} size="sm" variant="outline" className="text-xs h-6">
                         Mind Map
                       </Button>
-                      <Button onClick={handleDualRewrite} size="sm" variant="outline" className="text-xs h-6">
-                        Combine
-                      </Button>
+
                       <Button onClick={handleDualTestMe} size="sm" variant="outline" className="text-xs h-6">
                         Test Me
                       </Button>
