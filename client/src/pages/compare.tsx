@@ -265,7 +265,7 @@ export default function ComparePage() {
 
   const handlePodcast = () => {
     setShowSelectionPopup(false);
-    setPodcastModal(true);
+    setShowPodcastModal(true);
   };
 
   const handleRewrite = () => {
@@ -985,18 +985,18 @@ ${metaData.cognitiveMap}`;
                 />
               </div>
               
-              {documentChunksA && column === 'A' && (
+              {documentA?.isChunked && column === 'A' && (
                 <div className="mx-2 mb-2">
                   <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                    Large document chunked: {documentChunksA.chunkCount} sections, {documentChunksA.totalWordCount} words
+                    Large document chunked: {documentA.chunkCount} sections, {documentA.totalWords} words
                   </p>
                 </div>
               )}
               
-              {documentChunksB && column === 'B' && (
+              {documentB?.isChunked && column === 'B' && (
                 <div className="mx-2 mb-2">
                   <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                    Large document chunked: {documentChunksB.chunkCount} sections, {documentChunksB.totalWordCount} words
+                    Large document chunked: {documentB.chunkCount} sections, {documentB.totalWords} words
                   </p>
                 </div>
               )}
@@ -1005,16 +1005,14 @@ ${metaData.cognitiveMap}`;
           
           {showSelectionPopup && selectionDocument === title && (
             <TextSelectionHandler
-              selectedText={selectedText}
               onStudyGuide={handleStudyGuide}
               onTestMe={handleTestMe}
               onPodcast={handlePodcast}
               onRewrite={handleRewrite}
-              onCognitiveMap={handleCognitiveMap}
+              onCognitiveMap={() => handleCognitiveMap(selectedText)}
               onSummaryThesis={handleSummaryThesis}
               onThesisDeepDive={handleThesisDeepDive}
               onSuggestedReadings={handleSuggestedReadings}
-              onClose={() => setShowSelectionPopup(false)}
             />
           )}
         </CardContent>
@@ -1265,7 +1263,7 @@ ${metaData.cognitiveMap}`;
                 <Button onClick={handleTestMe} size="sm">Test Me</Button>
                 <Button onClick={handlePodcast} size="sm">Podcast</Button>
                 <Button onClick={handleRewrite} size="sm">Rewrite</Button>
-                <Button onClick={handleCognitiveMap} size="sm">Cognitive Map</Button>
+                <Button onClick={() => handleCognitiveMap(selectedText)} size="sm">Cognitive Map</Button>
                 <Button onClick={handleSummaryThesis} size="sm">Summary</Button>
                 <Button onClick={handleThesisDeepDive} size="sm">Deep Dive</Button>
                 <Button onClick={handleSuggestedReadings} size="sm">Readings</Button>
@@ -1286,14 +1284,13 @@ ${metaData.cognitiveMap}`;
           isOpen={showStudyGuideModal}
           onClose={() => setShowStudyGuideModal(false)}
           content={selectedText}
-          title={selectionDocument}
         />
 
         <TestMeModal
           isOpen={showTestModal}
           onClose={() => setShowTestModal(false)}
-          content={selectedText}
-          title={selectionDocument}
+          selectedText={selectedText}
+          isGenerating={false}
         />
 
         <PodcastModal
@@ -1319,8 +1316,12 @@ ${metaData.cognitiveMap}`;
         <RewriteModal
           isOpen={showRewriteModal}
           onClose={() => setShowRewriteModal(false)}
-          content={selectedText}
-          title={selectionDocument}
+          selectedText={selectedText}
+          document={{ 
+            content: selectedText,
+            title: selectionDocument,
+            id: `temp-${Date.now()}`
+          }}
         />
 
         <CognitiveMapModal
@@ -1328,27 +1329,29 @@ ${metaData.cognitiveMap}`;
           onClose={() => setShowCognitiveMapModal(false)}
           content={cognitiveMapContent}
           selectedText={selectedText}
+          isLoading={isGeneratingDualMap}
         />
 
         <SummaryThesisModal
           isOpen={showSummaryThesisModal}
           onClose={() => setShowSummaryThesisModal(false)}
-          content={selectedText}
-          title={selectionDocument}
+          selectedText={selectedText}
         />
 
         <ThesisDeepDiveModal
           isOpen={showThesisDeepDiveModal}
           onClose={() => setShowThesisDeepDiveModal(false)}
+          selectedText={selectedText}
           content={selectedText}
-          title={selectionDocument}
+          isLoading={false}
         />
 
         <SuggestedReadingsModal
           isOpen={showSuggestedReadingsModal}
           onClose={() => setShowSuggestedReadingsModal(false)}
+          selectedText={selectedText}
           content={selectedText}
-          title={selectionDocument}
+          isLoading={false}
         />
 
         <SynthesizeDocumentsModal
