@@ -629,7 +629,7 @@ ${selectedText}
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {
-      const { selectedText, documentTitle, provider = 'deepseek', type, prompt, voiceOptions } = req.body;
+      const { selectedText, documentTitle, provider = 'deepseek', type = 'single', prompt, voiceOptions } = req.body;
 
       if (!selectedText?.trim()) {
         return res.status(400).json({ error: 'Selected text is required' });
@@ -637,14 +637,18 @@ ${selectedText}
 
       console.log(`🎙️ GENERATING COMPLETE PODCAST - Type: ${type}, Provider: ${provider}`);
 
+      // Generate appropriate prompt based on type
+      const podcastPrompt = prompt || `Generate a complete ${type} podcast episode of exactly 3.5 minutes (450-500 words maximum) about the following text. The episode should have a natural beginning, middle, and end with clear conclusion. Keep it professional and informative:\n\n${selectedText}`;
+
       // Step 1: Generate dialogue using the appropriate AI service
       let chatResponse;
       switch (provider) {
         case 'openai':
-          chatResponse = await openaiService.generateChatResponse(prompt, selectedText, []);
+          chatResponse = await openaiService.generateChatResponse(podcastPrompt, selectedText, []);
           break;
         case 'deepseek':
-          chatResponse = await deepseekService.generateChatResponse(prompt, selectedText, []);
+          // DeepSeek expects (userMessage, documentContent, conversationHistory)
+          chatResponse = await deepseekService.generateChatResponse(podcastPrompt, selectedText, []);
           break;
         case 'anthropic':
           chatResponse = await anthropicService.generateChatResponse(prompt, selectedText, []);
@@ -1372,7 +1376,7 @@ Your task is to create a comprehensive synthesis that:
       let synthesis;
       if (provider.toLowerCase() === 'deepseek') {
         const response = await generateResponse(prompt, '', []);
-        synthesis = response.message;
+        synthesis = typeof response === 'string' ? response : response.message;
       } else {
         synthesis = await generateResponse(prompt, []);
       }

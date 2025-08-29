@@ -39,12 +39,20 @@ export default function DualTextSelectionInterface({
   const currentChunkA = chunksA.length > 0 ? chunksA[selectedChunkA] : documentA?.content || '';
   const currentChunkB = chunksB.length > 0 ? chunksB[selectedChunkB] : documentB?.content || '';
   
+  // Utility function to clean HTML and extract text
+  const cleanHtmlText = (html: string): string => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || doc.body.innerText || '';
+  };
+
   // Handle text selection for document A
   const handleTextSelectionA = () => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
-      const selectedText = selection.toString().trim();
+      let selectedText = selection.toString().trim();
       if (selectedText) {
+        // Clean any HTML artifacts
+        selectedText = cleanHtmlText(selectedText);
         onTextASelect(selectedText);
       }
     }
@@ -54,8 +62,10 @@ export default function DualTextSelectionInterface({
   const handleTextSelectionB = () => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
-      const selectedText = selection.toString().trim();
+      let selectedText = selection.toString().trim();
       if (selectedText) {
+        // Clean any HTML artifacts
+        selectedText = cleanHtmlText(selectedText);
         onTextBSelect(selectedText);
       }
     }
