@@ -13,11 +13,13 @@ Preferred communication style: Simple, everyday language.
 **August 29, 2025**: 
 - ✅ Completed dual-document functionality with auto-complete for short documents
 - ✅ Implemented two-document podcast generation with consolidation workflow
-- ✅ Fixed PodcastModal to handle binary audio responses correctly
+- ✅ Fixed podcast download system with server-side file storage and proper download endpoints
+- ✅ Replaced download button with clear user instructions: "Right-click audio player and select Save audio as..."
+- ✅ Removed redundant "Combine" button from two-document interface (kept working "Synthesize" button)
 - ✅ Enhanced all dual-document functions (Test Me, Podcast, Rewrite) with smart content detection
 - ✅ Auto-complete detects short documents (≤1 chunk) and uses entire content automatically
 - ✅ Maintained manual text selection capability for targeted analysis
-- ✅ All LSP diagnostics resolved, project builds successfully
+- ✅ Streamlined UI with essential, working buttons only
 
 ## System Architecture
 
