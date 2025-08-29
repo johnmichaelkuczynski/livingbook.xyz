@@ -1,0 +1,86 @@
+EMERGENCY: Fix false “Empty text for Document B” on Document Comparison page
+
+Locate file
+
+Search the repo for the string: Living Book Creator - Document Comparison
+
+Open the component that renders that header (likely src/pages/DocumentComparison.tsx or similar).
+
+Make Document A/B inputs single-source-of-truth (controlled)
+
+Add explicit state:
+
+const [docAMode, setDocAMode] = useState<'text'|'file'>('text')
+
+const [docBMode, setDocBMode] = useState<'text'|'file'>('text')
+
+const [docAText, setDocAText] = useState('')
+
+const [docBText, setDocBText] = useState('')
+
+const [docAFile, setDocAFile] = useState<File|null>(null)
+
+const [docBFile, setDocBFile] = useState<File|null>(null)
+
+Wire Document A textarea: value={docAText} and onChange={e=>setDocAText(e.target.value)}
+
+Wire Document B textarea: value={docBText} and onChange={e=>setDocBText(e.target.value)}
+
+Wire file pickers:
+
+A: onChange={e=>setDocAFile(e.target.files?.[0] ?? null)}
+
+B: onChange={e=>setDocBFile(e.target.files?.[0] ?? null)}
+
+When switching “Upload File / Enter Text” tabs, update only docAMode or docBMode. Do not reset the other fields.
+
+Fix the validator (bug is checking the wrong variable)
+
+Find the submit/compare handler (e.g., handleCompare or onSubmit).
+
+Replace any of these anti-patterns:
+
+Reading from document.getElementById(...)
+
+Using a single text var for both panes
+
+Using docAText to validate B
+
+Correct validation logic:
+
+A is valid iff (docAMode==='text' && docAText.trim().length>0) or (docAMode==='file' && docAFile)
+
+B is valid iff (docBMode==='text' && docBText.trim().length>0) or (docBMode==='file' && docBFile)
+
+If either is invalid, show the correct toast for that side. The current B-toast is firing because B’s value is never read from state; fix to use docBText / docBFile.
+
+Submit payload must come from state, not the DOM
+
+Call your compare API with:
+
+{
+  docA: { mode: docAMode, text: docAText, file: docAFile },
+  docB: { mode: docBMode, text: docBText, file: docBFile },
+  model: selectedModel
+}
+
+
+Remove any duplicate IDs or reused names between A and B (name="documentText" must be distinct, e.g., documentAText vs documentBText).
+
+Regression guards
+
+Add a quick unit/integration check or manual test script covering:
+
+B has text, A empty → shows A error only.
+
+A has text, B text → proceeds, no errors.
+
+A file + B text → proceeds.
+
+Switching tabs does not erase entered text.
+
+Ensure the red toast message text matches the actual failing side.
+
+Ship
+
+Save, rebuild, and verify on the live preview that entering text in Document B only no longer triggers the false “Empty text for Document B” toast.

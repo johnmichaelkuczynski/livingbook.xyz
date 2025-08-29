@@ -705,8 +705,8 @@ export default function ComparePage() {
     }
   };
 
-  // Heavily memoized Document Column to prevent unnecessary re-renders from chat state
-  const MemoizedDocumentColumn = memo(({  
+  // Document Column component (memoization temporarily removed for debugging)
+  const DocumentColumn = ({  
     title, 
     document: doc, 
     isUploading, 
@@ -841,7 +841,10 @@ export default function ComparePage() {
                 <Textarea
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
+                  onChange={(e) => {
+                    console.log(`[DEBUG] Textarea onChange for column ${column}:`, e.target.value);
+                    setTextInput(e.target.value);
+                  }}
                   className="flex-1 resize-none"
                   style={{ height: 'calc(100% - 32px)', minHeight: '1200px' }}
                   disabled={isUploading}
@@ -939,22 +942,7 @@ export default function ComparePage() {
       </Card>
     </div>
     );
-  }, (prevProps, nextProps) => {
-    // Memoization that allows text input updates
-    const documentIdEqual = prevProps.document?.id === nextProps.document?.id;
-    const documentContentEqual = prevProps.document?.content === nextProps.document?.content;
-    const isUploadingEqual = prevProps.isUploading === nextProps.isUploading;
-    const inputModeEqual = prevProps.inputMode === nextProps.inputMode;
-    const textInputEqual = prevProps.textInput === nextProps.textInput;
-    const dragActiveEqual = prevProps.dragActive === nextProps.dragActive;
-    
-    // Re-render if any of these change
-    const shouldRerender = !documentIdEqual || !documentContentEqual || 
-                          !isUploadingEqual || !inputModeEqual || 
-                          !textInputEqual || !dragActiveEqual;
-    
-    return !shouldRerender; // Return true to prevent re-render, false to allow re-render
-  });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
@@ -1014,7 +1002,7 @@ export default function ComparePage() {
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-h-[900px] pb-32 overflow-visible">
           {/* Document A - Takes 2/6 */}
           <div className="lg:col-span-2">
-            <MemoizedDocumentColumn
+            <DocumentColumn
               title="Document A"
               document={documentA}
               isUploading={isUploadingA}
@@ -1035,7 +1023,7 @@ export default function ComparePage() {
           
           {/* Document B - Takes 2/6 */}
           <div className="lg:col-span-2">
-            <MemoizedDocumentColumn
+            <DocumentColumn
               title="Document B"
               document={documentB}
               isUploading={isUploadingB}
