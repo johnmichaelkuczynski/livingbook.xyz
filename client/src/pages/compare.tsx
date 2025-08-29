@@ -441,6 +441,14 @@ export default function ComparePage() {
   const handleTextSubmit = async (column: 'A' | 'B') => {
     const textInput = column === 'A' ? textInputA : textInputB;
     
+    console.log(`[DEBUG] handleTextSubmit for column ${column}:`, {
+      textInput: textInput,
+      textInputA: textInputA,
+      textInputB: textInputB,
+      textInputLength: textInput?.length || 0,
+      textInputTrimmed: textInput?.trim() || ''
+    });
+    
     if (!textInput || !textInput.trim()) {
       toast({
         title: "Empty text",
