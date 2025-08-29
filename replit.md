@@ -6,14 +6,15 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
-### Comparison Page Text Input Issues - FIXED (January 9, 2025)
-- **Maximum Text Area Size**: Text input areas now use calc(100% - 60px) to fill entire available card space
-- **Card Height**: Increased comparison document cards to 1200px for maximum text input visibility
+### Comparison Page Full Functionality Implementation - COMPLETED (January 9, 2025)
+- **Complete Text Selection Features**: Added all single-document functionality to both Document A and Document B viewers
+- **Text Selection Toolbar**: Implemented full TextSelectionHandler with popup toolbar for Study Guide, Test Me, Podcast, Rewrite, Cognitive Map, Summary+Thesis, Thesis Deep-Dive, and Suggested Readings
+- **Modal Integration**: Added all 8 feature modals to comparison page with proper state management and text passage handling
+- **Document Context**: Text selections now properly identify source document (Document A vs Document B) for contextual analysis
+- **Maximum Text Area Size**: Text input areas use calc(100% - 60px) to fill entire available card space  
 - **Layout Structure**: Completely restructured layout with h-full flex containers and minimal padding/margins
-- **Dead Space Elimination**: Removed all unnecessary spacing and made text areas consume full height minus tabs/buttons
-- **Text Validation**: Enhanced text submission validation with better error messages and minimum length requirements
-- **Layout Consistency**: Matched ComparisonChatInterface height (1200px) to document columns for consistent layout
-- **User Experience**: Text input areas now fill virtually all available space with no dead space above them
+- **Card Height**: Increased comparison document cards to 1200px for maximum text input visibility
+- **User Experience**: Both document viewers now have identical functionality to single document mode
 
 ### Rewrite Download and Markdown Issues - FIXED (January 9, 2025)
 - **Download Error**: Fixed "document.createElement is not a function" plugin error in rewrite download functionality

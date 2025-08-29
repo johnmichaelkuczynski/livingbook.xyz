@@ -11,8 +11,17 @@ import { useToast } from "@/hooks/use-toast";
 import DocumentViewerIframe from "@/components/DocumentViewerIframe";
 import ComparisonChatInterface from "@/components/ComparisonChatInterface";
 import TextSelectionPopup from "@/components/TextSelectionPopup";
+import TextSelectionHandler from "@/components/TextSelectionHandler";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
 import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
+import StudyGuideModal from "@/components/StudyGuideModal";
+import TestMeModal from "@/components/TestMeModal";
+import PodcastModal from "@/components/PodcastModal";
+import RewriteModal from "@/components/RewriteModal";
+import CognitiveMapModal from "@/components/CognitiveMapModal";
+import SummaryThesisModal from "@/components/SummaryThesisModal";
+import ThesisDeepDiveModal from "@/components/ThesisDeepDiveModal";
+import SuggestedReadingsModal from "@/components/SuggestedReadingsModal";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -60,6 +69,16 @@ export default function ComparePage() {
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [selectionDocument, setSelectionDocument] = useState<string>("");
+  
+  // Modal States for Text Selection Features
+  const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
+  const [showCognitiveMapModal, setShowCognitiveMapModal] = useState(false);
+  const [showSummaryThesisModal, setShowSummaryThesisModal] = useState(false);
+  const [showThesisDeepDiveModal, setShowThesisDeepDiveModal] = useState(false);
+  const [showSuggestedReadingsModal, setShowSuggestedReadingsModal] = useState(false);
   
   // Synthesis Modal State
   const [showSynthesisModal, setShowSynthesisModal] = useState(false);
@@ -131,6 +150,55 @@ export default function ComparePage() {
   }, []);
 
   // Text selection handler
+  // Text Selection Action Handlers
+  const handleDiscuss = useCallback((text: string) => {
+    setMessage(`Analyze this text from ${selectionDocument}: "${text}"`);
+    // Auto-focus chat input
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, [selectionDocument]);
+
+  const handleRewrite = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowRewriteModal(true);
+  }, []);
+
+  const handleStudyGuide = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowStudyGuideModal(true);
+  }, []);
+
+  const handleTestMe = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowTestModal(true);
+  }, []);
+
+  const handlePodcast = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowPodcastModal(true);
+  }, []);
+
+  const handleCognitiveMap = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowCognitiveMapModal(true);
+  }, []);
+
+  const handleSummaryThesis = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowSummaryThesisModal(true);
+  }, []);
+
+  const handleThesisDeepDive = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowThesisDeepDiveModal(true);
+  }, []);
+
+  const handleSuggestedReadings = useCallback((text: string) => {
+    setSelectedText(text);
+    setShowSuggestedReadingsModal(true);
+  }, []);
+
   const handleTextSelection = useCallback((docTitle: string) => {
     const selection = window.getSelection();
     if (selection && selection.toString().trim().length > 0) {
@@ -829,21 +897,31 @@ export default function ComparePage() {
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
-                <div 
-                  className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
-                  onMouseUp={() => onTextSelection(`Document ${column}`)}
-                  onTouchEnd={() => onTextSelection(`Document ${column}`)}
-                  style={{ 
-                    textAlign: 'justify',
-                    textIndent: '2em',
-                    lineHeight: '1.6'
-                  }}
+                <TextSelectionHandler
+                  onDiscuss={handleDiscuss}
+                  onRewrite={handleRewrite}
+                  onStudyGuide={handleStudyGuide}
+                  onTestMe={handleTestMe}
+                  onPodcast={handlePodcast}
+                  onCognitiveMap={handleCognitiveMap}
+                  onSummaryThesis={handleSummaryThesis}
+                  onThesisDeepDive={handleThesisDeepDive}
+                  onSuggestedReadings={handleSuggestedReadings}
                 >
-                  <DocumentViewerIframe
-                    content={column === 'A' ? memoizedDocumentAContent : memoizedDocumentBContent}
-                    onTextSelection={column === 'A' ? stableTextSelectionA : stableTextSelectionB}
-                  />
-                </div>
+                  <div 
+                    className="prose prose-sm max-w-none text-gray-900 dark:text-gray-100 leading-relaxed cursor-text select-text"
+                    style={{ 
+                      textAlign: 'justify',
+                      textIndent: '2em',
+                      lineHeight: '1.6'
+                    }}
+                  >
+                    <DocumentViewerIframe
+                      content={column === 'A' ? memoizedDocumentAContent : memoizedDocumentBContent}
+                      onTextSelection={column === 'A' ? stableTextSelectionA : stableTextSelectionB}
+                    />
+                  </div>
+                </TextSelectionHandler>
               </div>
             </div>
           )}
@@ -1241,6 +1319,63 @@ export default function ComparePage() {
         <TextSelectionPopup
           isOpen={showSelectionPopup}
           onClose={() => setShowSelectionPopup(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        {/* All Text Selection Feature Modals */}
+        <StudyGuideModal
+          isOpen={showStudyGuideModal}
+          onClose={() => setShowStudyGuideModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <TestMeModal
+          isOpen={showTestModal}
+          onClose={() => setShowTestModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <PodcastModal
+          isOpen={showPodcastModal}
+          onClose={() => setShowPodcastModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <RewriteModal
+          isOpen={showRewriteModal}
+          onClose={() => setShowRewriteModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <CognitiveMapModal
+          isOpen={showCognitiveMapModal}
+          onClose={() => setShowCognitiveMapModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <SummaryThesisModal
+          isOpen={showSummaryThesisModal}
+          onClose={() => setShowSummaryThesisModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <ThesisDeepDiveModal
+          isOpen={showThesisDeepDiveModal}
+          onClose={() => setShowThesisDeepDiveModal(false)}
+          selectedText={selectedText}
+          documentTitle={selectionDocument}
+        />
+
+        <SuggestedReadingsModal
+          isOpen={showSuggestedReadingsModal}
+          onClose={() => setShowSuggestedReadingsModal(false)}
           selectedText={selectedText}
           documentTitle={selectionDocument}
         />
