@@ -731,7 +731,7 @@ export default function ComparePage() {
   }) => {
     return (
     <div className="flex-1">
-      <Card className="h-[1200px] flex flex-col overflow-hidden">
+      <Card className="h-[1400px] flex flex-col overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -827,16 +827,16 @@ export default function ComparePage() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="text" className="flex-1 flex flex-col h-full space-y-2">
+              <TabsContent value="text" className="flex-1 flex flex-col h-full space-y-2" style={{ height: 'calc(100% - 50px)' }}>
                 <Textarea
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  className="flex-1 h-full min-h-0 resize-none"
-                  style={{ height: 'calc(100% - 60px)' }}
+                  className="flex-1 resize-none"
+                  style={{ height: 'calc(100% - 80px)', minHeight: '800px' }}
                   disabled={isUploading}
                 />
-                <div className="flex items-center justify-between flex-shrink-0 h-12">
+                <div className="flex items-center justify-between flex-shrink-0 h-16">
                   <p className="text-xs text-gray-500">
                     {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
                   </p>
@@ -1327,57 +1327,48 @@ export default function ComparePage() {
         <StudyGuideModal
           isOpen={showStudyGuideModal}
           onClose={() => setShowStudyGuideModal(false)}
-          selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <TestMeModal
           isOpen={showTestModal}
           onClose={() => setShowTestModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <PodcastModal
           isOpen={showPodcastModal}
           onClose={() => setShowPodcastModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <RewriteModal
           isOpen={showRewriteModal}
           onClose={() => setShowRewriteModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <CognitiveMapModal
           isOpen={showCognitiveMapModal}
           onClose={() => setShowCognitiveMapModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <SummaryThesisModal
           isOpen={showSummaryThesisModal}
           onClose={() => setShowSummaryThesisModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <ThesisDeepDiveModal
           isOpen={showThesisDeepDiveModal}
           onClose={() => setShowThesisDeepDiveModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
 
         <SuggestedReadingsModal
           isOpen={showSuggestedReadingsModal}
           onClose={() => setShowSuggestedReadingsModal(false)}
           selectedText={selectedText}
-          documentTitle={selectionDocument}
         />
       </div>
     </div>
