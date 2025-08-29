@@ -176,7 +176,7 @@ export default function DualTextSelectionInterface({
             Generate Podcast
           </Button>
           <Button size="sm" onClick={() => onDualAction('cognitive-map')} className="text-xs">
-            Mind Map
+            Two-Document Mind Map
           </Button>
           <Button size="sm" onClick={() => onDualAction('test-me')} className="text-xs">
             Test Me

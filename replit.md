@@ -1,107 +1,8 @@
-# Living Book Creator - Document Processing & AI Chat
+# Living Book Creator
 
 ## Overview
 
-Living Book Creator is a streamlined document processing web application focused on text selection and AI-powered contextual analysis. The application now prioritizes core functionality: users can upload documents, select specific text passages, and ask AI questions about their selections. All complex modal features have been removed to focus on the essential text selection workflow.
-
-## Recent Changes (January 2025)
-
-### Comparison Page Full Functionality Implementation - COMPLETED (January 9, 2025)
-- **Complete Text Selection Features**: Added all single-document functionality to both Document A and Document B viewers
-- **Text Selection Toolbar**: Implemented full TextSelectionHandler with popup toolbar for Study Guide, Test Me, Podcast, Rewrite, Cognitive Map, Summary+Thesis, Thesis Deep-Dive, and Suggested Readings
-- **Modal Integration**: Added all 8 feature modals to comparison page with proper state management and text passage handling
-- **Document Context**: Text selections now properly identify source document (Document A vs Document B) for contextual analysis
-- **Maximum Text Area Size**: Text input areas use calc(100% - 60px) to fill entire available card space  
-- **Layout Structure**: Completely restructured layout with h-full flex containers and minimal padding/margins
-- **Card Height**: Increased comparison document cards to 1400px for maximum text input visibility with 800px minimum text area height
-- **User Experience**: Both document viewers now have identical functionality to single document mode
-
-### Rewrite Download and Markdown Issues - FIXED (January 9, 2025)
-- **Download Error**: Fixed "document.createElement is not a function" plugin error in rewrite download functionality
-- **Markdown Cleanup**: Fixed markdown formatting appearing in rewrite output by applying removeMarkupSymbols function to all rewrite responses
-- **Robust Download**: Implemented safer download approach with error handling and clipboard fallback
-- **Server-Side Fix**: Added markdown cleaning to /api/rewrite-content endpoint response
-- **User Experience**: Downloads now work reliably with clean, properly formatted text output
-
-### Document Not Found Error Handling - FIXED (January 9, 2025)
-- **Issue**: Users periodically experienced "404: Document not found" errors when sending chat messages in deployment
-- **Root Cause**: Frontend attempting to send messages to documents that no longer exist or have invalid IDs
-- **Server-Side Fixes**: Added comprehensive document ID validation, improved error logging, and enhanced error messages with actionable details
-- **Client-Side Fixes**: Enhanced error handling with specific messaging for document-related issues, automatic document state cleanup on errors
-- **User Experience**: Clear error messages now guide users to refresh and re-upload documents when issues occur
-- **Debugging**: Added extensive logging to track document state and identify when errors occur
-
-### Podcast Duration Optimization - COMPLETED (January 8, 2025)
-- **Complete Episode Generation**: Modified all podcast generation prompts to create complete, self-contained episodes that fit within 3.5 minutes
-- **Word Count Constraints**: Added 450-500 word maximum limits to ensure proper timing without content cutoff
-- **All Podcast Types Updated**: Applied constraints to normal single/dialogue, custom single/dialogue, standard, and modern reconstruction podcast modes
-- **Natural Conclusion**: Episodes now naturally conclude within timeframe rather than being truncated
-- **TypeScript Error Fixes**: Resolved error handling type issues in PodcastModal component
-
-### Complete Application Rebranding - COMPLETED (January 7, 2025)
-- **Full Rebranding**: Complete application rebranding from "DocMath AI" to "Living Book Creator" across all files
-- **Contact Integration**: Added discrete "Contact Us" link in blue at top left of all pages linking to contact@zhisystems.ai
-- **UI Text Consistency**: Fixed AI chat text sizing to match document text boxes - reduced from large prose to consistent small text
-- **Visual Cleanup**: Removed "Chat history preserved when..." message to eliminate visual clutter
-- **Contact Link Positioning**: Moved contact links from annoying fixed positioning to natural page flow to prevent content blocking
-- **Files Updated**: home.tsx, compare.tsx, wordGenerator.ts, email.ts service, and project documentation
-- **User Confirmed**: Complete satisfaction with "BETTER. NOTE PROGRESS" - all rebranding objectives achieved
-
-### Screen Flickering Issue - PERMANENTLY RESOLVED (January 8, 2025)
-- **Critical Problem**: Chat input keystrokes caused Document A and B viewers to flicker/blank out repeatedly
-- **Root Cause**: React reconciliation was re-rendering document viewers on every chat state change
-- **Nuclear Solution**: Implemented iframe-based document viewers (DocumentViewerIframe.tsx)
-- **Complete Isolation**: Documents now render in isolated iframes, completely bypassing React reconciliation
-- **Zero Re-renders**: Chat input changes can never affect document rendering - 100% flicker elimination
-- **Enhanced Features**: Maintained text selection, styling, and all document viewer functionality within iframes
-- **User Confirmed**: "much better" - screen flickering completely eliminated
-
-### Document Viewer Scrolling - FIXED (January 6, 2025) 
-- **Critical Document Scrolling Fixed**: Applied explicit height constraints (600px, max 80vh) with overflow-y: auto
-- **Independent Scrolling**: Document viewer now scrolls independently from rest of application
-- **Visual Improvements**: Added subtle border to clearly indicate scrollable area
-- **Independent Scroll per Component**: Each tab (Document A, Document B, Comparison Chat) has completely independent scrolling
-- **User Confirmed**: Scrolling problem completely resolved and working perfectly
-
-### Test Me Function - Fully Completed (January 6, 2025)
-- **Difficulty Slider Feature Added**: Interactive sliding scale from 1-10 with dramatically expanded range
-- **Extreme Difficulty Range**: Level 1 creates extremely basic questions for beginners (simple facts directly stated), Level 10 creates expert-level questions challenging PhD scholars with theoretical frameworks
-- **Smart Difficulty Processing**: Backend generates difficulty-aware prompts with level-appropriate question complexity
-- **User-Controlled Workflow**: Shows difficulty selection before test generation instead of auto-generating
-- **Comprehensive Testing Confirmed**: User successfully tested difficulty levels 1, 9, and 10 with appropriate question complexity
-- **JSON Parsing Robustness**: Fixed 20-minute hang issue with improved OpenAI response parsing
-- **Complete User Experience**: Test Me now works seamlessly with proper scrolling, visual feedback, and professional interface
-
-- **Text Selection Context Fixed**: Resolved critical issue where AI was analyzing entire documents instead of selected passages
-- **Podcast Generation Added**: Implemented comprehensive podcast system with three modes (single person, two person dialogue, custom instructions)
-- **OpenAI Dual-Voice Integration**: Enhanced podcast system with dual voices - HOST uses "alloy" voice, GUEST uses "nova" voice for natural conversations
-- **Popup Toolbar System**: Redesigned UI from permanent buttons to clean popup toolbar that appears on text selection, accommodating 10+ action buttons
-- **Voice Quality Fixed**: Eliminated identical voices and removed awkward "HOST:"/"GUEST:" prefixes from spoken audio for professional podcast quality
-- **UI Button Visibility Fixed**: Resolved critical issue where podcast/rewrite buttons were hidden by notifications - made buttons prominent and always visible
-- **Rewrite Text Readability**: Fixed light gray text issue - now uses dark, readable text with proper contrast
-- **Rewrite Function Added**: Created comprehensive rewrite system that works with selected text or document sections specified in instructions
-- **Visual Feedback**: Added toast notifications and input styling to indicate when text is selected with colored buttons
-- **Data Flow**: Fixed client-to-server communication to properly pass selected text context
-- **Smart Content Selection**: Both podcast and rewrite functions work with either selected text passages or full documents/specified sections
-- **Error Handling**: Fixed critical runtime errors in popup toolbar system and streamlined code architecture
-- **Download Functionality Fixed**: Implemented robust podcast download system with dedicated endpoint and fallback mechanisms
-- **Study Guide Function Working**: Fixed missing modal rendering - study guide generation now fully functional with proper UI display
-- **Cognitive Map Function Working**: Fixed critical connection bug - cognitive map now generates both logical structure analysis and interactive Mermaid diagrams
-- **Suggested Readings Function Working**: Connected function to toolbar and modal rendering - generates curated academic reading lists with authors and relevance explanations
-- **Thesis Deep-Dive Function Working (January 6, 2025)**: Implemented advanced scholarly analysis function providing exposition, analysis, and evaluation
-  * Connected handleThesisDeepDive function to TextSelectionHandler properly
-  * Added ThesisDeepDiveModal to rendered components with full functionality
-  * Backend API provides structured scholarly analysis format for advanced scholars
-  * Four sections: Extracted Thesis, Original Wording, Modern Applications, Cross-Comparison
-  * Professional interface with copy, download, and regeneration capabilities
-- **Test Me Function Completely Reinstalled (January 6, 2025)**: Rebuilt Test Me functionality from scratch with strict specifications:
-  * Exactly 5 questions per test (3 multiple choice, 2 short answer) - no variation allowed
-  * Dramatically expanded difficulty range (Level 1: extremely basic for beginners, Level 10: expert PhD-level)
-  * Scrollable test interface with proper height management  
-  * Complete workflow: Generate test → Take test → Receive LLM evaluation
-  * All questions and evaluations generated by LLM only (no hardcoded content)
-  * Clean JSON-based data exchange between frontend and backend
-  * Professional modal interface matching existing design patterns
+Living Book Creator is a web application designed for streamlined document processing and AI-powered contextual analysis. Its core purpose is to enable users to upload documents, select specific text passages, and interact with an AI to ask questions and perform various operations on their selections. The application focuses on essential text selection workflows, providing tools for study, content generation (like podcasts and rewrites), and advanced analytical features.
 
 ## User Preferences
 
@@ -112,53 +13,46 @@ Preferred communication style: Simple, everyday language.
 ### Frontend
 - **Framework**: React 18 with TypeScript
 - **Routing**: Wouter
-- **UI**: Radix UI components with shadcn/ui design system
-- **Styling**: Tailwind CSS with CSS custom properties
+- **UI**: Radix UI components with shadcn/ui design system, styled with Tailwind CSS.
 - **State Management**: TanStack Query (React Query)
-- **Build Tool**: Vite
+- **Math Rendering**: KaTeX integration for mathematical notation.
+- **Document Viewing**: Uses iframe-based viewers for stable and flicker-free document rendering.
 
 ### Backend
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript
-- **File Processing**: Multer for PDF, DOCX, TXT uploads
-- **AI Integration**: OpenAI GPT-4o for document analysis and chat
-- **Document Processing**: Custom utilities for text extraction and math notation processing, preserving original HTML formatting from various document types (e.g., Mammoth.js for DOCX)
+- **File Processing**: Multer handles PDF, DOCX, and TXT uploads. Custom utilities and Mammoth.js are used for text extraction and preserving original HTML formatting from various document types.
+- **AI Integration**: Primarily uses OpenAI GPT-4o for document analysis and chat, with support for DeepSeek, Anthropic, and Perplexity.
+- **Audio Processing**: Generates SSML scripts for natural speech with different voices (e.g., "alloy" for HOST, "nova" for GUEST) for podcast generation.
 
 ### Data Storage
-- **Database**: PostgreSQL with Drizzle ORM (using Neon Database serverless provider)
-- **Schema Management**: Drizzle Kit for migrations
-- **Development**: In-memory storage option
+- **Database**: PostgreSQL with Drizzle ORM, utilizing Neon Database for serverless hosting.
+- **Schema Management**: Drizzle Kit for migrations.
 
 ### Core Features & Design Patterns
-- **Document Processing Pipeline**: Handles file upload, text extraction, math notation formatting, and storage with HTML preservation for document structure.
-- **Text Selection System**: Users can highlight specific passages in documents for targeted AI analysis.
-- **Contextual AI Chat**: AI analyzes only the selected text passage instead of the entire document when text is highlighted.
-- **Podcast Generation**: Three-mode system (single person, two person dialogue, custom instructions) with Azure Speech API integration.
-- **Audio Processing**: Generates SSML scripts for natural speech with different voices for dialogue participants.
-- **Content Rewriting**: Advanced rewrite function that allows custom instructions for selected text or document sections (e.g., "Chapter 2").
-- **Smart Content Selection**: Both podcast and rewrite functions work with either selected text passages or full documents/specified sections.
-- **Visual Feedback**: Toast notifications and input styling provide clear indication when text is selected.
-- **Multi-Provider AI**: Supports DeepSeek, OpenAI, Anthropic, and Perplexity for chat responses.
-- **Math Rendering**: KaTeX integration for proper mathematical notation display.
-- **Input Flexibility**: Supports both file uploads (PDF, DOCX, TXT) and direct text input.
-- **Clean Interface**: Streamlined UI with essential podcast functionality integrated.
-- **Fixed Input**: Bottom-positioned chat input with podcast and rewrite buttons that stay accessible while browsing documents.
+- **Document Processing Pipeline**: Manages file uploads, text extraction, math notation formatting, and storage while preserving document structure.
+- **Text Selection System**: Allows users to highlight text for targeted AI analysis.
+- **Contextual AI Chat**: AI interactions are focused on the selected text, rather than the entire document.
+- **Content Generation**: Includes comprehensive podcast generation (single, dialogue, custom modes) and content rewriting with custom instructions.
+- **Study Tools**: Features include Study Guide generation, Test Me (with customizable difficulty levels and varied question types), Cognitive Map generation (with Mermaid diagrams), Suggested Readings, and Thesis Deep-Dive for scholarly analysis.
+- **Two-Document Comparison**: Supports side-by-side comparison with features like a three-stage mind map protocol that generates individual mind maps for each document and a meta-map identifying analogies and similarities.
+- **User Experience**: Employs a clean, streamlined UI with a popup toolbar for text selection actions, toast notifications for feedback, and flexible input options (file uploads or direct text). Chat input and content generation buttons are persistently accessible.
 
 ## External Dependencies
 
-- **@neondatabase/serverless**: PostgreSQL database connectivity
-- **drizzle-orm & drizzle-kit**: ORM and migration tools
-- **@tanstack/react-query**: Server state management
-- **multer**: File upload handling
-- **openai**: AI chat completions
-- **@radix-ui/***: UI component primitives
-- **tailwindcss**: CSS framework
-- **wouter**: React router
-- **KaTeX**: Math notation rendering
-- **html-react-parser**: HTML content rendering
-- **mammoth.js**: DOCX to HTML conversion
-- **mermaid.js**: Diagram generation
-- **docx**: DOCX file generation
-- **Microsoft Azure TTS**: Text-to-speech synthesis
-- **Vite**: Build tool
-- **DeepSeek, Anthropic, Perplexity**: Additional AI providers for chat functionality.
+- **@neondatabase/serverless**: PostgreSQL database connectivity.
+- **drizzle-orm & drizzle-kit**: ORM and migration tools.
+- **@tanstack/react-query**: Server state management.
+- **multer**: File upload handling.
+- **openai**: AI chat completions.
+- **@radix-ui/***: UI component primitives.
+- **tailwindcss**: CSS framework.
+- **wouter**: React router.
+- **KaTeX**: Math notation rendering.
+- **html-react-parser**: HTML content rendering.
+- **mammoth.js**: DOCX to HTML conversion.
+- **mermaid.js**: Diagram generation.
+- **docx**: DOCX file generation.
+- **Microsoft Azure TTS**: Text-to-speech synthesis.
+- **Vite**: Build tool.
+- **DeepSeek, Anthropic, Perplexity**: Additional AI providers.
