@@ -1317,6 +1317,75 @@ Instructions: ${instructions}
 
   // Comparison API endpoints
   
+  // Synthesize two documents into a unified analysis
+  app.post("/api/synthesize-documents", async (req, res) => {
+    try {
+      const { documentA, documentB, titleA = "Document A", titleB = "Document B", customInstructions, provider = 'deepseek' } = req.body;
+      
+      if (!documentA || !documentB) {
+        return res.status(400).json({ error: "Both documents are required" });
+      }
+
+      // Create synthesis prompt
+      let prompt = `You are tasked with synthesizing two documents into a comprehensive, unified analysis. 
+
+DOCUMENT A: ${titleA}
+${documentA}
+
+DOCUMENT B: ${titleB}  
+${documentB}
+
+Your task is to create a comprehensive synthesis that:
+1. Identifies key themes and concepts from both documents
+2. Compares and contrasts the main arguments or findings
+3. Highlights areas of agreement and disagreement
+4. Draws connections between the documents
+5. Provides insights that emerge from considering both documents together
+6. Creates a unified perspective that incorporates elements from both sources
+
+`;
+
+      if (customInstructions) {
+        prompt += `\nSpecial Instructions: ${customInstructions}\n\n`;
+      }
+
+      prompt += `Please provide a well-structured synthesis that combines the insights from both documents into a cohesive analysis. Format your response with clear headings and organized sections.`;
+
+      // Select AI service based on provider
+      let generateResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateResponse = openaiService.generateResponse;
+          break;
+        case 'anthropic':
+          generateResponse = anthropicService.generateResponse;
+          break;
+        case 'perplexity':
+          generateResponse = perplexityService.generateResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateResponse = deepseekService.generateResponse;
+          break;
+      }
+
+      const synthesis = await generateResponse(prompt);
+      const cleanedSynthesis = removeMarkupSymbols(synthesis);
+
+      res.json({
+        synthesis: cleanedSynthesis,
+        provider: provider,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Document synthesis error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to synthesize documents" 
+      });
+    }
+  });
+
   // Send comparison message
   app.post("/api/compare/message", async (req, res) => {
     try {
