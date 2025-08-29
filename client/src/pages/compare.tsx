@@ -259,12 +259,57 @@ export default function ComparePage() {
     setShowSynthesizeModal(true);
   };
 
+  // Download handlers for chat functionality
+  const handleDownloadChat = () => {
+    if (messages.length === 0) return;
+    
+    const chatContent = messages.map(msg => {
+      const timestamp = new Date(msg.timestamp).toLocaleString();
+      return `[${timestamp}] ${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`;
+    }).join('\n\n');
+    
+    const blob = new Blob([chatContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-conversation-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Chat downloaded",
+      description: "Conversation saved successfully.",
+    });
+  };
+
+  const handleDownloadMessage = (msg: any) => {
+    const timestamp = new Date(msg.timestamp).toLocaleString();
+    const content = `[${timestamp}] ${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `message-${timestamp.replace(/[/:]/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Message downloaded",
+      description: "Single message saved successfully.",
+    });
+  };
+
   const handleDualPodcast = () => {
     if (!documentA || !documentB) return;
     // Set up for dual document podcast
     setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
     setSelectionDocument("Both Documents");
-    setPodcastModal(true);
+    setShowPodcastModal(true);
   };
 
   const handleDualCognitiveMap = () => {
@@ -728,19 +773,30 @@ export default function ComparePage() {
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                      {messages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-2 rounded-lg relative group ${
                             msg.role === 'user' 
                               ? 'bg-blue-500 text-white' 
                               : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                           }`}>
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className="text-xs whitespace-pre-wrap">{msg.content}</p>
                             <p className={`text-xs mt-1 ${
                               msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                             }`}>
                               {new Date(msg.timestamp).toLocaleTimeString()}
                             </p>
+                            {/* Individual message download button */}
+                            <Button
+                              onClick={() => handleDownloadMessage(msg)}
+                              size="sm"
+                              variant="ghost"
+                              className={`absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-4 w-4 ${
+                                msg.role === 'user' ? 'text-blue-100 hover:text-white' : 'text-gray-400 hover:text-gray-600'
+                              }`}
+                            >
+                              <Download className="w-2 h-2" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -765,13 +821,24 @@ export default function ComparePage() {
                         }
                       }}
                     />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!message.trim() || !documentA || !documentB}
-                      className="self-end"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!message.trim() || !documentA || !documentB}
+                        className="self-end"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={handleDownloadChat}
+                        disabled={messages.length === 0}
+                        variant="outline"
+                        size="sm"
+                        className="self-end"
+                      >
+                        <Download className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {documentA && documentB 
