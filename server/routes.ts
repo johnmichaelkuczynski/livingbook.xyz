@@ -1355,21 +1355,21 @@ Your task is to create a comprehensive synthesis that:
       let generateResponse;
       switch (provider.toLowerCase()) {
         case 'openai':
-          generateResponse = openaiService.generateResponse;
+          generateResponse = openaiService.generateChatResponse;
           break;
         case 'anthropic':
-          generateResponse = anthropicService.generateResponse;
+          generateResponse = anthropicService.generateChatResponse;
           break;
         case 'perplexity':
-          generateResponse = perplexityService.generateResponse;
+          generateResponse = perplexityService.generateChatResponse;
           break;
         case 'deepseek':
         default:
-          generateResponse = deepseekService.generateResponse;
+          generateResponse = deepseekService.generateChatResponse;
           break;
       }
 
-      const synthesis = await generateResponse(prompt);
+      const synthesis = await generateResponse(prompt, []);
       const cleanedSynthesis = removeMarkupSymbols(synthesis);
 
       res.json({

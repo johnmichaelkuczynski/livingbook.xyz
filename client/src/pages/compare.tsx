@@ -161,6 +161,7 @@ export default function ComparePage() {
       }
       
       const result = await response.json();
+      console.log('Upload result:', result);
       
       // Set the document - API returns document directly
       if (column === 'A') {
