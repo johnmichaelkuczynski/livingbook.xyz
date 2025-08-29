@@ -6,6 +6,13 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
+### Comparison Page Text Input Issues - FIXED (January 9, 2025)
+- **Text Area Size**: Fixed tiny text input areas in comparison mode by increasing min-height from 250px to 500px
+- **Card Height**: Increased comparison document cards from 800px to 900px for better text input visibility
+- **Text Validation**: Enhanced text submission validation with better error messages and minimum length requirements
+- **Layout Consistency**: Matched ComparisonChatInterface height to document columns for consistent layout
+- **User Experience**: Text input areas now properly sized for meaningful document comparison workflows
+
 ### Rewrite Download and Markdown Issues - FIXED (January 9, 2025)
 - **Download Error**: Fixed "document.createElement is not a function" plugin error in rewrite download functionality
 - **Markdown Cleanup**: Fixed markdown formatting appearing in rewrite output by applying removeMarkupSymbols function to all rewrite responses
