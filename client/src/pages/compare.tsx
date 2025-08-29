@@ -64,6 +64,7 @@ export default function ComparePage() {
   const [showThesisDeepDiveModal, setShowThesisDeepDiveModal] = useState(false);
   const [showSuggestedReadingsModal, setShowSuggestedReadingsModal] = useState(false);
   const [showSynthesizeModal, setShowSynthesizeModal] = useState(false);
+  const [cognitiveMapContent, setCognitiveMapContent] = useState('');
   
   // Chat state
   const [message, setMessage] = useState("");
@@ -265,9 +266,39 @@ export default function ComparePage() {
     setShowRewriteModal(true);
   };
 
-  const handleCognitiveMap = () => {
-    setShowSelectionPopup(false);
+  const handleCognitiveMap = async (text: string) => {
+    setSelectedText(text);
+    setSelectionDocument(documentA ? documentA.originalName : "Unknown Document");
     setShowCognitiveMapModal(true);
+    
+    // Generate cognitive map content
+    try {
+      const response = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: text,
+          provider: provider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate cognitive map: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setCognitiveMapContent(data.cognitiveMap);
+      
+    } catch (error) {
+      console.error('Cognitive map generation error:', error);
+      toast({
+        title: "Error generating cognitive map",
+        description: "Failed to generate cognitive map. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSummaryThesis = () => {
@@ -344,11 +375,42 @@ export default function ComparePage() {
     setShowPodcastModal(true);
   };
 
-  const handleDualCognitiveMap = () => {
+  const handleDualCognitiveMap = async () => {
     if (!documentA || !documentB) return;
-    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
+    
+    const combinedText = `Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`;
+    setSelectedText(combinedText);
     setSelectionDocument("Both Documents");
     setShowCognitiveMapModal(true);
+    
+    // Generate cognitive map content
+    try {
+      const response = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: combinedText,
+          provider: provider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate cognitive map: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setCognitiveMapContent(data.cognitiveMap);
+      
+    } catch (error) {
+      console.error('Cognitive map generation error:', error);
+      toast({
+        title: "Error generating cognitive map",
+        description: "Failed to generate cognitive map. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDualRewrite = () => {
@@ -365,11 +427,22 @@ export default function ComparePage() {
     setShowTestModal(true);
   };
 
+  // Utility function to clean HTML and extract text
+  const cleanHtmlText = (html: string): string => {
+    if (!html) return '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || doc.body.innerText || '';
+  };
+
   // Handle dual action functions (for selected text from both documents)
   const handleDualAction = (action: string) => {
     if (!selectedTextA || !selectedTextB) return;
     
-    const combinedContent = `Selected from ${documentA?.title || 'Document A'}: ${selectedTextA}\n\nSelected from ${documentB?.title || 'Document B'}: ${selectedTextB}`;
+    // Clean both texts of any HTML formatting
+    const cleanTextA = cleanHtmlText(selectedTextA);
+    const cleanTextB = cleanHtmlText(selectedTextB);
+    
+    const combinedContent = `Selected from ${documentA?.title || 'Document A'}:\n${cleanTextA}\n\nSelected from ${documentB?.title || 'Document B'}:\n${cleanTextB}`;
     
     setSelectedText(combinedContent);
     setSelectionDocument("Both Documents (Selected Passages)");
@@ -1001,8 +1074,8 @@ export default function ComparePage() {
         <CognitiveMapModal
           isOpen={showCognitiveMapModal}
           onClose={() => setShowCognitiveMapModal(false)}
-          content={selectedText}
-          title={selectionDocument}
+          content={cognitiveMapContent}
+          selectedText={selectedText}
         />
 
         <SummaryThesisModal
