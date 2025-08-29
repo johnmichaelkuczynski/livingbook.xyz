@@ -44,27 +44,25 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     setCurrentStep('script');
     
     try {
-      // Step 1: Generate podcast script
-      const scriptResponse = await apiRequest('POST', '/api/generate-podcast-script', {
-        documentId: document.id,
-        selectedText: selectedText || null,
-        mode,
+      // Generate podcast with single API call
+      const response = await apiRequest('POST', '/api/generate-podcast', {
+        selectedText: selectedText || document.content,
+        provider: 'deepseek',
+        podcastType: mode.includes('dialogue') ? 'dialogue' : 'single',
         customInstructions: (mode === 'custom-single' || mode === 'custom-dialogue') ? customInstructions : null,
       });
       
-      const scriptData = await scriptResponse.json();
-      setPodcastScript(scriptData.script);
+      const data = await response.json();
+      setPodcastScript(data.script || 'Script generated successfully');
       setCurrentStep('audio');
       
-      // Step 2: Generate audio
-      const audioResponse = await apiRequest('POST', '/api/generate-podcast-audio', {
-        script: scriptData.script,
-        mode,
-      });
-      
-      const audioData = await audioResponse.json();
-      setAudioUrl(audioData.audioUrl);
-      setCurrentStep('complete');
+      // Audio is generated as part of the same call
+      if (data.audioUrl) {
+        setAudioUrl(data.audioUrl);
+        setCurrentStep('complete');
+      } else {
+        throw new Error('No audio URL returned from podcast generation');
+      }
       
       toast({
         title: "Podcast generated successfully",
