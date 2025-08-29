@@ -441,18 +441,48 @@ export default function ComparePage() {
     return doc.body.textContent || doc.body.innerText || '';
   };
 
-  // Handle dual action functions (for selected text from both documents)
+  // Handle dual action functions (for selected text from both documents OR entire documents if single-chunk)
   const handleDualAction = async (action: string) => {
-    if (!selectedTextA || !selectedTextB) return;
+    // Determine whether to use selected text or entire document content
+    let textA = selectedTextA;
+    let textB = selectedTextB;
+    let contentLabel = "Both Documents (Selected Passages)";
+    
+    // If documents are short (single chunk) and no text is manually selected, use entire document
+    const isDocumentAShort = !documentA?.isChunked || documentA?.chunkCount <= 1;
+    const isDocumentBShort = !documentB?.isChunked || documentB?.chunkCount <= 1;
+    
+    if (!selectedTextA && isDocumentAShort && documentA?.content) {
+      textA = cleanHtmlText(documentA.content);
+    }
+    
+    if (!selectedTextB && isDocumentBShort && documentB?.content) {
+      textB = cleanHtmlText(documentB.content);
+    }
+    
+    // Update content label if using entire documents
+    if ((!selectedTextA && isDocumentAShort) || (!selectedTextB && isDocumentBShort)) {
+      contentLabel = "Both Documents (Complete)";
+    }
+    
+    // If still no content available, return
+    if (!textA || !textB) {
+      toast({
+        title: "No content available",
+        description: "Please select text from both documents or ensure documents are loaded.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Clean both texts of any HTML formatting
-    const cleanTextA = cleanHtmlText(selectedTextA);
-    const cleanTextB = cleanHtmlText(selectedTextB);
+    const cleanTextA = cleanHtmlText(textA);
+    const cleanTextB = cleanHtmlText(textB);
     
-    const combinedContent = `Selected from ${documentA?.title || 'Document A'}:\n${cleanTextA}\n\nSelected from ${documentB?.title || 'Document B'}:\n${cleanTextB}`;
+    const combinedContent = `From ${documentA?.title || 'Document A'}:\n${cleanTextA}\n\nFrom ${documentB?.title || 'Document B'}:\n${cleanTextB}`;
     
     setSelectedText(combinedContent);
-    setSelectionDocument("Both Documents (Selected Passages)");
+    setSelectionDocument(contentLabel);
     
     switch (action) {
       case 'podcast':
@@ -1013,6 +1043,15 @@ ${metaData.cognitiveMap}`;
                 {documentA && documentB && (
                   <div className="flex-shrink-0 space-y-2">
                     <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300">Both Documents:</h3>
+                    
+                    {/* Auto-complete indicator for short documents */}
+                    {((documentA && (!documentA.isChunked || documentA.chunkCount <= 1)) ||
+                      (documentB && (!documentB.isChunked || documentB.chunkCount <= 1))) && (
+                      <div className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                        <span className="font-medium">Auto-complete:</span> Functions will use entire document content unless you select specific text.
+                      </div>
+                    )}
+                    
                     <div className="grid grid-cols-2 gap-1">
                       <Button onClick={handleSynthesizeDocuments} size="sm" variant="outline" className="text-xs h-6">
                         Synthesize
