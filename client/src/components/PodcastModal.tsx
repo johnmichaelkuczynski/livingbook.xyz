@@ -131,7 +131,23 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
         description: "Please wait while we prepare your podcast.",
       });
 
-      // Extract audio ID from URL and use dedicated download endpoint
+      // For blob URLs, download directly
+      if (audioUrl.startsWith('blob:')) {
+        const link = document.createElement('a');
+        link.href = audioUrl;
+        link.download = `podcast-${Date.now()}.mp3`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download started",
+          description: "Your podcast file is being downloaded.",
+        });
+        return;
+      }
+
+      // For server URLs, extract audio ID and use dedicated download endpoint
       const audioId = audioUrl.split('/').pop();
       const downloadUrl = `/api/download-audio/${audioId}`;
       console.log('Download URL:', downloadUrl);
