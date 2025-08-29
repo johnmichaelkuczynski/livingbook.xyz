@@ -842,8 +842,9 @@ export default function ComparePage() {
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
                   onChange={(e) => {
-                    console.log(`[DEBUG] Textarea onChange for column ${column}:`, e.target.value);
-                    setTextInput(e.target.value);
+                    const newValue = e.target.value;
+                    console.log(`[DEBUG] Textarea onChange for column ${column}:`, newValue, 'calling setTextInput with:', typeof setTextInput);
+                    setTextInput(newValue);
                   }}
                   className="flex-1 resize-none"
                   style={{ height: 'calc(100% - 32px)', minHeight: '1200px' }}
