@@ -22,6 +22,7 @@ import SummaryThesisModal from "@/components/SummaryThesisModal";
 import ThesisDeepDiveModal from "@/components/ThesisDeepDiveModal";
 import SuggestedReadingsModal from "@/components/SuggestedReadingsModal";
 import SynthesizeDocumentsModal from "@/components/SynthesizeDocumentsModal";
+import DualTextSelectionInterface from "@/components/DualTextSelectionInterface";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -39,19 +40,24 @@ export default function ComparePage() {
   const [textInputB, setTextInputB] = useState('');
   const [messages, setMessages] = useState<Array<{id: number, role: string, content: string, timestamp: string}>>([]);
   
-  // Document chunking states for large documents
-  const [documentChunksA, setDocumentChunksA] = useState<any>(null);
-  const [documentChunksB, setDocumentChunksB] = useState<any>(null);
+  // Document chunking states for large documents (1000 word chunks)
+  const [documentChunksA, setDocumentChunksA] = useState<string[]>([]);
+  const [documentChunksB, setDocumentChunksB] = useState<string[]>([]);
+  const [selectedChunkA, setSelectedChunkA] = useState<number>(0);
+  const [selectedChunkB, setSelectedChunkB] = useState<number>(0);
   
-  // Text Selection State
+  // Text Selection State - Enhanced for dual selection
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
+  const [showDualSelectionPopup, setShowDualSelectionPopup] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [selectedTextA, setSelectedTextA] = useState("");
+  const [selectedTextB, setSelectedTextB] = useState("");
   const [selectionDocument, setSelectionDocument] = useState<string>("");
   
   // Modal States for Text Selection Features
   const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
-  const [showPodcastModal, setPodcastModal] = useState(false);
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [showCognitiveMapModal, setShowCognitiveMapModal] = useState(false);
   const [showSummaryThesisModal, setShowSummaryThesisModal] = useState(false);
@@ -66,6 +72,25 @@ export default function ComparePage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Utility function to chunk documents by word count (1000 words)
+  const chunkDocument = (content: string): string[] => {
+    const words = content.split(/\s+/);
+    const chunks: string[] = [];
+    const chunkSize = 1000;
+    
+    for (let i = 0; i < words.length; i += chunkSize) {
+      const chunk = words.slice(i, i + chunkSize).join(' ');
+      chunks.push(chunk);
+    }
+    
+    return chunks.length > 0 ? chunks : [content];
+  };
+
+  // Function to count words in a string
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
 
   // Handle text submission
   const handleTextSubmit = async (column: 'A' | 'B') => {
@@ -163,11 +188,18 @@ export default function ComparePage() {
       const result = await response.json();
       console.log('Upload result:', result);
       
-      // Set the document - API returns document directly
+      // Set the document and create chunks if large
+      const wordCount = countWords(result.content);
+      const chunks = wordCount > 1000 ? chunkDocument(result.content) : [];
+      
       if (column === 'A') {
         setDocumentA(result);
+        setDocumentChunksA(chunks);
+        setSelectedChunkA(0);
       } else {
         setDocumentB(result);
+        setDocumentChunksB(chunks);
+        setSelectedChunkB(0);
       }
       
       toast({
@@ -333,6 +365,34 @@ export default function ComparePage() {
     setShowTestModal(true);
   };
 
+  // Handle dual action functions (for selected text from both documents)
+  const handleDualAction = (action: string) => {
+    if (!selectedTextA || !selectedTextB) return;
+    
+    const combinedContent = `Selected from ${documentA?.title || 'Document A'}: ${selectedTextA}\n\nSelected from ${documentB?.title || 'Document B'}: ${selectedTextB}`;
+    
+    setSelectedText(combinedContent);
+    setSelectionDocument("Both Documents (Selected Passages)");
+    
+    switch (action) {
+      case 'podcast':
+        setShowPodcastModal(true);
+        break;
+      case 'cognitive-map':
+        setShowCognitiveMapModal(true);
+        break;
+      case 'test-me':
+        setShowTestModal(true);
+        break;
+      case 'study-guide':
+        setShowStudyGuideModal(true);
+        break;
+      case 'rewrite':
+        setShowRewriteModal(true);
+        break;
+    }
+  };
+
   // Handle clearing all documents and chat
   const handleClearAll = () => {
     setDocumentA(null);
@@ -341,8 +401,12 @@ export default function ComparePage() {
     setSessionId(null);
     setTextInputA('');
     setTextInputB('');
-    setDocumentChunksA(null);
-    setDocumentChunksB(null);
+    setDocumentChunksA([]);
+    setDocumentChunksB([]);
+    setSelectedTextA('');
+    setSelectedTextB('');
+    setSelectedChunkA(0);
+    setSelectedChunkB(0);
     
     toast({
       title: "Cleared all content",
@@ -761,6 +825,30 @@ export default function ComparePage() {
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-2"></div>
                   </div>
                 )}
+
+                {/* Dual Text Selection Interface */}
+                {documentA && documentB && (
+                  <div className="flex-shrink-0 space-y-2">
+                    <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300">Select Passages from Both Documents:</h3>
+                    <DualTextSelectionInterface
+                      documentA={documentA}
+                      documentB={documentB}
+                      chunksA={documentChunksA}
+                      chunksB={documentChunksB}
+                      selectedChunkA={selectedChunkA}
+                      selectedChunkB={selectedChunkB}
+                      selectedTextA={selectedTextA}
+                      selectedTextB={selectedTextB}
+                      onChunkAChange={setSelectedChunkA}
+                      onChunkBChange={setSelectedChunkB}
+                      onTextASelect={setSelectedTextA}
+                      onTextBSelect={setSelectedTextB}
+                      onDualAction={handleDualAction}
+                    />
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2"></div>
+                  </div>
+                )}
+
                 {/* Chat Messages Area */}
                 <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border overflow-y-auto p-2">
                   {!documentA && !documentB ? (
@@ -898,7 +986,7 @@ export default function ComparePage() {
 
         <PodcastModal
           isOpen={showPodcastModal}
-          onClose={() => setPodcastModal(false)}
+          onClose={() => setShowPodcastModal(false)}
           content={selectedText}
           title={selectionDocument}
         />
