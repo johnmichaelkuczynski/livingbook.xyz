@@ -446,7 +446,9 @@ export default function ComparePage() {
       textInputA: textInputA,
       textInputB: textInputB,
       textInputLength: textInput?.length || 0,
-      textInputTrimmed: textInput?.trim() || ''
+      textInputTrimmed: textInput?.trim() || '',
+      textInputALength: textInputA?.length || 0,
+      textInputBLength: textInputB?.length || 0
     });
     
     if (!textInput || !textInput.trim()) {
@@ -938,21 +940,20 @@ export default function ComparePage() {
     </div>
     );
   }, (prevProps, nextProps) => {
-    // Ultra-aggressive memoization: only re-render for actual document content changes
-    // Ignore ALL other state changes including chat state
+    // Memoization that allows text input updates
     const documentIdEqual = prevProps.document?.id === nextProps.document?.id;
     const documentContentEqual = prevProps.document?.content === nextProps.document?.content;
     const isUploadingEqual = prevProps.isUploading === nextProps.isUploading;
     const inputModeEqual = prevProps.inputMode === nextProps.inputMode;
+    const textInputEqual = prevProps.textInput === nextProps.textInput;
+    const dragActiveEqual = prevProps.dragActive === nextProps.dragActive;
     
-    // For text input, only care if we're in text mode and uploading
-    const textInputEqual = (prevProps.inputMode === 'text') ? 
-      (prevProps.textInput === nextProps.textInput) : true;
+    // Re-render if any of these change
+    const shouldRerender = !documentIdEqual || !documentContentEqual || 
+                          !isUploadingEqual || !inputModeEqual || 
+                          !textInputEqual || !dragActiveEqual;
     
-    const shouldNotRerender = documentIdEqual && documentContentEqual && 
-                             isUploadingEqual && inputModeEqual && textInputEqual;
-    
-    return shouldNotRerender;
+    return !shouldRerender; // Return true to prevent re-render, false to allow re-render
   });
 
   return (
