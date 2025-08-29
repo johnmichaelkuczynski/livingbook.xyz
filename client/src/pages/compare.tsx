@@ -1005,15 +1005,18 @@ ${metaData.cognitiveMap}`;
           
           {showSelectionPopup && selectionDocument === title && (
             <TextSelectionHandler
-              onStudyGuide={handleStudyGuide}
-              onTestMe={handleTestMe}
-              onPodcast={handlePodcast}
-              onRewrite={handleRewrite}
+              onDiscuss={(text) => {}}
+              onStudyGuide={() => handleStudyGuide()}
+              onTestMe={() => handleTestMe()}
+              onPodcast={() => handlePodcast()}
+              onRewrite={() => handleRewrite()}
               onCognitiveMap={() => handleCognitiveMap(selectedText)}
-              onSummaryThesis={handleSummaryThesis}
-              onThesisDeepDive={handleThesisDeepDive}
-              onSuggestedReadings={handleSuggestedReadings}
-            />
+              onSummaryThesis={() => handleSummaryThesis()}
+              onThesisDeepDive={() => handleThesisDeepDive()}
+              onSuggestedReadings={() => handleSuggestedReadings()}
+            >
+              <div></div>
+            </TextSelectionHandler>
           )}
         </CardContent>
       </Card>
