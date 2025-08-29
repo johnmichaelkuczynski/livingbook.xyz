@@ -69,6 +69,9 @@ export default function ComparePage() {
   const [isGeneratingDualMap, setIsGeneratingDualMap] = useState(false);
   const [dualMapProgress, setDualMapProgress] = useState(0);
   const [dualMapStatus, setDualMapStatus] = useState('');
+  const [isGeneratingDualPodcast, setIsGeneratingDualPodcast] = useState(false);
+  const [dualPodcastProgress, setDualPodcastProgress] = useState(0);
+  const [dualPodcastStatus, setDualPodcastStatus] = useState('');
   
   // Chat state
   const [message, setMessage] = useState("");
@@ -453,7 +456,7 @@ export default function ComparePage() {
     
     switch (action) {
       case 'podcast':
-        setShowPodcastModal(true);
+        await handleDualDocumentPodcast(cleanTextA, cleanTextB);
         break;
       case 'cognitive-map':
         await handleDualDocumentMindMap(cleanTextA, cleanTextB);
@@ -581,6 +584,97 @@ ${metaData.cognitiveMap}`;
       setIsGeneratingDualMap(false);
       setDualMapProgress(0);
       setDualMapStatus('');
+    }
+  };
+
+  // Handle dual document podcast generation with specific protocol
+  const handleDualDocumentPodcast = async (textA: string, textB: string) => {
+    setIsGeneratingDualPodcast(true);
+    setDualPodcastProgress(0);
+    setShowPodcastModal(true);
+
+    try {
+      setDualPodcastStatus('Creating comparative podcast script...');
+      setDualPodcastProgress(20);
+
+      const podcastPrompt = `Create a comparative podcast episode analyzing two documents with the following exact structure:
+
+DOCUMENT A (${documentA?.title || 'Document A'}):
+${textA}
+
+DOCUMENT B (${documentB?.title || 'Document B'}):
+${textB}
+
+Generate a podcast with exactly this format:
+
+I. INTRO
+- Welcome listeners and introduce the comparative analysis
+- Briefly mention both documents being analyzed
+
+II. SUMMARY OF DOCUMENT A
+- Comprehensive summary of Document A's key points, arguments, and content
+
+III. SUMMARY OF DOCUMENT B  
+- Comprehensive summary of Document B's key points, arguments, and content
+
+IV. SIMILARITIES BETWEEN THE TWO DOCUMENTS
+Analyze similarities in respect of:
+- Content (themes, topics, subject matter)
+- Style (writing approach, tone, structure)
+- Mentality (worldview, philosophical approach)
+- Target-audience (intended readers, level of complexity)
+- Author-agenda (goals, purposes, intentions)
+
+V. DISSIMILARITIES BETWEEN THE TWO DOCUMENTS
+Analyze differences in respect of:
+- Content (contrasting themes, different topics)
+- Style (different writing approaches, contrasting tones)
+- Mentality (opposing worldviews, different philosophical approaches)
+- Target-audience (different intended readers, varying complexity levels)
+- Author-agenda (different goals, contrasting purposes)
+
+VI. CONCLUSION
+- Synthesize the comparative analysis
+- Highlight the most significant insights from the comparison
+- Provide final thoughts on the relationship between the documents
+
+Keep the entire episode to exactly 3.5 minutes (450-500 words maximum). Make it engaging and informative.`;
+
+      setDualPodcastProgress(40);
+
+      const response = await fetch('/api/generate-podcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText: podcastPrompt,
+          provider: provider,
+          type: 'dual-document-comparison',
+          documentTitle: `Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`
+        }),
+      });
+
+      setDualPodcastProgress(80);
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate dual podcast: ${response.statusText}`);
+      }
+
+      setDualPodcastProgress(100);
+      setDualPodcastStatus('Dual-document podcast generated successfully!');
+
+      // The response will be handled by the PodcastModal component
+      
+    } catch (error) {
+      console.error('Dual podcast generation error:', error);
+      toast({
+        title: "Error generating dual podcast",
+        description: "Failed to generate comparative podcast. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingDualPodcast(false);
+      setDualPodcastProgress(0);
+      setDualPodcastStatus('');
     }
   };
 
@@ -1229,6 +1323,13 @@ ${metaData.cognitiveMap}`;
           progress={dualMapProgress}
           status={dualMapStatus}
           title="Generating Two-Document Mind Map"
+        />
+
+        <ProgressModal
+          isOpen={isGeneratingDualPodcast}
+          progress={dualPodcastProgress}
+          status={dualPodcastStatus}
+          title="Generating Comparative Podcast"
         />
       </div>
     </div>
