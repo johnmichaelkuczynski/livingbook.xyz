@@ -1369,8 +1369,14 @@ Your task is to create a comprehensive synthesis that:
           break;
       }
 
-      const synthesis = await generateResponse(prompt, []);
-      const cleanedSynthesis = removeMarkupSymbols(synthesis);
+      let synthesis;
+      if (provider.toLowerCase() === 'deepseek') {
+        const response = await generateResponse(prompt, '', []);
+        synthesis = response.message;
+      } else {
+        synthesis = await generateResponse(prompt, []);
+      }
+      const cleanedSynthesis = removeMarkupSymbols(synthesis || 'No synthesis generated');
 
       res.json({
         synthesis: cleanedSynthesis,
