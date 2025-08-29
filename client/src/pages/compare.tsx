@@ -219,15 +219,15 @@ export default function ComparePage() {
     setMessage(''); // Clear input immediately
     
     try {
-      const response = await fetch('/api/compare/chat', {
+      const response = await fetch('/api/compare/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: userMessage,
-          documentA: documentA.id,
-          documentB: documentB.id,
+          documentAId: documentA.id,
+          documentBId: documentB.id,
           provider: provider,
           sessionId: sessionId
         }),
