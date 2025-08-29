@@ -732,20 +732,20 @@ export default function ComparePage() {
     return (
     <div className="flex-1">
       <Card className="h-[1400px] flex flex-col overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+        <CardHeader className="py-1 px-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <FileText className="w-4 h-4" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col overflow-hidden p-4 h-full">
+        <CardContent className="flex-1 flex flex-col overflow-hidden p-1" style={{ height: 'calc(100% - 45px)' }}>
           {!doc ? (
             <Tabs 
               value={inputMode} 
               onValueChange={(value) => setInputMode(value as 'upload' | 'text')}
               className="flex-1 flex flex-col h-full"
             >
-              <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0">
+              <TabsList className="grid w-full grid-cols-2 mb-1 flex-shrink-0">
                 <TabsTrigger value="upload" className="flex items-center gap-2">
                   <Upload className="w-4 h-4" />
                   Upload File
@@ -827,13 +827,13 @@ export default function ComparePage() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="text" className="flex-1 flex flex-col h-full space-y-2" style={{ height: 'calc(100% - 50px)' }}>
+              <TabsContent value="text" className="flex-1 flex flex-col space-y-1" style={{ height: 'calc(100% - 45px)' }}>
                 <Textarea
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
                   className="flex-1 resize-none"
-                  style={{ height: 'calc(100% - 80px)', minHeight: '800px' }}
+                  style={{ height: 'calc(100% - 60px)', minHeight: '1000px' }}
                   disabled={isUploading}
                 />
                 <div className="flex items-center justify-between flex-shrink-0 h-16">
@@ -852,10 +852,10 @@ export default function ComparePage() {
               </TabsContent>
             </Tabs>
           ) : (
-            <div className="flex-1 flex flex-col space-y-4">
-              <div className="flex items-center justify-between mb-4">
+            <div className="flex-1 flex flex-col space-y-1">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{doc.title}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">{doc.title}</h3>
                 </div>
                 <div className="flex gap-2 ml-4">
                   <div className="relative">
@@ -896,7 +896,7 @@ export default function ComparePage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 h-[600px]">
+              <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-2" style={{ height: 'calc(100% - 40px)' }}>
                 <TextSelectionHandler
                   onDiscuss={handleDiscuss}
                   onRewrite={handleRewrite}
