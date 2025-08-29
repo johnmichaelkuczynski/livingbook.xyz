@@ -6,6 +6,13 @@ Living Book Creator is a streamlined document processing web application focused
 
 ## Recent Changes (January 2025)
 
+### Rewrite Download and Markdown Issues - FIXED (January 9, 2025)
+- **Download Error**: Fixed "document.createElement is not a function" plugin error in rewrite download functionality
+- **Markdown Cleanup**: Fixed markdown formatting appearing in rewrite output by applying removeMarkupSymbols function to all rewrite responses
+- **Robust Download**: Implemented safer download approach with error handling and clipboard fallback
+- **Server-Side Fix**: Added markdown cleaning to /api/rewrite-content endpoint response
+- **User Experience**: Downloads now work reliably with clean, properly formatted text output
+
 ### Document Not Found Error Handling - FIXED (January 9, 2025)
 - **Issue**: Users periodically experienced "404: Document not found" errors when sending chat messages in deployment
 - **Root Cause**: Frontend attempting to send messages to documents that no longer exist or have invalid IDs
