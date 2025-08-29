@@ -117,7 +117,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     setIsPlaying(!isPlaying);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!audioUrl) {
       toast({
         title: "No audio available",
@@ -128,42 +128,20 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     }
 
     try {
-      // For blob URLs, we need to fetch the blob data first
-      if (audioUrl.startsWith('blob:')) {
-        toast({
-          title: "Preparing download...",
-          description: "Getting your podcast ready.",
-        });
-
-        const response = await fetch(audioUrl);
-        const blob = await response.blob();
-        
-        // Create download link
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `podcast-${Date.now()}.mp3`;
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up
-        URL.revokeObjectURL(downloadUrl);
-        
-        toast({
-          title: "Download started",
-          description: "Your podcast is being downloaded.",
-        });
-        return;
-      }
-
-      // For server URLs, open in new tab for download
-      window.open(audioUrl, '_blank');
+      // Create download link with proper blob handling
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = `podcast-${Date.now()}.mp3`;
+      link.style.display = 'none';
+      
+      // Add to DOM, trigger download, then remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
       toast({
-        title: "Download opened",
-        description: "Right-click and save the audio file.",
+        title: "Download started",
+        description: "Your podcast is being downloaded.",
       });
       
     } catch (error) {
