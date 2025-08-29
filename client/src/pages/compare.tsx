@@ -23,6 +23,7 @@ import ThesisDeepDiveModal from "@/components/ThesisDeepDiveModal";
 import SuggestedReadingsModal from "@/components/SuggestedReadingsModal";
 import SynthesizeDocumentsModal from "@/components/SynthesizeDocumentsModal";
 import DualTextSelectionInterface from "@/components/DualTextSelectionInterface";
+import ProgressModal from "@/components/ProgressModal";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -65,6 +66,9 @@ export default function ComparePage() {
   const [showSuggestedReadingsModal, setShowSuggestedReadingsModal] = useState(false);
   const [showSynthesizeModal, setShowSynthesizeModal] = useState(false);
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
+  const [isGeneratingDualMap, setIsGeneratingDualMap] = useState(false);
+  const [dualMapProgress, setDualMapProgress] = useState(0);
+  const [dualMapStatus, setDualMapStatus] = useState('');
   
   // Chat state
   const [message, setMessage] = useState("");
@@ -435,7 +439,7 @@ export default function ComparePage() {
   };
 
   // Handle dual action functions (for selected text from both documents)
-  const handleDualAction = (action: string) => {
+  const handleDualAction = async (action: string) => {
     if (!selectedTextA || !selectedTextB) return;
     
     // Clean both texts of any HTML formatting
@@ -452,7 +456,7 @@ export default function ComparePage() {
         setShowPodcastModal(true);
         break;
       case 'cognitive-map':
-        setShowCognitiveMapModal(true);
+        await handleDualDocumentMindMap(cleanTextA, cleanTextB);
         break;
       case 'test-me':
         setShowTestModal(true);
@@ -463,6 +467,120 @@ export default function ComparePage() {
       case 'rewrite':
         setShowRewriteModal(true);
         break;
+    }
+  };
+
+  // Handle dual document mind map generation with progress tracking
+  const handleDualDocumentMindMap = async (textA: string, textB: string) => {
+    setIsGeneratingDualMap(true);
+    setDualMapProgress(0);
+    setShowCognitiveMapModal(true);
+
+    try {
+      // Step 1: Generate mind map for Document A
+      setDualMapStatus('Generating mind map for Document A...');
+      setDualMapProgress(10);
+      
+      const responseA = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText: textA,
+          provider: provider,
+          documentTitle: documentA?.title || 'Document A'
+        }),
+      });
+
+      if (!responseA.ok) throw new Error('Failed to generate mind map for Document A');
+      const dataA = await responseA.json();
+      
+      setDualMapProgress(40);
+
+      // Step 2: Generate mind map for Document B
+      setDualMapStatus('Generating mind map for Document B...');
+      
+      const responseB = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText: textB,
+          provider: provider,
+          documentTitle: documentB?.title || 'Document B'
+        }),
+      });
+
+      if (!responseB.ok) throw new Error('Failed to generate mind map for Document B');
+      const dataB = await responseB.json();
+      
+      setDualMapProgress(70);
+
+      // Step 3: Generate meta-map showing analogies and similarities
+      setDualMapStatus('Generating meta-map with analogies and similarities...');
+      
+      const metaPrompt = `Analyze the following two mind maps and create a meta-map that identifies analogies, similarities, connections, and contrasts between them:
+
+MIND MAP A (${documentA?.title || 'Document A'}):
+${dataA.cognitiveMap}
+
+MIND MAP B (${documentB?.title || 'Document B'}):
+${dataB.cognitiveMap}
+
+Create a structured analysis that shows:
+1. Key similarities between the two documents
+2. Analogous concepts or structures
+3. Contrasting viewpoints or approaches
+4. Potential connections or bridges between the ideas
+5. A visual Mermaid diagram showing the relationships
+
+Format as LOGICAL STRUCTURE and MERMAID DIAGRAM sections.`;
+
+      const metaResponse = await fetch('/api/generate-cognitive-map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText: metaPrompt,
+          provider: provider,
+          documentTitle: 'Meta-Analysis: Analogies & Similarities'
+        }),
+      });
+
+      if (!metaResponse.ok) throw new Error('Failed to generate meta-map');
+      const metaData = await metaResponse.json();
+      
+      setDualMapProgress(100);
+
+      // Combine all three maps into comprehensive analysis
+      const combinedAnalysis = `TWO-DOCUMENT MIND MAP ANALYSIS
+
+==================== DOCUMENT A MIND MAP ====================
+${documentA?.title || 'Document A'}
+
+${dataA.cognitiveMap}
+
+==================== DOCUMENT B MIND MAP ====================
+${documentB?.title || 'Document B'}
+
+${dataB.cognitiveMap}
+
+==================== META-MAP: ANALOGIES & SIMILARITIES ====================
+Cross-Document Analysis
+
+${metaData.cognitiveMap}`;
+
+      setCognitiveMapContent(combinedAnalysis);
+      setDualMapStatus('Complete! Generated mind maps for both documents and meta-analysis.');
+      
+    } catch (error) {
+      console.error('Dual mind map generation error:', error);
+      toast({
+        title: "Error generating dual mind map",
+        description: "Failed to generate complete analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingDualMap(false);
+      setDualMapProgress(0);
+      setDualMapStatus('');
     }
   };
 
@@ -1104,6 +1222,13 @@ export default function ComparePage() {
           onClose={() => setShowSynthesizeModal(false)}
           documentA={documentA}
           documentB={documentB}
+        />
+
+        <ProgressModal
+          isOpen={isGeneratingDualMap}
+          progress={dualMapProgress}
+          status={dualMapStatus}
+          title="Generating Two-Document Mind Map"
         />
       </div>
     </div>
