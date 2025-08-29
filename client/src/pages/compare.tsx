@@ -105,14 +105,14 @@ export default function ComparePage() {
       const result = await response.json();
       console.log('Text processing result:', result);
       
-      // Set the document
+      // Set the document - API returns document directly, not in result.document
       if (column === 'A') {
-        console.log('Setting documentA:', result.document);
-        setDocumentA(result.document);
+        console.log('Setting documentA:', result);
+        setDocumentA(result);
         setTextInputA(''); // Clear text input after successful processing
       } else {
-        console.log('Setting documentB:', result.document);
-        setDocumentB(result.document);
+        console.log('Setting documentB:', result);
+        setDocumentB(result);
         setTextInputB(''); // Clear text input after successful processing
       }
       
@@ -162,11 +162,11 @@ export default function ComparePage() {
       
       const result = await response.json();
       
-      // Set the document
+      // Set the document - API returns document directly
       if (column === 'A') {
-        setDocumentA(result.document);
+        setDocumentA(result);
       } else {
-        setDocumentB(result.document);
+        setDocumentB(result);
       }
       
       toast({
