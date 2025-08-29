@@ -663,21 +663,21 @@ export default function ComparePage() {
   }) => {
     return (
     <div className="flex-1">
-      <Card className="h-[1000px] flex flex-col overflow-hidden">
+      <Card className="h-[1200px] flex flex-col overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col overflow-hidden">
+        <CardContent className="flex-1 flex flex-col overflow-hidden p-4 h-full">
           {!doc ? (
             <Tabs 
               value={inputMode} 
               onValueChange={(value) => setInputMode(value as 'upload' | 'text')}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col h-full"
             >
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0">
                 <TabsTrigger value="upload" className="flex items-center gap-2">
                   <Upload className="w-4 h-4" />
                   Upload File
@@ -759,15 +759,16 @@ export default function ComparePage() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="text" className="flex-1 flex flex-col space-y-4">
+              <TabsContent value="text" className="flex-1 flex flex-col h-full space-y-2">
                 <Textarea
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  className="flex-1 min-h-[750px] h-full resize-vertical"
+                  className="flex-1 h-full min-h-0 resize-none"
+                  style={{ height: 'calc(100% - 60px)' }}
                   disabled={isUploading}
                 />
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-shrink-0 h-12">
                   <p className="text-xs text-gray-500">
                     {textInput.length} characters • {textInput.trim().split(/\s+/).filter(word => word.length > 0).length} words
                   </p>
