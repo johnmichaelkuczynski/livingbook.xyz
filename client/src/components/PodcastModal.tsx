@@ -59,26 +59,16 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
       
       const contentType = response.headers.get('content-type');
       
-      // Check if response is audio file
-      if (contentType && contentType.includes('audio/')) {
-        // Direct audio response - create blob URL
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(audioUrl);
-        setPodcastScript('Podcast generated successfully');
+      // JSON response with audioUrl and script
+      const data = await response.json();
+      setPodcastScript(data.script || 'Script generated successfully');
+      setCurrentStep('audio');
+      
+      if (data.audioUrl) {
+        setAudioUrl(data.audioUrl);
         setCurrentStep('complete');
       } else {
-        // JSON response with audioUrl
-        const data = await response.json();
-        setPodcastScript(data.script || 'Script generated successfully');
-        setCurrentStep('audio');
-        
-        if (data.audioUrl) {
-          setAudioUrl(data.audioUrl);
-          setCurrentStep('complete');
-        } else {
-          throw new Error('No audio URL returned from podcast generation');
-        }
+        throw new Error('No audio URL returned from podcast generation');
       }
       
       toast({
@@ -128,10 +118,9 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
     }
 
     try {
-      // Create download link with proper blob handling
+      // Direct link to server download endpoint
       const link = document.createElement('a');
       link.href = audioUrl;
-      link.download = `podcast-${Date.now()}.mp3`;
       link.style.display = 'none';
       
       // Add to DOM, trigger download, then remove
@@ -148,7 +137,7 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
       console.error('Download failed:', error);
       toast({
         title: "Download failed", 
-        description: "Please right-click the audio player and select 'Save audio as...'",
+        description: "Please try again or contact support.",
         variant: "destructive",
       });
     }

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import { createReadStream } from "fs";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
 import { chunkDocument } from "./services/documentChunker";
@@ -677,14 +678,30 @@ ${selectedText}
         const audioBuffer = await azureTTSSimple.generateDialogueAudio(dialogue);
         console.log(`🎵 REAL PODCAST AUDIO GENERATED - Size: ${audioBuffer.length} bytes`);
 
-        // Set appropriate headers for MP3 audio download
-        res.set({
-          'Content-Type': 'audio/mpeg',
-          'Content-Length': audioBuffer.length.toString(),
-          'Content-Disposition': `attachment; filename="podcast-${type}-${Date.now()}.mp3"`
-        });
+        // Save to temporary file for download
+        const timestamp = Date.now();
+        const filename = `podcast-${type}-${timestamp}.mp3`;
+        const filePath = path.join(process.cwd(), 'downloads', filename);
+        
+        await fs.writeFile(filePath, audioBuffer);
+        console.log(`💾 Audio saved to: ${filePath}`);
 
-        res.send(audioBuffer);
+        // Schedule file cleanup after 1 hour
+        setTimeout(async () => {
+          try {
+            await fs.unlink(filePath);
+            console.log(`🗑️ Cleaned up file: ${filePath}`);
+          } catch (err) {
+            console.log(`⚠️ Failed to cleanup file: ${filePath}`, err);
+          }
+        }, 60 * 60 * 1000); // 1 hour
+
+        // Return JSON response with download URL
+        res.json({
+          script: dialogue,
+          audioUrl: `/api/download-podcast/${filename}`,
+          filename: filename
+        });
         return; // Important: return here to prevent fallback
         
       } catch (audioError: any) {
@@ -705,6 +722,44 @@ ${selectedText}
     } catch (error) {
       console.error('Error generating complete podcast:', error);
       res.status(500).json({ error: 'Failed to generate podcast' });
+    }
+  });
+
+  // Download podcast file
+  app.get("/api/download-podcast/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      
+      // Validate filename to prevent directory traversal
+      if (!filename || !filename.match(/^podcast-[a-zA-Z0-9-]+\.[a-zA-Z0-9]+$/)) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      
+      const filePath = path.join(process.cwd(), 'downloads', filename);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch (err) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Set headers for download
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-cache'
+      });
+      
+      // Stream the file
+      const fileStream = createReadStream(filePath);
+      fileStream.pipe(res);
+      
+      console.log(`📥 File downloaded: ${filename}`);
+      
+    } catch (error) {
+      console.error("Download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
     }
   });
 
