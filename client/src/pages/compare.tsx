@@ -69,9 +69,7 @@ export default function ComparePage() {
   const [isGeneratingDualMap, setIsGeneratingDualMap] = useState(false);
   const [dualMapProgress, setDualMapProgress] = useState(0);
   const [dualMapStatus, setDualMapStatus] = useState('');
-  const [isGeneratingDualPodcast, setIsGeneratingDualPodcast] = useState(false);
-  const [dualPodcastProgress, setDualPodcastProgress] = useState(0);
-  const [dualPodcastStatus, setDualPodcastStatus] = useState('');
+
   
   // Chat state
   const [message, setMessage] = useState("");
@@ -587,17 +585,11 @@ ${metaData.cognitiveMap}`;
     }
   };
 
-  // Handle dual document podcast generation with specific protocol
+  // Handle dual document podcast generation - consolidate into single document first
   const handleDualDocumentPodcast = async (textA: string, textB: string) => {
-    setIsGeneratingDualPodcast(true);
-    setDualPodcastProgress(0);
-    setShowPodcastModal(true);
-
     try {
-      setDualPodcastStatus('Creating comparative podcast script...');
-      setDualPodcastProgress(20);
-
-      const podcastPrompt = `CRITICAL INSTRUCTION: Generate a podcast DIALOGUE - not an essay or study guide. Use only HOST: and GUEST: speaker labels.
+      // Step 1: Create a consolidated document with both texts
+      const consolidatedContent = `COMPARATIVE ANALYSIS REQUEST:
 
 DOCUMENT A (${documentA?.title || 'Document A'}):
 ${textA}
@@ -605,60 +597,47 @@ ${textA}
 DOCUMENT B (${documentB?.title || 'Document B'}):
 ${textB}
 
-REQUIRED FORMAT - Generate exactly this structure with HOST: and GUEST: speaker labels:
+ANALYSIS PROTOCOL:
+Please generate a comparative podcast with the following structure:
+I. INTRO - Welcome listeners and introduce the comparative analysis
+II. SUMMARY OF DOCUMENT A - Comprehensive summary of Document A's key points, arguments, and content
+III. SUMMARY OF DOCUMENT B - Comprehensive summary of Document B's key points, arguments, and content
+IV. SIMILARITIES - Analyze similarities in content, style, mentality, target-audience, author-agenda
+V. DISSIMILARITIES - Analyze differences in content, style, mentality, target-audience, author-agenda  
+VI. CONCLUSION - Synthesize the comparative analysis and provide final thoughts
 
-HOST: Welcome to Comparative Analysis. I'm your host and today we're examining two documents side by side.
-GUEST: Thanks for having me. This comparison should reveal some fascinating insights.
-HOST: Let's start with Document A. What are its main points?
-GUEST: Document A focuses on [summarize key points from textA].
-HOST: And Document B?
-GUEST: Document B takes a different approach, discussing [summarize key points from textB].
-HOST: What similarities do you notice between these documents?
-GUEST: Both documents share [identify similarities in content, style, mentality, target-audience, author-agenda].
-HOST: What about the differences?
-GUEST: The key differences include [identify contrasts in content, style, mentality, target-audience, author-agenda].
-HOST: What's your overall assessment?
-GUEST: The comparison reveals [synthesize insights about relationship between documents].
-HOST: Excellent analysis. Thanks for joining us.
-GUEST: My pleasure.
+Keep the episode to exactly 3.5 minutes (450-500 words maximum).`;
 
-CRITICAL: Use ONLY "HOST:" and "GUEST:" labels. Keep total under 500 words. Generate actual spoken dialogue, not essay content.`;
-
-      setDualPodcastProgress(40);
-
-      const response = await fetch('/api/generate-podcast', {
+      // Step 2: Create a temporary document from the consolidated content
+      const tempDocResponse = await fetch('/api/documents/create-from-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          selectedText: podcastPrompt,
-          provider: provider,
-          type: 'dual-document-comparison',
-          documentTitle: `Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`
-        }),
+          content: consolidatedContent,
+          title: `Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`
+        })
       });
 
-      setDualPodcastProgress(80);
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate dual podcast: ${response.statusText}`);
+      if (!tempDocResponse.ok) {
+        throw new Error('Failed to create consolidated document');
       }
 
-      setDualPodcastProgress(100);
-      setDualPodcastStatus('Dual-document podcast generated successfully!');
+      const tempDoc = await tempDocResponse.json();
 
-      // The response will be handled by the PodcastModal component
+      // Step 3: Set up the consolidated document and selected text for podcast modal
+      setSelectedText(consolidatedContent);
+      setSelectionDocument(`Comparative Analysis: ${documentA?.title || 'Document A'} vs ${documentB?.title || 'Document B'}`);
       
+      // Step 4: Open podcast modal with the consolidated document
+      setShowPodcastModal(true);
+
     } catch (error) {
-      console.error('Dual podcast generation error:', error);
+      console.error('Dual document podcast error:', error);
       toast({
-        title: "Error generating dual podcast",
-        description: "Failed to generate comparative podcast. Please try again.",
+        title: "Error setting up dual podcast",
+        description: "Failed to prepare comparative podcast. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsGeneratingDualPodcast(false);
-      setDualPodcastProgress(0);
-      setDualPodcastStatus('');
     }
   };
 
@@ -1256,8 +1235,12 @@ CRITICAL: Use ONLY "HOST:" and "GUEST:" labels. Keep total under 500 words. Gene
         <PodcastModal
           isOpen={showPodcastModal}
           onClose={() => setShowPodcastModal(false)}
-          content={selectedText}
-          title={selectionDocument}
+          document={{ 
+            content: selectedText,
+            title: selectionDocument,
+            id: `temp-${Date.now()}`
+          }}
+          selectedText={selectedText}
         />
 
         <RewriteModal
@@ -1309,12 +1292,7 @@ CRITICAL: Use ONLY "HOST:" and "GUEST:" labels. Keep total under 500 words. Gene
           title="Generating Two-Document Mind Map"
         />
 
-        <ProgressModal
-          isOpen={isGeneratingDualPodcast}
-          progress={dualPodcastProgress}
-          status={dualPodcastStatus}
-          title="Generating Comparative Podcast"
-        />
+
       </div>
     </div>
   );
