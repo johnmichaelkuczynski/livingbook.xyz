@@ -21,6 +21,7 @@ import CognitiveMapModal from "@/components/CognitiveMapModal";
 import SummaryThesisModal from "@/components/SummaryThesisModal";
 import ThesisDeepDiveModal from "@/components/ThesisDeepDiveModal";
 import SuggestedReadingsModal from "@/components/SuggestedReadingsModal";
+import SynthesizeDocumentsModal from "@/components/SynthesizeDocumentsModal";
 
 // Using any type to match existing codebase pattern
 type Document = any;
@@ -56,6 +57,7 @@ export default function ComparePage() {
   const [showSummaryThesisModal, setShowSummaryThesisModal] = useState(false);
   const [showThesisDeepDiveModal, setShowThesisDeepDiveModal] = useState(false);
   const [showSuggestedReadingsModal, setShowSuggestedReadingsModal] = useState(false);
+  const [showSynthesizeModal, setShowSynthesizeModal] = useState(false);
   
   // Chat state
   const [message, setMessage] = useState("");
@@ -207,6 +209,82 @@ export default function ComparePage() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  // Text Selection Handlers
+  const handleStudyGuide = () => {
+    setShowSelectionPopup(false);
+    setShowStudyGuideModal(true);
+  };
+
+  const handleTestMe = () => {
+    setShowSelectionPopup(false);
+    setShowTestModal(true);
+  };
+
+  const handlePodcast = () => {
+    setShowSelectionPopup(false);
+    setPodcastModal(true);
+  };
+
+  const handleRewrite = () => {
+    setShowSelectionPopup(false);
+    setShowRewriteModal(true);
+  };
+
+  const handleCognitiveMap = () => {
+    setShowSelectionPopup(false);
+    setShowCognitiveMapModal(true);
+  };
+
+  const handleSummaryThesis = () => {
+    setShowSelectionPopup(false);
+    setShowSummaryThesisModal(true);
+  };
+
+  const handleThesisDeepDive = () => {
+    setShowSelectionPopup(false);
+    setShowThesisDeepDiveModal(true);
+  };
+
+  const handleSuggestedReadings = () => {
+    setShowSelectionPopup(false);
+    setShowSuggestedReadingsModal(true);
+  };
+
+  // Multi-document handlers for both documents
+  const handleSynthesizeDocuments = () => {
+    if (!documentA || !documentB) return;
+    setShowSynthesizeModal(true);
+  };
+
+  const handleDualPodcast = () => {
+    if (!documentA || !documentB) return;
+    // Set up for dual document podcast
+    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
+    setSelectionDocument("Both Documents");
+    setPodcastModal(true);
+  };
+
+  const handleDualCognitiveMap = () => {
+    if (!documentA || !documentB) return;
+    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
+    setSelectionDocument("Both Documents");
+    setShowCognitiveMapModal(true);
+  };
+
+  const handleDualRewrite = () => {
+    if (!documentA || !documentB) return;
+    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
+    setSelectionDocument("Both Documents");
+    setShowRewriteModal(true);
+  };
+
+  const handleDualTestMe = () => {
+    if (!documentA || !documentB) return;
+    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
+    setSelectionDocument("Both Documents");
+    setShowTestModal(true);
   };
 
   // Handle clearing all documents and chat
@@ -486,7 +564,11 @@ export default function ComparePage() {
               <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded m-2 overflow-hidden">
                 <DocumentViewerIframe 
                   content={doc.content}
-                  onTextSelection={() => onTextSelection(doc.title)}
+                  onTextSelection={(selectedText: string) => {
+                    setSelectedText(selectedText);
+                    setSelectionDocument(`Document ${column}: ${doc.title}`);
+                    setShowSelectionPopup(true);
+                  }}
                 />
               </div>
               
@@ -593,7 +675,7 @@ export default function ComparePage() {
                 <CardTitle className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-3 h-3" />
-                    AI Chat
+                    AI Chat & Functions
                   </div>
                   <Select value={provider} onValueChange={setProvider}>
                     <SelectTrigger className="w-20 h-6 text-xs">
@@ -609,6 +691,30 @@ export default function ComparePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-2 space-y-2">
+                {/* Multi-Document Functions */}
+                {documentA && documentB && (
+                  <div className="flex-shrink-0 space-y-2">
+                    <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300">Both Documents:</h3>
+                    <div className="grid grid-cols-2 gap-1">
+                      <Button onClick={handleSynthesizeDocuments} size="sm" variant="outline" className="text-xs h-6">
+                        Synthesize
+                      </Button>
+                      <Button onClick={handleDualPodcast} size="sm" variant="outline" className="text-xs h-6">
+                        Podcast
+                      </Button>
+                      <Button onClick={handleDualCognitiveMap} size="sm" variant="outline" className="text-xs h-6">
+                        Mind Map
+                      </Button>
+                      <Button onClick={handleDualRewrite} size="sm" variant="outline" className="text-xs h-6">
+                        Combine
+                      </Button>
+                      <Button onClick={handleDualTestMe} size="sm" variant="outline" className="text-xs h-6">
+                        Test Me
+                      </Button>
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2"></div>
+                  </div>
+                )}
                 {/* Chat Messages Area */}
                 <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border overflow-y-auto p-2">
                   {!documentA && !documentB ? (
@@ -677,17 +783,100 @@ export default function ComparePage() {
             </Card>
           </div>
         </div>
+        
+        {/* Text Selection Popup */}
+        {showSelectionPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-medium mb-2">Selected Text Functions</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Source: {selectionDocument}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={handleStudyGuide} size="sm">Study Guide</Button>
+                <Button onClick={handleTestMe} size="sm">Test Me</Button>
+                <Button onClick={handlePodcast} size="sm">Podcast</Button>
+                <Button onClick={handleRewrite} size="sm">Rewrite</Button>
+                <Button onClick={handleCognitiveMap} size="sm">Cognitive Map</Button>
+                <Button onClick={handleSummaryThesis} size="sm">Summary</Button>
+                <Button onClick={handleThesisDeepDive} size="sm">Deep Dive</Button>
+                <Button onClick={handleSuggestedReadings} size="sm">Readings</Button>
+              </div>
+              <Button 
+                onClick={() => setShowSelectionPopup(false)} 
+                variant="outline" 
+                className="w-full mt-3"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* All Modals */}
+        <StudyGuideModal
+          isOpen={showStudyGuideModal}
+          onClose={() => setShowStudyGuideModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <TestMeModal
+          isOpen={showTestModal}
+          onClose={() => setShowTestModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <PodcastModal
+          isOpen={showPodcastModal}
+          onClose={() => setPodcastModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <RewriteModal
+          isOpen={showRewriteModal}
+          onClose={() => setShowRewriteModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <CognitiveMapModal
+          isOpen={showCognitiveMapModal}
+          onClose={() => setShowCognitiveMapModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <SummaryThesisModal
+          isOpen={showSummaryThesisModal}
+          onClose={() => setShowSummaryThesisModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <ThesisDeepDiveModal
+          isOpen={showThesisDeepDiveModal}
+          onClose={() => setShowThesisDeepDiveModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <SuggestedReadingsModal
+          isOpen={showSuggestedReadingsModal}
+          onClose={() => setShowSuggestedReadingsModal(false)}
+          content={selectedText}
+          title={selectionDocument}
+        />
+
+        <SynthesizeDocumentsModal
+          isOpen={showSynthesizeModal}
+          onClose={() => setShowSynthesizeModal(false)}
+          documentA={documentA}
+          documentB={documentB}
+        />
       </div>
     </div>
   );
 }
-
-// Placeholder handler functions
-const handleStudyGuide = () => {};
-const handleTestMe = () => {};
-const handlePodcast = () => {};
-const handleRewrite = () => {};
-const handleCognitiveMap = () => {};
-const handleSummaryThesis = () => {};
-const handleThesisDeepDive = () => {};
-const handleSuggestedReadings = () => {};
