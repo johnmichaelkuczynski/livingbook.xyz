@@ -103,12 +103,15 @@ export default function ComparePage() {
       }
       
       const result = await response.json();
+      console.log('Text processing result:', result);
       
       // Set the document
       if (column === 'A') {
+        console.log('Setting documentA:', result.document);
         setDocumentA(result.document);
         setTextInputA(''); // Clear text input after successful processing
       } else {
+        console.log('Setting documentB:', result.document);
         setDocumentB(result.document);
         setTextInputB(''); // Clear text input after successful processing
       }
