@@ -638,7 +638,13 @@ ${selectedText}
       console.log(`🎙️ GENERATING COMPLETE PODCAST - Type: ${type}, Provider: ${provider}`);
 
       // Generate appropriate prompt based on type
-      const podcastPrompt = prompt || `Generate a complete ${type} podcast episode of exactly 3.5 minutes (450-500 words maximum) about the following text. The episode should have a natural beginning, middle, and end with clear conclusion. Keep it professional and informative:\n\n${selectedText}`;
+      let podcastPrompt;
+      if (type === 'dual-document-comparison') {
+        // For dual document comparison, use the provided prompt directly (it already contains the structured format)
+        podcastPrompt = selectedText;
+      } else {
+        podcastPrompt = prompt || `Generate a complete ${type} podcast episode of exactly 3.5 minutes (450-500 words maximum) about the following text. The episode should have a natural beginning, middle, and end with clear conclusion. Keep it professional and informative:\n\n${selectedText}`;
+      }
 
       // Step 1: Generate dialogue using the appropriate AI service
       let chatResponse;
