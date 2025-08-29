@@ -640,10 +640,32 @@ ${selectedText}
       // Generate appropriate prompt based on type
       let podcastPrompt;
       if (type === 'dual-document-comparison') {
-        // For dual document comparison, use the provided prompt directly (it already contains the structured format)
-        podcastPrompt = selectedText;
+        // For dual document comparison, force a simple dialogue format
+        podcastPrompt = `You MUST generate ONLY a dialogue conversation using exactly "HOST:" and "GUEST:" labels. Do NOT write essays or study guides.
+
+Analysis of two documents:
+${selectedText}
+
+Generate ONLY this format:
+
+HOST: Welcome to our show. Today we're comparing two documents.
+GUEST: Thanks for having me. This comparison will be enlightening.
+HOST: What do you notice about the first document?
+GUEST: [Brief analysis of first document]
+HOST: And the second document?
+GUEST: [Brief analysis of second document]
+HOST: What similarities do you see?
+GUEST: [Identify similarities]
+HOST: What about differences?
+GUEST: [Identify differences]
+HOST: Any final thoughts?
+GUEST: [Synthesis and conclusion]
+HOST: Thank you for this analysis.
+GUEST: My pleasure.
+
+CRITICAL: Use ONLY "HOST:" and "GUEST:" speaker labels. Keep under 500 words total.`;
       } else {
-        podcastPrompt = prompt || `Generate a complete ${type} podcast episode of exactly 3.5 minutes (450-500 words maximum) about the following text. The episode should have a natural beginning, middle, and end with clear conclusion. Keep it professional and informative:\n\n${selectedText}`;
+        podcastPrompt = prompt || `Generate a complete ${type} podcast episode with proper dialogue format using HOST: and GUEST: speaker labels. Episode should be exactly 3.5 minutes (450-500 words maximum) about the following text. Include natural conversation with clear speaker turns. Keep it professional and informative:\n\n${selectedText}`;
       }
 
       // Step 1: Generate dialogue using the appropriate AI service

@@ -75,7 +75,41 @@ export async function generateDialogueAudio(dialogue: string): Promise<Buffer> {
   console.log(`📝 First few lines:`, lines.slice(0, 8).map(l => `"${l}"`));
 
   for (const line of lines) {
-    // Try multiple regex patterns to match different formats
+    // Check for HOST/GUEST format first
+    if (line.match(/^HOST:/i) || line.match(/^GUEST:/i)) {
+      let speakerNum, text;
+      
+      if (line.match(/^HOST:/i)) {
+        speakerNum = '1';
+        text = line.replace(/^HOST:\s*/i, '').trim();
+      } else {
+        speakerNum = '2';
+        text = line.replace(/^GUEST:\s*/i, '').trim();
+      }
+      
+      // Clean up the text - remove markdown and extra punctuation
+      text = text.replace(/\*\*/g, '').replace(/\*/g, '').trim();
+      
+      if (text.length > 0) {
+        const voice = speakerNum === '1' ? 'en-US-DavisNeural' : 'en-US-JennyNeural';
+        console.log(`🎙️ Processing Speaker ${speakerNum}: "${text.substring(0, 50)}..."`);
+        
+        try {
+          const audioBuffer = await generateSimpleAudio(text, voice);
+          audioBuffers.push(audioBuffer);
+          
+          // Add small pause between speakers
+          const silenceBuffer = Buffer.alloc(1500); // Small pause
+          audioBuffers.push(silenceBuffer);
+        } catch (error) {
+          console.error(`❌ Failed to generate audio for Speaker ${speakerNum}:`, error);
+          // Continue with other speakers instead of failing completely
+        }
+      }
+      continue;
+    }
+
+    // Try other patterns for Speaker 1/2 format
     const patterns = [
       /^\*?\*?Speaker\s+([12])(?:\s*\([^)]*\))?\s*:\*?\*?\s*(.+)$/i,  // **Speaker 1:** text
       /^Speaker\s+([12]):\s*(.+)$/i,                                   // Speaker 1: text  
@@ -91,7 +125,7 @@ export async function generateDialogueAudio(dialogue: string): Promise<Buffer> {
     
     if (speakerMatch) {
       const speakerNum = speakerMatch[1];
-      let text = speakerMatch[2].trim();
+      let text = speakerMatch[2] ? speakerMatch[2].trim() : speakerMatch[1].trim();
       
       // Clean up the text - remove markdown and extra punctuation
       text = text.replace(/\*\*/g, '').replace(/\*/g, '').trim();
