@@ -77,11 +77,11 @@ export default function ComparisonChatInterface({
 
   return (
     <Card className="h-[1400px] flex flex-col overflow-hidden">
-      <CardHeader>
+      <CardHeader className="py-0 px-2 h-8 min-h-0">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Comparison Chat
+          <div className="flex items-center gap-1">
+            <MessageSquare className="w-3 h-3" />
+            <span className="text-xs">Comparison Chat</span>
           </div>
           <Select value={provider} onValueChange={onProviderChange}>
             <SelectTrigger className="w-32">
