@@ -36,6 +36,7 @@ export default function ComparePage() {
   const [dragActiveB, setDragActiveB] = useState(false);
   const [textInputA, setTextInputA] = useState('');
   const [textInputB, setTextInputB] = useState('');
+  const [messages, setMessages] = useState<Array<{id: number, role: string, content: string, timestamp: string}>>([]);
   
   // Document chunking states for large documents
   const [documentChunksA, setDocumentChunksA] = useState<any>(null);
@@ -240,6 +241,23 @@ export default function ComparePage() {
       if (result.sessionId && !sessionId) {
         setSessionId(result.sessionId);
       }
+      
+      // Add user message and AI response to messages
+      const newUserMessage = {
+        id: Date.now(),
+        role: 'user',
+        content: userMessage,
+        timestamp: new Date().toISOString()
+      };
+      
+      const newAiMessage = {
+        id: result.id || Date.now() + 1,
+        role: result.role || 'assistant',
+        content: result.content || 'No response received',
+        timestamp: result.timestamp || new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, newUserMessage, newAiMessage]);
       
       toast({
         title: "Message sent",
@@ -570,10 +588,29 @@ export default function ComparePage() {
                     <p className="text-sm text-gray-500 text-center mt-8">
                       Upload or enter text for both documents to start chatting
                     </p>
-                  ) : (
+                  ) : messages.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center mt-8">
-                      Chat messages will appear here
+                      Ask a question about your documents...
                     </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {messages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                            msg.role === 'user' 
+                              ? 'bg-blue-500 text-white' 
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                          }`}>
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
+                              {new Date(msg.timestamp).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
                 
