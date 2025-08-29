@@ -103,15 +103,12 @@ export default function ComparePage() {
       }
       
       const result = await response.json();
-      console.log('Text processing result:', result);
       
       // Set the document - API returns document directly, not in result.document
       if (column === 'A') {
-        console.log('Setting documentA:', result);
         setDocumentA(result);
         setTextInputA(''); // Clear text input after successful processing
       } else {
-        console.log('Setting documentB:', result);
         setDocumentB(result);
         setTextInputB(''); // Clear text input after successful processing
       }
@@ -151,7 +148,7 @@ export default function ComparePage() {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch('/api/documents/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
