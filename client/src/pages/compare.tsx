@@ -376,10 +376,29 @@ export default function ComparePage() {
 
   const handleDualPodcast = () => {
     if (!documentA || !documentB) return;
-    // Set up for dual document podcast
-    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
-    setSelectionDocument("Both Documents");
-    setShowPodcastModal(true);
+    
+    // Use auto-complete logic for short documents
+    const isDocumentAShort = !documentA?.isChunked || documentA?.chunkCount <= 1;
+    const isDocumentBShort = !documentB?.isChunked || documentB?.chunkCount <= 1;
+    
+    let textA = selectedTextA;
+    let textB = selectedTextB;
+    
+    // Auto-complete for short documents with no selection
+    if (!selectedTextA && isDocumentAShort && documentA?.content) {
+      textA = cleanHtmlText(documentA.content);
+    }
+    
+    if (!selectedTextB && isDocumentBShort && documentB?.content) {
+      textB = cleanHtmlText(documentB.content);
+    }
+    
+    // If still no content, use full documents as fallback
+    if (!textA) textA = cleanHtmlText(documentA.content);
+    if (!textB) textB = cleanHtmlText(documentB.content);
+    
+    // Open two-document podcast modal
+    setShowTwoDocumentPodcastModal(true);
   };
 
   const handleDualCognitiveMap = async () => {
@@ -422,15 +441,61 @@ export default function ComparePage() {
 
   const handleDualRewrite = () => {
     if (!documentA || !documentB) return;
-    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
-    setSelectionDocument("Both Documents");
+    
+    // Use auto-complete logic for short documents
+    const isDocumentAShort = !documentA?.isChunked || documentA?.chunkCount <= 1;
+    const isDocumentBShort = !documentB?.isChunked || documentB?.chunkCount <= 1;
+    
+    let textA = selectedTextA;
+    let textB = selectedTextB;
+    
+    // Auto-complete for short documents with no selection
+    if (!selectedTextA && isDocumentAShort && documentA?.content) {
+      textA = cleanHtmlText(documentA.content);
+    }
+    
+    if (!selectedTextB && isDocumentBShort && documentB?.content) {
+      textB = cleanHtmlText(documentB.content);
+    }
+    
+    // If still no content, use full documents as fallback
+    if (!textA) textA = cleanHtmlText(documentA.content);
+    if (!textB) textB = cleanHtmlText(documentB.content);
+    
+    const combinedContent = `From ${documentA?.title || 'Document A'}:\n${textA}\n\nFrom ${documentB?.title || 'Document B'}:\n${textB}`;
+    
+    setSelectedText(combinedContent);
+    setSelectionDocument("Both Documents (Auto-Complete)");
     setShowRewriteModal(true);
   };
 
   const handleDualTestMe = () => {
     if (!documentA || !documentB) return;
-    setSelectedText(`Document A: ${documentA.content}\n\nDocument B: ${documentB.content}`);
-    setSelectionDocument("Both Documents");
+    
+    // Use auto-complete logic for short documents
+    const isDocumentAShort = !documentA?.isChunked || documentA?.chunkCount <= 1;
+    const isDocumentBShort = !documentB?.isChunked || documentB?.chunkCount <= 1;
+    
+    let textA = selectedTextA;
+    let textB = selectedTextB;
+    
+    // Auto-complete for short documents with no selection
+    if (!selectedTextA && isDocumentAShort && documentA?.content) {
+      textA = cleanHtmlText(documentA.content);
+    }
+    
+    if (!selectedTextB && isDocumentBShort && documentB?.content) {
+      textB = cleanHtmlText(documentB.content);
+    }
+    
+    // If still no content, use full documents as fallback
+    if (!textA) textA = cleanHtmlText(documentA.content);
+    if (!textB) textB = cleanHtmlText(documentB.content);
+    
+    const combinedContent = `From ${documentA?.title || 'Document A'}:\n${textA}\n\nFrom ${documentB?.title || 'Document B'}:\n${textB}`;
+    
+    setSelectedText(combinedContent);
+    setSelectionDocument("Both Documents (Auto-Complete)");
     setShowTestModal(true);
   };
 
