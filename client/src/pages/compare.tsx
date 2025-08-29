@@ -1327,30 +1327,36 @@ export default function ComparePage() {
         <StudyGuideModal
           isOpen={showStudyGuideModal}
           onClose={() => setShowStudyGuideModal(false)}
+          content={selectedText}
         />
 
         <TestMeModal
           isOpen={showTestModal}
           onClose={() => setShowTestModal(false)}
           selectedText={selectedText}
+          isGenerating={false}
         />
 
         <PodcastModal
           isOpen={showPodcastModal}
           onClose={() => setShowPodcastModal(false)}
           selectedText={selectedText}
+          document={selectionDocument === "Document A" ? documentA : documentB}
         />
 
         <RewriteModal
           isOpen={showRewriteModal}
           onClose={() => setShowRewriteModal(false)}
           selectedText={selectedText}
+          document={selectionDocument === "Document A" ? documentA : documentB}
         />
 
         <CognitiveMapModal
           isOpen={showCognitiveMapModal}
           onClose={() => setShowCognitiveMapModal(false)}
           selectedText={selectedText}
+          content={selectedText}
+          isLoading={false}
         />
 
         <SummaryThesisModal
@@ -1363,12 +1369,16 @@ export default function ComparePage() {
           isOpen={showThesisDeepDiveModal}
           onClose={() => setShowThesisDeepDiveModal(false)}
           selectedText={selectedText}
+          content={selectedText}
+          isLoading={false}
         />
 
         <SuggestedReadingsModal
           isOpen={showSuggestedReadingsModal}
           onClose={() => setShowSuggestedReadingsModal(false)}
           selectedText={selectedText}
+          content={selectedText}
+          isLoading={false}
         />
       </div>
     </div>
