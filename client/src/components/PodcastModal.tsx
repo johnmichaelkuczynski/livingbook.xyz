@@ -52,16 +52,33 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
         customInstructions: (mode === 'custom-single' || mode === 'custom-dialogue') ? customInstructions : null,
       });
       
-      const data = await response.json();
-      setPodcastScript(data.script || 'Script generated successfully');
-      setCurrentStep('audio');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
       
-      // Audio is generated as part of the same call
-      if (data.audioUrl) {
-        setAudioUrl(data.audioUrl);
+      const contentType = response.headers.get('content-type');
+      
+      // Check if response is audio file
+      if (contentType && contentType.includes('audio/')) {
+        // Direct audio response - create blob URL
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioUrl(audioUrl);
+        setPodcastScript('Podcast generated successfully');
         setCurrentStep('complete');
       } else {
-        throw new Error('No audio URL returned from podcast generation');
+        // JSON response with audioUrl
+        const data = await response.json();
+        setPodcastScript(data.script || 'Script generated successfully');
+        setCurrentStep('audio');
+        
+        if (data.audioUrl) {
+          setAudioUrl(data.audioUrl);
+          setCurrentStep('complete');
+        } else {
+          throw new Error('No audio URL returned from podcast generation');
+        }
       }
       
       toast({
@@ -71,9 +88,17 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
       
     } catch (error) {
       console.error('Podcast generation error:', error);
+      
+      let errorMessage = "Please try again later.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Failed to generate podcast",
-        description: "Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
