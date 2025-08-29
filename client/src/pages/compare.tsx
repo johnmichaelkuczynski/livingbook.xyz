@@ -597,7 +597,7 @@ ${metaData.cognitiveMap}`;
       setDualPodcastStatus('Creating comparative podcast script...');
       setDualPodcastProgress(20);
 
-      const podcastPrompt = `Create a comparative podcast episode analyzing two documents with the following exact structure:
+      const podcastPrompt = `CRITICAL INSTRUCTION: Generate a podcast DIALOGUE - not an essay or study guide. Use only HOST: and GUEST: speaker labels.
 
 DOCUMENT A (${documentA?.title || 'Document A'}):
 ${textA}
@@ -605,40 +605,24 @@ ${textA}
 DOCUMENT B (${documentB?.title || 'Document B'}):
 ${textB}
 
-Generate a podcast with exactly this format:
+REQUIRED FORMAT - Generate exactly this structure with HOST: and GUEST: speaker labels:
 
-I. INTRO
-- Welcome listeners and introduce the comparative analysis
-- Briefly mention both documents being analyzed
+HOST: Welcome to Comparative Analysis. I'm your host and today we're examining two documents side by side.
+GUEST: Thanks for having me. This comparison should reveal some fascinating insights.
+HOST: Let's start with Document A. What are its main points?
+GUEST: Document A focuses on [summarize key points from textA].
+HOST: And Document B?
+GUEST: Document B takes a different approach, discussing [summarize key points from textB].
+HOST: What similarities do you notice between these documents?
+GUEST: Both documents share [identify similarities in content, style, mentality, target-audience, author-agenda].
+HOST: What about the differences?
+GUEST: The key differences include [identify contrasts in content, style, mentality, target-audience, author-agenda].
+HOST: What's your overall assessment?
+GUEST: The comparison reveals [synthesize insights about relationship between documents].
+HOST: Excellent analysis. Thanks for joining us.
+GUEST: My pleasure.
 
-II. SUMMARY OF DOCUMENT A
-- Comprehensive summary of Document A's key points, arguments, and content
-
-III. SUMMARY OF DOCUMENT B  
-- Comprehensive summary of Document B's key points, arguments, and content
-
-IV. SIMILARITIES BETWEEN THE TWO DOCUMENTS
-Analyze similarities in respect of:
-- Content (themes, topics, subject matter)
-- Style (writing approach, tone, structure)
-- Mentality (worldview, philosophical approach)
-- Target-audience (intended readers, level of complexity)
-- Author-agenda (goals, purposes, intentions)
-
-V. DISSIMILARITIES BETWEEN THE TWO DOCUMENTS
-Analyze differences in respect of:
-- Content (contrasting themes, different topics)
-- Style (different writing approaches, contrasting tones)
-- Mentality (opposing worldviews, different philosophical approaches)
-- Target-audience (different intended readers, varying complexity levels)
-- Author-agenda (different goals, contrasting purposes)
-
-VI. CONCLUSION
-- Synthesize the comparative analysis
-- Highlight the most significant insights from the comparison
-- Provide final thoughts on the relationship between the documents
-
-Keep the entire episode to exactly 3.5 minutes (450-500 words maximum). Make it engaging and informative.`;
+CRITICAL: Use ONLY "HOST:" and "GUEST:" labels. Keep total under 500 words. Generate actual spoken dialogue, not essay content.`;
 
       setDualPodcastProgress(40);
 
