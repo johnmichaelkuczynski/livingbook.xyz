@@ -8,6 +8,17 @@ Living Book Creator is a web application designed for streamlined document proce
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**August 29, 2025**: 
+- ✅ Completed dual-document functionality with auto-complete for short documents
+- ✅ Implemented two-document podcast generation with consolidation workflow
+- ✅ Fixed PodcastModal to handle binary audio responses correctly
+- ✅ Enhanced all dual-document functions (Test Me, Podcast, Rewrite) with smart content detection
+- ✅ Auto-complete detects short documents (≤1 chunk) and uses entire content automatically
+- ✅ Maintained manual text selection capability for targeted analysis
+- ✅ All LSP diagnostics resolved, project builds successfully
+
 ## System Architecture
 
 ### Frontend
@@ -31,11 +42,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Features & Design Patterns
 - **Document Processing Pipeline**: Manages file uploads, text extraction, math notation formatting, and storage while preserving document structure.
-- **Text Selection System**: Allows users to highlight text for targeted AI analysis.
+- **Text Selection System**: Allows users to highlight text for targeted AI analysis with auto-complete functionality for short documents.
 - **Contextual AI Chat**: AI interactions are focused on the selected text, rather than the entire document.
 - **Content Generation**: Includes comprehensive podcast generation (single, dialogue, custom modes) and content rewriting with custom instructions.
 - **Study Tools**: Features include Study Guide generation, Test Me (with customizable difficulty levels and varied question types), Cognitive Map generation (with Mermaid diagrams), Suggested Readings, and Thesis Deep-Dive for scholarly analysis.
-- **Two-Document Comparison**: Supports side-by-side comparison with features like a three-stage mind map protocol that generates individual mind maps for each document and a meta-map identifying analogies and similarities.
+- **Two-Document Comparison**: Supports side-by-side comparison with comprehensive dual-document functions including Test Me, Podcast generation (with two-step consolidation workflow), Rewrite, and mind map generation. All functions support auto-complete for short documents (single chunks) and manual text selection for larger documents.
+- **Auto-Complete Intelligence**: Short documents (≤1000 words, single chunk) automatically use entire content when no manual selection is made, while preserving manual selection capability for targeted analysis.
 - **User Experience**: Employs a clean, streamlined UI with a popup toolbar for text selection actions, toast notifications for feedback, and flexible input options (file uploads or direct text). Chat input and content generation buttons are persistently accessible.
 
 ## External Dependencies
