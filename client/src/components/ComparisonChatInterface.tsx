@@ -76,7 +76,7 @@ export default function ComparisonChatInterface({
   };
 
   return (
-    <Card className="h-[800px] flex flex-col overflow-hidden">
+    <Card className="h-[900px] flex flex-col overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -103,8 +103,8 @@ export default function ComparisonChatInterface({
           <ScrollArea 
             className="h-full" 
             style={{ 
-              height: '600px',
-              maxHeight: '600px', 
+              height: '700px',
+              maxHeight: '700px', 
               overflowY: 'auto',
               overflowX: 'hidden',
               scrollBehavior: 'smooth',
