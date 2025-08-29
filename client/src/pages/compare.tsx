@@ -663,7 +663,7 @@ export default function ComparePage() {
   }) => {
     return (
     <div className="flex-1">
-      <Card className="h-[900px] flex flex-col overflow-hidden">
+      <Card className="h-[1000px] flex flex-col overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -764,7 +764,7 @@ export default function ComparePage() {
                   placeholder={`Type or paste your text for Document ${column} here...`}
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  className="flex-1 min-h-[500px] max-h-[700px] resize-vertical"
+                  className="flex-1 min-h-[750px] h-full resize-vertical"
                   disabled={isUploading}
                 />
                 <div className="flex items-center justify-between">
