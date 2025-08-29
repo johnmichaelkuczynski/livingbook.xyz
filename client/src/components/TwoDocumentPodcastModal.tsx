@@ -8,14 +8,8 @@ import PodcastModal from './PodcastModal';
 interface TwoDocumentPodcastModalProps {
   isOpen: boolean;
   onClose: () => void;
-  documentA: {
-    title: string;
-    content: string;
-  } | null;
-  documentB: {
-    title: string;
-    content: string;
-  } | null;
+  documentA: any | null;
+  documentB: any | null;
   selectedTextA: string;
   selectedTextB: string;
 }
@@ -42,8 +36,8 @@ export function TwoDocumentPodcastModal({
       let textB = selectedTextB;
       
       // Auto-complete for short documents if no text is selected
-      const isDocumentAShort = !documentA || documentA.chunkCount <= 1;
-      const isDocumentBShort = !documentB || documentB.chunkCount <= 1;
+      const isDocumentAShort = !documentA?.isChunked || (documentA?.chunkCount || 1) <= 1;
+      const isDocumentBShort = !documentB?.isChunked || (documentB?.chunkCount || 1) <= 1;
       
       if (!textA && isDocumentAShort && documentA?.content) {
         textA = documentA.content;
@@ -114,14 +108,14 @@ ${textB}`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold mb-2">Document A: {documentA?.title}</h4>
+                  <h4 className="font-semibold mb-2">Document A: {documentA?.title || documentA?.originalName}</h4>
                   <ScrollArea className="h-32 text-sm text-gray-600 dark:text-gray-400">
                     {selectedTextA || 'No text selected'}
                   </ScrollArea>
                 </div>
 
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold mb-2">Document B: {documentB?.title}</h4>
+                  <h4 className="font-semibold mb-2">Document B: {documentB?.title || documentB?.originalName}</h4>
                   <ScrollArea className="h-32 text-sm text-gray-600 dark:text-gray-400">
                     {selectedTextB || 'No text selected'}
                   </ScrollArea>
