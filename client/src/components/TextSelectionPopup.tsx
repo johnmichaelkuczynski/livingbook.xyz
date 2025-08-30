@@ -255,10 +255,10 @@ export default function TextSelectionPopup({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="openai">OpenAI</SelectItem>
-                          <SelectItem value="anthropic">Anthropic</SelectItem>
-                          <SelectItem value="deepseek">DeepSeek</SelectItem>
-                          <SelectItem value="perplexity">Perplexity</SelectItem>
+                          <SelectItem value="openai">ZHI 1</SelectItem>
+                          <SelectItem value="anthropic">ZHI 2</SelectItem>
+                          <SelectItem value="deepseek">ZHI 3</SelectItem>
+                          <SelectItem value="perplexity">ZHI 4</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
