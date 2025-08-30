@@ -51,7 +51,7 @@ function removeMarkupSymbols(text: string): string {
 
 export default function ChatInterface({ document, showInputInline = true, onMessageToDocument }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState('deepseek');
+  const [selectedProvider, setSelectedProvider] = useState('openai');
   const [isTyping, setIsTyping] = useState(false);
   const [mathRenderingEnabled, setMathRenderingEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -329,10 +329,10 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="deepseek">DeepSeek</SelectItem>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="anthropic">Anthropic</SelectItem>
-                <SelectItem value="perplexity">Perplexity</SelectItem>
+                <SelectItem value="openai">ZHI 1</SelectItem>
+                <SelectItem value="anthropic">ZHI 2</SelectItem>
+                <SelectItem value="deepseek">ZHI 3</SelectItem>
+                <SelectItem value="perplexity">ZHI 4</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center space-x-2">

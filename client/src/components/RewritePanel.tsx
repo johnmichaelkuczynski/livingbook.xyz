@@ -70,7 +70,7 @@ function splitIntoChunks(text: string, maxWords: number = 500): TextChunk[] {
 export default function RewritePanel({ document, isOpen, onClose, onApplyChunkToDocument }: RewritePanelProps) {
   const [chunks, setChunks] = useState<TextChunk[]>([]);
   const [rewriteInstructions, setRewriteInstructions] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState('deepseek');
+  const [selectedProvider, setSelectedProvider] = useState('openai');
   const [isRewriting, setIsRewriting] = useState(false);
   const [expandedChunks, setExpandedChunks] = useState<Set<number>>(new Set());
   const [expandedPreviews, setExpandedPreviews] = useState<Set<string>>(new Set());
@@ -478,10 +478,10 @@ export default function RewritePanel({ document, isOpen, onClose, onApplyChunkTo
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="openai">OpenAI</SelectItem>
-                      <SelectItem value="anthropic">Anthropic</SelectItem>
-                      <SelectItem value="perplexity">Perplexity</SelectItem>
+                      <SelectItem value="openai">ZHI 1</SelectItem>
+                      <SelectItem value="anthropic">ZHI 2</SelectItem>
+                      <SelectItem value="deepseek">ZHI 3</SelectItem>
+                      <SelectItem value="perplexity">ZHI 4</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
