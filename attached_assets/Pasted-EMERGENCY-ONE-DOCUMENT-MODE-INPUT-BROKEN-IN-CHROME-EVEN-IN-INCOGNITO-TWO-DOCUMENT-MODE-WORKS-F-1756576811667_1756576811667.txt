@@ -1,0 +1,100 @@
+EMERGENCY — ONE-DOCUMENT MODE INPUT BROKEN IN CHROME (EVEN IN INCOGNITO). TWO-DOCUMENT MODE WORKS. FIX NOW.
+
+Scope: Living Book Creator. In Chrome, One-Document mode text box cannot type or paste. Two-Document mode is OK. This is our code/DOM in One-Document mode. Deliver a code fix and PR.
+
+Do exactly this—no commentary:
+
+Reproduce
+
+Chrome latest: normal + Incognito.
+
+Confirm: One-Doc input won’t type/paste; Two-Doc input works.
+
+Diff One-Doc vs Two-Doc at runtime (DevTools)
+
+In One-Doc, click the main text input, then run:
+
+$0 = document.querySelector('input, textarea, [contenteditable="true"]');
+getEventListeners($0);
+getComputedStyle($0);
+const r=$0.getBoundingClientRect();
+document.elementFromPoint(r.left + r.width/2, r.top + r.height/2)
+
+
+Do the same in Two-Doc for its working input.
+
+Note any difference in: pointer-events, z-index, opacity, filter, transform, user-select, disabled, readOnly, and attached listeners (beforeinput, keydown, keypress).
+
+Remove the One-Doc blocker (most likely causes)
+
+A covering element in One-Doc layout:
+
+Identify element returned by elementFromPoint(...) that is not the input.
+
+In CSS for that element: set pointer-events: none; or lower its z-index.
+
+Global key handler active only in One-Doc:
+
+Search and guard:
+
+rg -n "beforeinput|onBeforeInput|keydown|keypress|preventDefault|stopPropagation" src
+
+
+Delete any preventDefault() on beforeinput for text fields.
+
+Add a universal guard used in One-Doc bootstrap:
+
+function isTypingTarget(t: EventTarget|null){
+  return t instanceof HTMLElement && (t.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(t.tagName));
+}
+window.addEventListener('keydown', e => { if (isTypingTarget(e.target)) return; /* existing shortcuts */ });
+window.addEventListener('beforeinput', e => { if (isTypingTarget(e.target)) return; /* don’t block typing */ });
+
+
+CSS applied only in One-Doc container:
+
+Remove from One-Doc wrappers: user-select: none;, pointer-events: none;, filter: blur(...), stray transform that creates an intercepting layer.
+
+Re-enable on fields:
+
+input, textarea, [contenteditable="true"] { user-select: text; pointer-events: auto; }
+
+
+Unify components
+
+Replace the One-Doc input component with the exact Two-Doc input component (same JSX + props) to inherit working behavior.
+
+Ensure any <input value=...> in One-Doc has a real onChange that updates state; otherwise use defaultValue.
+
+Remove One-Doc focus traps / modals
+
+If One-Doc mounts a hidden modal, drawer, or overlay (even opacity:0), disable it or exclude inputs from its trap:
+
+if (isTypingTarget(e.target)) return;
+
+
+Minimal code changes (edit these files exactly)
+
+src/modes/oneDoc/OneDocInput.tsx (or equivalent): swap in the Two-Doc input component; remove any onBeforeInput={(e)=>e.preventDefault()}.
+
+src/global/shortcuts.ts (or equivalent): add isTypingTarget guard to all global listeners.
+
+src/modes/oneDoc/OneDocLayout.(tsx|css) (or equivalent): remove or neutralize any overlay (pointer-events:none), fix z-index, remove user-select:none and pointer-events:none from ancestors of the input.
+
+Acceptance criteria (must all pass)
+
+Chrome (normal + Incognito): type, Backspace, arrows, Ctrl+V paste and context-menu paste work in One-Doc.
+
+Two-Doc unchanged and still works.
+
+Global shortcuts still work outside text fields.
+
+No regressions in Safari/Firefox.
+
+Deliverables
+
+PR title: Fix: One-Document mode input/paste blocked in Chrome (overlay + key guards + component unify)
+
+PR includes: file diffs for the three areas above and a 10–20s screen recording in Chrome showing One-Doc typing + paste working.
+
+Implement this now and submit the PR.

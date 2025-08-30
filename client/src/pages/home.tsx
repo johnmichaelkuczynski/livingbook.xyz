@@ -1052,6 +1052,20 @@ Speaker 1: [dialogue]
                         onChange={(e) => setTextInput(e.target.value)}
                         className="flex-1 min-h-[350px] resize-vertical"
                         disabled={isUploading}
+                        style={{
+                          pointerEvents: 'auto',
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text',
+                          MozUserSelect: 'text',
+                          msUserSelect: 'text',
+                          position: 'relative',
+                          zIndex: 100,
+                          backgroundColor: 'white',
+                          touchAction: 'manipulation'
+                        }}
+                        autoComplete="off"
+                        spellCheck="true"
+                        tabIndex={0}
                       />
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-500">
@@ -1122,6 +1136,20 @@ Speaker 1: [dialogue]
                       }
                       className={`w-full h-20 resize-none text-lg ${selectedText ? 'border-green-500 bg-green-50' : ''}`}
                       disabled={sendMessageMutation.isPending}
+                      style={{
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        MozUserSelect: 'text',
+                        msUserSelect: 'text',
+                        position: 'relative',
+                        zIndex: 100,
+                        backgroundColor: selectedText ? '#f0f9ff' : 'white',
+                        touchAction: 'manipulation'
+                      }}
+                      autoComplete="off"
+                      spellCheck="true"
+                      tabIndex={0}
                     />
                   </div>
                   <div className="flex flex-col justify-end">
