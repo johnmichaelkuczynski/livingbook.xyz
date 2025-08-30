@@ -911,6 +911,20 @@ ${metaData.cognitiveMap}`;
                   onChange={(e) => setTextInput(e.target.value)}
                   className="flex-1 resize-none min-h-[400px]"
                   disabled={isUploading}
+                  style={{
+                    pointerEvents: 'auto',
+                    userSelect: 'text',
+                    WebkitUserSelect: 'text',
+                    MozUserSelect: 'text',
+                    msUserSelect: 'text',
+                    position: 'relative',
+                    zIndex: 100,
+                    backgroundColor: 'white',
+                    touchAction: 'manipulation'
+                  }}
+                  autoComplete="off"
+                  spellCheck="true"
+                  tabIndex={0}
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-gray-500">
@@ -1219,6 +1233,20 @@ ${metaData.cognitiveMap}`;
                           handleSendMessage();
                         }
                       }}
+                      style={{
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        MozUserSelect: 'text',
+                        msUserSelect: 'text',
+                        position: 'relative',
+                        zIndex: 100,
+                        backgroundColor: 'white',
+                        touchAction: 'manipulation'
+                      }}
+                      autoComplete="off"
+                      spellCheck="true"
+                      tabIndex={0}
                     />
                     <div className="flex flex-col gap-2">
                       <Button
