@@ -8,7 +8,19 @@ interface DocumentViewerProps {
 
 function DocumentViewer({ content, onTextSelection }: DocumentViewerProps) {
   useEffect(() => {
-    const handleSelection = () => {
+    // Helper function to check if target is a typing element
+    const isTypingTarget = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tagName = target.tagName.toUpperCase();
+      return target.isContentEditable || 
+             ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
+             target.closest('input, textarea, [contenteditable="true"]') !== null;
+    };
+
+    const handleSelection = (e: Event) => {
+      // Don't interfere with typing in input fields
+      if (isTypingTarget(e.target)) return;
+      
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim() || '';
       
