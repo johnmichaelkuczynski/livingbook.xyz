@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, BookOpen, TestTube, Map, Lightbulb, Brain, Bookmark, MessageSquare, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +22,7 @@ import StudyGuideModal from '@/components/StudyGuideModal';
 import TestMeModal from '@/components/TestMeModal';
 import PodcastModal from '@/components/PodcastModal';
 import ChunkPodcastModal from '@/components/ChunkPodcastModal';
+import ChunkModal, { ContentType } from '@/components/ChunkModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -51,6 +52,8 @@ export default function Home() {
   const [podcastDialogue, setPodcastDialogue] = useState('');
   const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [showChunkPodcastModal, setShowChunkPodcastModal] = useState(false);
+  const [showChunkModal, setShowChunkModal] = useState(false);
+  const [chunkModalContentType, setChunkModalContentType] = useState<ContentType | null>(null);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [podcastType, setPodcastType] = useState<'standard' | 'modern'>('standard');
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
@@ -805,6 +808,20 @@ Speaker 1: [dialogue]
     }
   };
 
+  const handleChunkModalOpen = (contentType: ContentType) => {
+    if (!currentDocument) {
+      toast({
+        title: "No document loaded",
+        description: "Please upload a document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChunkModalContentType(contentType);
+    setShowChunkModal(true);
+  };
+
   const handleSuggestedReadings = async (text?: string) => {
     const textToAnalyze = text || selectedText;
     if (!textToAnalyze.trim()) {
@@ -1126,34 +1143,96 @@ Speaker 1: [dialogue]
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {/* Podcast - Special handling for large/small docs */}
                   <Button 
                     onClick={handlePodcastClick}
-                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-2"
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
-                    <FileText className="w-4 h-4" />
-                    Generate Podcast
+                    <Mic className="w-5 h-5" />
+                    <span className="text-xs">Podcast</span>
                   </Button>
+                  
+                  {/* Study Guide */}
                   <Button 
-                    onClick={() => setShowRewriteModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 px-4 py-2"
+                    onClick={() => handleChunkModalOpen('study-guide')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
-                    <FileText className="w-4 h-4" />
-                    Rewrite Content
+                    <BookOpen className="w-5 h-5" />
+                    <span className="text-xs">Study Guide</span>
                   </Button>
+                  
+                  {/* Test Me */}
                   <Button 
-                    onClick={() => handleStudyGuide()}
-                    variant="outline"
-                    className="flex items-center gap-2 px-4 py-2"
+                    onClick={() => handleChunkModalOpen('test-me')}
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
-                    <FileText className="w-4 h-4" />
-                    Study Guide
+                    <TestTube className="w-5 h-5" />
+                    <span className="text-xs">Test Me</span>
+                  </Button>
+                  
+                  {/* Cognitive Map */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('cognitive-map')}
+                    className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <Map className="w-5 h-5" />
+                    <span className="text-xs">Cognitive Map</span>
+                  </Button>
+                  
+                  {/* Summary/Thesis */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('summary-thesis')}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <Lightbulb className="w-5 h-5" />
+                    <span className="text-xs">Summary/Thesis</span>
+                  </Button>
+                  
+                  {/* Thesis Deep Dive */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('thesis-deep-dive')}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <Brain className="w-5 h-5" />
+                    <span className="text-xs">Thesis Deep Dive</span>
+                  </Button>
+                  
+                  {/* Suggested Readings */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('suggested-readings')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <Bookmark className="w-5 h-5" />
+                    <span className="text-xs">Suggested Readings</span>
+                  </Button>
+                  
+                  {/* Discuss */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('discuss')}
+                    className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    <span className="text-xs">Discuss</span>
+                  </Button>
+                  
+                  {/* Rewrite */}
+                  <Button 
+                    onClick={() => handleChunkModalOpen('rewrite')}
+                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                  >
+                    <Edit className="w-5 h-5" />
+                    <span className="text-xs">Rewrite</span>
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Generate AI-powered content based on your entire document
-                </p>
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Chunk-based Processing:</strong> Each function allows you to select specific 1000-word sections of your document for targeted AI analysis.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    • Select multiple chunks for batch processing • 10-second delays between requests to avoid rate limits • Choose your preferred AI provider
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -1255,6 +1334,19 @@ Speaker 1: [dialogue]
         onClose={() => setShowChunkPodcastModal(false)}
         document={currentDocument}
       />
+
+      {/* Generic Chunk Modal for all content types */}
+      {chunkModalContentType && (
+        <ChunkModal
+          isOpen={showChunkModal}
+          onClose={() => {
+            setShowChunkModal(false);
+            setChunkModalContentType(null);
+          }}
+          document={currentDocument}
+          contentType={chunkModalContentType}
+        />
+      )}
 
       {/* Rewrite Modal */}
       <RewriteModal

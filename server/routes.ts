@@ -563,10 +563,27 @@ ${selectedText}`;
   // Generate study guide for selected text
   app.post("/api/study-guide", async (req, res) => {
     try {
-      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      const { selectedText, documentTitle, documentId, chunkIndex, provider = 'openai' } = req.body;
       
-      if (!selectedText) {
-        return res.status(400).json({ error: "Selected text is required" });
+      let textToAnalyze = selectedText;
+      
+      // If documentId and chunkIndex are provided, get the chunk content
+      if (documentId && chunkIndex !== undefined) {
+        try {
+          const document = await storage.getDocument(documentId);
+          if (document) {
+            const chunkedDoc = chunkDocument(document.content, 1000);
+            if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching chunk:', error);
+        }
+      }
+      
+      if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+        return res.status(400).json({ error: "Text content is required" });
       }
 
       const studyGuidePrompt = `Generate a study guide based on the selected passage. The study guide should include:
@@ -583,7 +600,7 @@ Keep it clear, concise, and pedagogically useful.
 
 Selected passage from "${documentTitle}":
 """
-${selectedText}
+${textToAnalyze}
 """`;
 
       // Select AI service based on provider
@@ -607,7 +624,7 @@ ${selectedText}
       // Generate study guide
       const aiResponse = await generateChatResponse(
         studyGuidePrompt,
-        selectedText,
+        textToAnalyze,
         []
       );
       
@@ -616,7 +633,8 @@ ${selectedText}
       }
 
       res.json({
-        studyGuide: aiResponse.message
+        studyGuide: aiResponse.message,
+        chunkIndex
       });
       
     } catch (error) {
@@ -2803,6 +2821,194 @@ IMPORTANT: Return only valid JSON. No additional text.`;
     } catch (error) {
       console.error('Error grading test:', error);
       res.status(500).json({ error: 'Failed to grade test' });
+    }
+  });
+
+  // Test Me generation endpoint (chunk-based and regular)
+  app.post("/api/test-me", async (req, res) => {
+    try {
+      const { selectedText, documentId, chunkIndex, provider = 'deepseek' } = req.body;
+      
+      let textToAnalyze = selectedText;
+      
+      // If documentId and chunkIndex are provided, get the chunk content
+      if (documentId && chunkIndex !== undefined) {
+        try {
+          const document = await storage.getDocument(documentId);
+          if (document) {
+            const chunkedDoc = chunkDocument(document.content, 1000);
+            if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching chunk:', error);
+        }
+      }
+      
+      if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+        return res.status(400).json({ error: "Text content is required" });
+      }
+
+      console.log(`📝 GENERATING TEST - Provider: ${provider}, Text length: ${textToAnalyze.length}`);
+
+      const prompt = `Create a comprehensive quiz based on the provided text. Generate questions that test understanding, analysis, and application of the concepts. Include multiple choice, short answer, and essay questions.
+
+Format your response exactly like this:
+
+MULTIPLE CHOICE QUESTIONS:
+1. [Question text]
+   A) [Option A]
+   B) [Option B] 
+   C) [Option C]
+   D) [Option D]
+   Answer: [Correct letter]
+
+SHORT ANSWER QUESTIONS:
+1. [Question requiring 2-3 sentence response]
+2. [Another short answer question]
+
+ESSAY QUESTIONS:
+1. [Question requiring detailed analysis]
+2. [Question requiring critical thinking]
+
+PROVIDED TEXT:
+"""
+${textToAnalyze}
+"""
+
+Generate 3-5 multiple choice, 2-3 short answer, and 1-2 essay questions based on the content.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, textToAnalyze, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      const cleanedContent = removeMarkupSymbols(response.message);
+      
+      console.log(`✅ TEST GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
+      
+      res.json({ test: cleanedContent, chunkIndex });
+      
+    } catch (error) {
+      console.error("Test generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate test"
+      });
+    }
+  });
+
+  // Discussion generation endpoint (chunk-based and regular)
+  app.post("/api/discuss", async (req, res) => {
+    try {
+      const { selectedText, documentId, chunkIndex, provider = 'deepseek' } = req.body;
+      
+      let textToAnalyze = selectedText;
+      
+      // If documentId and chunkIndex are provided, get the chunk content
+      if (documentId && chunkIndex !== undefined) {
+        try {
+          const document = await storage.getDocument(documentId);
+          if (document) {
+            const chunkedDoc = chunkDocument(document.content, 1000);
+            if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching chunk:', error);
+        }
+      }
+      
+      if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+        return res.status(400).json({ error: "Text content is required" });
+      }
+
+      console.log(`💬 GENERATING DISCUSSION POINTS - Provider: ${provider}, Text length: ${textToAnalyze.length}`);
+
+      const prompt = `Generate thoughtful discussion questions and topics based on the provided text. Create questions that encourage critical thinking, debate, and deeper analysis of the concepts presented.
+
+Format your response exactly like this:
+
+KEY DISCUSSION TOPICS:
+• [Main theme or concept for discussion]
+• [Another important theme]
+• [Third significant concept]
+
+CRITICAL THINKING QUESTIONS:
+1. [Question that challenges assumptions]
+2. [Question that explores implications]  
+3. [Question that connects to broader contexts]
+
+DEBATE QUESTIONS:
+1. [Question with multiple valid perspectives]
+2. [Controversial or thought-provoking question]
+
+ANALYSIS QUESTIONS:
+1. [Question requiring deep textual analysis]
+2. [Question exploring author's reasoning]
+
+PROVIDED TEXT:
+"""
+${textToAnalyze}
+"""
+
+Generate discussion content that promotes engagement and deeper understanding.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(prompt, textToAnalyze, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      
+      const cleanedContent = removeMarkupSymbols(response.message);
+      
+      console.log(`✅ DISCUSSION GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
+      
+      res.json({ discussion: cleanedContent, chunkIndex });
+      
+    } catch (error) {
+      console.error("Discussion generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate discussion"
+      });
     }
   });
 
