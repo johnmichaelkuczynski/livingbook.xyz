@@ -14,7 +14,7 @@ import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
 import ChatInterface from '@/components/ChatInterface';
 import TextSelectionHandler from '@/components/TextSelectionHandler';
 // Removed RewritePanel
-// import TextSelectionPopup from '@/components/TextSelectionPopup'; // REMOVED
+import TextSelectionPopup from '@/components/TextSelectionPopup';
 // Removed all text selection - just basic document viewing
 import TestMeModal from '@/components/TestMeModal';
 import PodcastModal from '@/components/PodcastModal';
@@ -75,6 +75,7 @@ export default function Home() {
   const [showDocumentThesisDeepDiveModal, setShowDocumentThesisDeepDiveModal] = useState(false);
   const [showDocumentSuggestedReadingsModal, setShowDocumentSuggestedReadingsModal] = useState(false);
   const [showDocumentRewriteModal, setShowDocumentRewriteModal] = useState(false);
+  const [showDiscussPopup, setShowDiscussPopup] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -918,7 +919,7 @@ Speaker 1: [dialogue]
                 <TextSelectionHandler
                   onDiscuss={(text) => {
                     setSelectedText(text);
-                    setMessage(`Tell me more about: "${text.substring(0, 100)}..."`);
+                    setShowDiscussPopup(true);
                   }}
                   onRewrite={() => setShowRewriteModal(true)}
                   onTestMe={handleTestMe}
@@ -1367,6 +1368,14 @@ Speaker 1: [dialogue]
         isOpen={showDocumentRewriteModal}
         onClose={() => setShowDocumentRewriteModal(false)}
         document={currentDocument}
+      />
+
+      {/* Text Selection Discussion Popup */}
+      <TextSelectionPopup
+        isOpen={showDiscussPopup}
+        onClose={() => setShowDiscussPopup(false)}
+        selectedText={selectedText}
+        documentTitle={currentDocument?.originalName}
       />
 
     </div>
