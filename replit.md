@@ -22,7 +22,11 @@ Preferred communication style: Simple, everyday language.
 - ✅ Created DocumentSummaryThesisModal with copy, download, and scrollable content functionality
 - ✅ Implemented standing Thesis Deep Dive function with comprehensive scholarly analysis
 - ✅ Created DocumentThesisDeepDiveModal with two-column layout and structured sections (EXTRACTED THESIS, ORIGINAL WORDING, MODERN APPLICATIONS, CROSS-COMPARISON)
-- ✅ Added PDF, TXT, and Copy export functionality for research use
+- ✅ Implemented standing Suggested Readings function with academic book recommendations
+- ✅ Created DocumentSuggestedReadingsModal with two-column layout and individual book cards
+- ✅ Implemented standing Rewrite function with custom instruction interface
+- ✅ Created DocumentRewriteModal with Content Source display and Rewrite Instructions text area
+- ✅ Added PDF, TXT, and Copy export functionality for all research functions
 - ✅ All functions are standalone (not chunk-based) and work on entire documents
 
 **August 29, 2025**: 
