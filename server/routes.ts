@@ -893,6 +893,81 @@ ${document.content}
     }
   });
 
+  // Document Thesis Deep-Dive Generation - creates comprehensive thesis analysis of entire document
+  app.post("/api/generate-document-thesis-deep-dive", async (req, res) => {
+    try {
+      const { documentId, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`🔍 GENERATING DOCUMENT THESIS DEEP-DIVE - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const thesisDeepDivePrompt = `Analyze the following document and provide a comprehensive thesis deep-dive analysis. Format your response EXACTLY as follows:
+
+EXTRACTED THESIS: [Extract the core thesis or main argument of the document in 1-2 clear, precise sentences]
+
+ORIGINAL WORDING: [Quote the most important original passage that captures the thesis, using quotation marks and italics formatting]
+
+MODERN APPLICATIONS: [Explain how this thesis applies to contemporary contexts, current debates, or modern fields. Discuss relevance to today's issues, technology, or academic discourse. 2-3 paragraphs.]
+
+CROSS-COMPARISON: [Compare this thesis with other related theories, authors, or fields of study. Highlight similarities, differences, and connections to broader intellectual traditions. 2-3 paragraphs.]
+
+Focus on creating a scholarly, comprehensive analysis that demonstrates deep understanding of the document's central argument and its broader implications.
+
+Document content:
+"""
+${document.content}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(thesisDeepDivePrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT THESIS DEEP-DIVE GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        thesisDeepDive: response.message,
+        documentTitle: document.originalName,
+        documentContent: document.content,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document thesis deep-dive generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document thesis deep-dive" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {

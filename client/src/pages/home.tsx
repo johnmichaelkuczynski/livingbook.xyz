@@ -23,6 +23,7 @@ import ChunkModal, { ContentType } from '@/components/ChunkModal';
 import InteractiveTestModal from '@/components/InteractiveTestModal';
 import DocumentCognitiveMapModal from '@/components/DocumentCognitiveMapModal';
 import DocumentSummaryThesisModal from '@/components/DocumentSummaryThesisModal';
+import DocumentThesisDeepDiveModal from '@/components/DocumentThesisDeepDiveModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -69,6 +70,7 @@ export default function Home() {
   const [showInteractiveTestModal, setShowInteractiveTestModal] = useState(false);
   const [showDocumentCognitiveMapModal, setShowDocumentCognitiveMapModal] = useState(false);
   const [showDocumentSummaryThesisModal, setShowDocumentSummaryThesisModal] = useState(false);
+  const [showDocumentThesisDeepDiveModal, setShowDocumentThesisDeepDiveModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1110,9 +1112,9 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Summary/Thesis</span>
                   </Button>
                   
-                  {/* Thesis Deep Dive */}
+                  {/* Document Thesis Deep Dive */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('thesis-deep-dive')}
+                    onClick={() => setShowDocumentThesisDeepDiveModal(true)}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
                     <Brain className="w-5 h-5" />
@@ -1339,6 +1341,13 @@ Speaker 1: [dialogue]
       <DocumentSummaryThesisModal
         isOpen={showDocumentSummaryThesisModal}
         onClose={() => setShowDocumentSummaryThesisModal(false)}
+        document={currentDocument}
+      />
+
+      {/* Document Thesis Deep Dive Modal */}
+      <DocumentThesisDeepDiveModal
+        isOpen={showDocumentThesisDeepDiveModal}
+        onClose={() => setShowDocumentThesisDeepDiveModal(false)}
         document={currentDocument}
       />
 
