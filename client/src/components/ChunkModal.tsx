@@ -460,9 +460,9 @@ export default function ChunkModal({ isOpen, onClose, document, contentType }: C
                     Generated Content
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-0">
-                  <ScrollArea className="h-full">
-                    <div className="space-y-3 pr-4">
+                <CardContent className="flex-1 min-h-0 p-0">
+                  <ScrollArea className="h-full p-4">
+                    <div className="space-y-4">
                       {results.map((result) => (
                         <Card key={result.chunkIndex} className="p-4">
                           <div className="flex items-start gap-3">
@@ -481,11 +481,11 @@ export default function ChunkModal({ isOpen, onClose, document, contentType }: C
                                 )}
                               </div>
                               {result.success && result.content ? (
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <ScrollArea className="max-h-40">
-                                    <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                                <div className="bg-gray-50 rounded-lg p-4 border">
+                                  <ScrollArea className="max-h-[500px]">
+                                    <div className="text-sm text-gray-900 whitespace-pre-wrap font-sans leading-relaxed pr-4">
                                       {result.content}
-                                    </pre>
+                                    </div>
                                   </ScrollArea>
                                 </div>
                               ) : (
