@@ -13,7 +13,6 @@ import TextSelectionPopup from "@/components/TextSelectionPopup";
 import TextSelectionHandler from "@/components/TextSelectionHandler";
 import KaTeXRenderer from "@/components/KaTeXRenderer";
 import { downloadAIResponseAsWord } from "@/utils/wordGenerator";
-import StudyGuideModal from "@/components/StudyGuideModal";
 import TestMeModal from "@/components/TestMeModal";
 import PodcastModal from "@/components/PodcastModal";
 import { TwoDocumentPodcastModal } from "@/components/TwoDocumentPodcastModal";
@@ -57,7 +56,6 @@ export default function ComparePage() {
   const [selectionDocument, setSelectionDocument] = useState<string>("");
   
   // Modal States for Text Selection Features
-  const [showStudyGuideModal, setShowStudyGuideModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
@@ -253,10 +251,6 @@ export default function ComparePage() {
   };
 
   // Text Selection Handlers
-  const handleStudyGuide = () => {
-    setShowSelectionPopup(false);
-    setShowStudyGuideModal(true);
-  };
 
   const handleTestMe = () => {
     setShowSelectionPopup(false);
@@ -558,9 +552,6 @@ export default function ComparePage() {
         break;
       case 'test-me':
         setShowTestModal(true);
-        break;
-      case 'study-guide':
-        setShowStudyGuideModal(true);
         break;
       case 'rewrite':
         setShowRewriteModal(true);
@@ -1020,7 +1011,6 @@ ${metaData.cognitiveMap}`;
           {showSelectionPopup && selectionDocument === title && (
             <TextSelectionHandler
               onDiscuss={(text) => {}}
-              onStudyGuide={() => handleStudyGuide()}
               onTestMe={() => handleTestMe()}
               onPodcast={() => handlePodcast()}
               onRewrite={() => handleRewrite()}
@@ -1328,7 +1318,6 @@ ${metaData.cognitiveMap}`;
                 Source: {selectionDocument}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={handleStudyGuide} size="sm">Study Guide</Button>
                 <Button onClick={handleTestMe} size="sm">Test Me</Button>
                 <Button onClick={handlePodcast} size="sm">Podcast</Button>
                 <Button onClick={handleRewrite} size="sm">Rewrite</Button>
@@ -1349,11 +1338,6 @@ ${metaData.cognitiveMap}`;
         )}
 
         {/* All Modals */}
-        <StudyGuideModal
-          isOpen={showStudyGuideModal}
-          onClose={() => setShowStudyGuideModal(false)}
-          content={selectedText}
-        />
 
         <TestMeModal
           isOpen={showTestModal}

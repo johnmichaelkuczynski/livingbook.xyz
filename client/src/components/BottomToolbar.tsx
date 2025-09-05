@@ -14,7 +14,6 @@ import {
 interface BottomToolbarProps {
   selectedText: string;
   documentTitle?: string;
-  onStudyGuide: () => void;
   onTestMe: () => void;
   onPodcast: () => void;
   onCognitiveMap: () => void;
@@ -27,7 +26,6 @@ interface BottomToolbarProps {
 export default function BottomToolbar({
   selectedText,
   documentTitle,
-  onStudyGuide,
   onTestMe,
   onPodcast,
   onCognitiveMap,
@@ -42,12 +40,6 @@ export default function BottomToolbar({
   if (!hasSelection) return null;
 
   const toolbarButtons = [
-    {
-      label: 'Study Guide',
-      icon: BookOpen,
-      onClick: onStudyGuide,
-      description: 'Generate a comprehensive study guide'
-    },
     {
       label: 'Test Me',
       icon: GraduationCap,

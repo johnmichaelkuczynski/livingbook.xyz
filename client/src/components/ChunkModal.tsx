@@ -13,7 +13,7 @@ import { FileText, Clock, CheckCircle, XCircle, Loader2, Brain, BookOpen, TestTu
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
-export type ContentType = 'study-guide' | 'test-me' | 'cognitive-map' | 'summary-thesis' | 'thesis-deep-dive' | 'suggested-readings' | 'discuss' | 'rewrite';
+export type ContentType = 'test-me' | 'cognitive-map' | 'summary-thesis' | 'thesis-deep-dive' | 'suggested-readings' | 'discuss' | 'rewrite';
 
 interface ChunkModalProps {
   isOpen: boolean;
@@ -46,13 +46,6 @@ interface ContentResult {
 }
 
 const CONTENT_CONFIG = {
-  'study-guide': {
-    title: 'Generate Study Guides',
-    description: 'Create comprehensive study guides for selected document chunks',
-    icon: BookOpen,
-    color: 'bg-blue-600 hover:bg-blue-700',
-    apiEndpoint: '/api/study-guide'
-  },
   'test-me': {
     title: 'Generate Tests',
     description: 'Create practice tests and quizzes for selected chunks',

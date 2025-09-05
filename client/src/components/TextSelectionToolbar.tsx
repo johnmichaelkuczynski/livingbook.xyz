@@ -22,7 +22,6 @@ interface TextSelectionToolbarProps {
   selectionRect?: DOMRect;
   onDiscuss: () => void;
   onRewrite: () => void;
-  onStudyGuide: () => void;
   onTestMe: () => void;
   onPodcast: () => void;
   onCognitiveMap: () => void;
@@ -37,7 +36,6 @@ export default function TextSelectionToolbar({
   selectionRect,
   onDiscuss,
   onRewrite,
-  onStudyGuide,
   onTestMe,
   onPodcast,
   onCognitiveMap,
@@ -133,12 +131,6 @@ export default function TextSelectionToolbar({
       onClick: onRewrite,
       color: 'bg-purple-500 hover:bg-purple-600'
     },  
-    {
-      label: 'Study Guide',
-      icon: Bookmark,
-      onClick: onStudyGuide,
-      color: 'bg-orange-500 hover:bg-orange-600'
-    },
     {
       label: 'Test Me',
       icon: ClipboardCheck,

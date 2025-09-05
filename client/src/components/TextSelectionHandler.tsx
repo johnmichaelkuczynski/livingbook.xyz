@@ -5,7 +5,6 @@ interface TextSelectionHandlerProps {
   children: React.ReactNode;
   onDiscuss: (text: string) => void;
   onRewrite: (text: string) => void;
-  onStudyGuide: (text: string) => void;
   onTestMe: (text: string) => void;
   onPodcast: (text: string) => void;
   onCognitiveMap: (text: string) => void;
@@ -18,7 +17,6 @@ export default function TextSelectionHandler({
   children,
   onDiscuss,
   onRewrite,
-  onStudyGuide,
   onTestMe,
   onPodcast,
   onCognitiveMap,
@@ -129,10 +127,6 @@ export default function TextSelectionHandler({
           selectionRect={selectionRect}
           onDiscuss={() => onDiscuss(selectedText)}
           onRewrite={() => onRewrite(selectedText)}
-          onStudyGuide={() => {
-            console.log('🎯 STUDY GUIDE CLICKED - Text length:', selectedText.length);
-            onStudyGuide(selectedText);
-          }}
           onTestMe={() => {
             console.log('📝 TEST ME CLICKED - Text length:', selectedText.length);
             onTestMe(selectedText);
