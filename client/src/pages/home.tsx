@@ -20,6 +20,7 @@ import TestMeModal from '@/components/TestMeModal';
 import PodcastModal from '@/components/PodcastModal';
 import ChunkPodcastModal from '@/components/ChunkPodcastModal';
 import ChunkModal, { ContentType } from '@/components/ChunkModal';
+import InteractiveTestModal from '@/components/InteractiveTestModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -63,6 +64,7 @@ export default function Home() {
   const [isGeneratingSuggestedReadings, setIsGeneratingSuggestedReadings] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [showInteractiveTestModal, setShowInteractiveTestModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1077,9 +1079,9 @@ Speaker 1: [dialogue]
                   </Button>
                   
                   
-                  {/* Test Me */}
+                  {/* Interactive Test Me */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('test-me')}
+                    onClick={() => setShowInteractiveTestModal(true)}
                     className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
                     <TestTube className="w-5 h-5" />
@@ -1315,7 +1317,12 @@ Speaker 1: [dialogue]
         selectedText={selectedText}
       />
 
-
+      {/* Interactive Test Modal */}
+      <InteractiveTestModal
+        isOpen={showInteractiveTestModal}
+        onClose={() => setShowInteractiveTestModal(false)}
+        document={currentDocument}
+      />
 
     </div>
   );

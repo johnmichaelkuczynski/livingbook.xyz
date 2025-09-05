@@ -561,6 +561,127 @@ ${selectedText}`;
   });
 
 
+  // Interactive Test Generation - creates 3 multiple choice + 2 short answer questions
+  app.post("/api/generate-interactive-test", async (req, res) => {
+    try {
+      const { documentId, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`📝 GENERATING INTERACTIVE TEST - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const testPrompt = `Create an interactive test with EXACTLY 5 questions based on the following document. Format your response as valid JSON with this exact structure:
+
+{
+  "multipleChoice": [
+    {
+      "question": "Question text here?",
+      "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
+      "correctAnswer": "A",
+      "explanation": "Brief explanation of why this is correct"
+    }
+  ],
+  "shortAnswer": [
+    {
+      "question": "Question text here?",
+      "sampleAnswer": "A good answer should include these key points...",
+      "points": 10
+    }
+  ]
+}
+
+Requirements:
+- Create EXACTLY 3 multiple choice questions in the "multipleChoice" array
+- Create EXACTLY 2 short answer questions in the "shortAnswer" array  
+- Multiple choice questions must have 4 options each (A, B, C, D)
+- Include correct answers and explanations for multiple choice
+- Include sample answers for short answer questions
+- Base all questions on the actual content provided
+- Make questions test understanding, not just memorization
+- Vary difficulty levels across questions
+
+Document content:
+"""
+${document.content}
+"""
+
+Return ONLY the JSON object, no other text.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(testPrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      // Parse the JSON response
+      let testData;
+      try {
+        // Clean the response to extract JSON
+        let cleanedResponse = response.message.trim();
+        if (cleanedResponse.startsWith('```json')) {
+          cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/```$/, '').trim();
+        }
+        if (cleanedResponse.startsWith('```')) {
+          cleanedResponse = cleanedResponse.replace(/```\n?/, '').replace(/```$/, '').trim();
+        }
+        
+        testData = JSON.parse(cleanedResponse);
+        
+        // Validate the structure
+        if (!testData.multipleChoice || !Array.isArray(testData.multipleChoice) || testData.multipleChoice.length !== 3) {
+          throw new Error('Invalid multiple choice questions format or count');
+        }
+        if (!testData.shortAnswer || !Array.isArray(testData.shortAnswer) || testData.shortAnswer.length !== 2) {
+          throw new Error('Invalid short answer questions format or count');
+        }
+        
+      } catch (parseError) {
+        console.error('Failed to parse test JSON:', parseError);
+        console.error('Raw response:', response.message);
+        return res.status(500).json({ error: 'Failed to generate properly formatted test questions' });
+      }
+
+      console.log(`✅ INTERACTIVE TEST GENERATED - ${testData.multipleChoice.length} MC, ${testData.shortAnswer.length} SA questions`);
+
+      res.json({
+        test: testData,
+        documentTitle: document.originalName,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Interactive test generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate interactive test" 
+      });
+    }
+  });
 
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
