@@ -683,6 +683,99 @@ Return ONLY the JSON object, no other text.`;
     }
   });
 
+  // Document Cognitive Map Generation - creates structured analysis of entire document
+  app.post("/api/generate-document-cognitive-map", async (req, res) => {
+    try {
+      const { documentId, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`🧠 GENERATING DOCUMENT COGNITIVE MAP - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const cognitiveMapPrompt = `Analyze the following document and create a comprehensive cognitive map. Structure your response as a detailed analysis that can be rendered as a visual hierarchy.
+
+Create a structured analysis with the following components:
+
+MAIN THESIS: [The central argument or main point of the document]
+
+KEY CLAIMS: [2-3 major supporting arguments]
+- Key Claim 1: [Description]
+- Key Claim 2: [Description] 
+- Key Claim 3: [Description if applicable]
+
+SUB-CLAIMS: [Supporting points for each key claim]
+- Sub-claim 1a: [Supporting Key Claim 1]
+- Sub-claim 1b: [Supporting Key Claim 1]
+- Sub-claim 2a: [Supporting Key Claim 2]
+- Sub-claim 2b: [Supporting Key Claim 2]
+
+EVIDENCE: [Specific examples, data, or support provided]
+- Evidence 1: [Description]
+- Evidence 2: [Description]
+
+DEFINITIONS: [Key terms defined or concepts explained]
+- Definition 1: [Term and explanation]
+- Definition 2: [Term and explanation]
+
+ASSUMPTIONS: [Underlying assumptions or premises]
+- Assumption 1: [Description]
+- Assumption 2: [Description]
+
+Provide clear, concise descriptions for each component. Focus on the logical structure and relationships between ideas.
+
+Document content:
+"""
+${document.content}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(cognitiveMapPrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT COGNITIVE MAP GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        cognitiveMap: response.message,
+        documentTitle: document.originalName,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document cognitive map generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document cognitive map" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {

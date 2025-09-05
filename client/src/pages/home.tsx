@@ -21,6 +21,7 @@ import PodcastModal from '@/components/PodcastModal';
 import ChunkPodcastModal from '@/components/ChunkPodcastModal';
 import ChunkModal, { ContentType } from '@/components/ChunkModal';
 import InteractiveTestModal from '@/components/InteractiveTestModal';
+import DocumentCognitiveMapModal from '@/components/DocumentCognitiveMapModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -65,6 +66,7 @@ export default function Home() {
   const [showTestModal, setShowTestModal] = useState(false);
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
   const [showInteractiveTestModal, setShowInteractiveTestModal] = useState(false);
+  const [showDocumentCognitiveMapModal, setShowDocumentCognitiveMapModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1088,12 +1090,12 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Test Me</span>
                   </Button>
                   
-                  {/* Cognitive Map */}
+                  {/* Document Cognitive Map */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('cognitive-map')}
+                    onClick={() => setShowDocumentCognitiveMapModal(true)}
                     className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
-                    <Map className="w-5 h-5" />
+                    <Brain className="w-5 h-5" />
                     <span className="text-xs">Cognitive Map</span>
                   </Button>
                   
@@ -1321,6 +1323,13 @@ Speaker 1: [dialogue]
       <InteractiveTestModal
         isOpen={showInteractiveTestModal}
         onClose={() => setShowInteractiveTestModal(false)}
+        document={currentDocument}
+      />
+
+      {/* Document Cognitive Map Modal */}
+      <DocumentCognitiveMapModal
+        isOpen={showDocumentCognitiveMapModal}
+        onClose={() => setShowDocumentCognitiveMapModal(false)}
         document={currentDocument}
       />
 
