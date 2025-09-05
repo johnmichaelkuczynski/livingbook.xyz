@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Brain, RefreshCw, FileText, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import mermaid from 'mermaid';
 
 interface DocumentCognitiveMapModalProps {
   isOpen: boolean;
@@ -15,16 +16,29 @@ interface DocumentCognitiveMapModalProps {
 
 export default function DocumentCognitiveMapModal({ isOpen, onClose, document }: DocumentCognitiveMapModalProps) {
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
+  const [mermaidDiagram, setMermaidDiagram] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const mermaidRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
+
+  // Initialize Mermaid
+  useEffect(() => {
+    mermaid.initialize({ 
+      startOnLoad: true, 
+      theme: 'default',
+      fontFamily: 'arial',
+      fontSize: 12
+    });
+  }, []);
 
   const generateCognitiveMap = async () => {
     if (!document) return;
 
     setIsGenerating(true);
     setCognitiveMapContent('');
+    setMermaidDiagram('');
 
     try {
       const response = await apiRequest('POST', '/api/generate-document-cognitive-map', {
@@ -35,10 +49,11 @@ export default function DocumentCognitiveMapModal({ isOpen, onClose, document }:
       if (response.ok) {
         const data = await response.json();
         setCognitiveMapContent(data.cognitiveMap);
+        setMermaidDiagram(data.mermaidDiagram || '');
         
         toast({
           title: "Cognitive Map Generated",
-          description: "Document analysis complete - structured view ready.",
+          description: "Document analysis complete - visual diagram ready.",
         });
       } else {
         throw new Error('Failed to generate cognitive map');
@@ -62,6 +77,32 @@ export default function DocumentCognitiveMapModal({ isOpen, onClose, document }:
       generateCognitiveMap();
     }
   }, [isOpen, document]);
+
+  // Render Mermaid diagram when content changes
+  useEffect(() => {
+    if (mermaidDiagram && mermaidRef.current) {
+      // Clear previous content
+      mermaidRef.current.innerHTML = '';
+      
+      // Generate unique ID for this diagram
+      const id = `mermaid-diagram-${Date.now()}`;
+      
+      try {
+        mermaid.render(id, mermaidDiagram).then((result) => {
+          if (mermaidRef.current) {
+            mermaidRef.current.innerHTML = result.svg;
+          }
+        }).catch((error) => {
+          console.error('Mermaid rendering error:', error);
+          if (mermaidRef.current) {
+            mermaidRef.current.innerHTML = '<p class="text-red-500 text-sm">Error rendering diagram</p>';
+          }
+        });
+      } catch (error) {
+        console.error('Mermaid setup error:', error);
+      }
+    }
+  }, [mermaidDiagram]);
 
   // Parse the cognitive map content into structured sections
   const parseStructuredContent = (content: string) => {
@@ -159,7 +200,7 @@ export default function DocumentCognitiveMapModal({ isOpen, onClose, document }:
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column - Document Summary */}
+                {/* Left Column - Document Summary and Text Analysis */}
                 <div className="space-y-4">
                   <Card>
                     <CardHeader>
@@ -208,60 +249,46 @@ export default function DocumentCognitiveMapModal({ isOpen, onClose, document }:
                   )}
                 </div>
 
-                {/* Right Column - Visual Cognitive Map */}
+                {/* Right Column - Visual Cognitive Map Diagram */}
                 <div className="space-y-4">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Visual Cognitive Map</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Main Thesis */}
-                      {structuredContent.mainThesis && (
-                        <div className="text-center">
-                          <div className="p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
-                            <div className="font-semibold text-sm text-indigo-800 mb-1">Main Thesis:</div>
-                            <div className="text-sm text-indigo-700">{structuredContent.mainThesis}</div>
-                          </div>
+                    <CardContent>
+                      {/* Mermaid Diagram */}
+                      {mermaidDiagram && (
+                        <div className="w-full h-auto overflow-auto border rounded-lg bg-white p-4">
+                          <div ref={mermaidRef} className="w-full h-auto"></div>
                         </div>
                       )}
-
-                      {/* Key Claims */}
-                      {structuredContent.keyClaims.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {structuredContent.keyClaims.map((claim, index) => (
-                            <div key={index} className="p-3 bg-green-100 border border-green-300 rounded-lg">
-                              <div className="font-semibold text-sm text-green-800 mb-1">
-                                Key Claim {index + 1}:
+                      
+                      {/* Fallback if no diagram */}
+                      {!mermaidDiagram && structuredContent && (
+                        <div className="space-y-4">
+                          {/* Main Thesis */}
+                          {structuredContent.mainThesis && (
+                            <div className="text-center">
+                              <div className="p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
+                                <div className="font-semibold text-sm text-indigo-800 mb-1">Main Thesis:</div>
+                                <div className="text-sm text-indigo-700">{structuredContent.mainThesis}</div>
                               </div>
-                              <div className="text-sm text-green-700">{claim}</div>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          )}
 
-                      {/* Sub-Claims */}
-                      {structuredContent.subClaims.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {structuredContent.subClaims.map((subClaim, index) => (
-                            <div key={index} className="p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-                              <div className="font-semibold text-sm text-yellow-800 mb-1">
-                                Sub-claim {index + 1}:
-                              </div>
-                              <div className="text-sm text-yellow-700">{subClaim}</div>
+                          {/* Key Claims */}
+                          {structuredContent.keyClaims.length > 0 && (
+                            <div className="grid grid-cols-1 gap-3">
+                              {structuredContent.keyClaims.map((claim, index) => (
+                                <div key={index} className="p-3 bg-green-100 border border-green-300 rounded-lg">
+                                  <div className="font-semibold text-sm text-green-800 mb-1">
+                                    Key Claim {index + 1}:
+                                  </div>
+                                  <div className="text-sm text-green-700">{claim}</div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Evidence */}
-                      {structuredContent.evidence.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="font-semibold text-sm text-orange-800">Evidence:</div>
-                          {structuredContent.evidence.map((evidence, index) => (
-                            <div key={index} className="p-2 bg-orange-100 border border-orange-300 rounded">
-                              <div className="text-sm text-orange-700">{evidence}</div>
-                            </div>
-                          ))}
+                          )}
                         </div>
                       )}
                     </CardContent>

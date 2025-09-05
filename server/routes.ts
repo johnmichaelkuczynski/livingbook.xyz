@@ -700,10 +700,9 @@ Return ONLY the JSON object, no other text.`;
 
       console.log(`🧠 GENERATING DOCUMENT COGNITIVE MAP - Provider: ${provider}, Document: ${document.originalName}`);
 
-      const cognitiveMapPrompt = `Analyze the following document and create a comprehensive cognitive map. Structure your response as a detailed analysis that can be rendered as a visual hierarchy.
+      const cognitiveMapPrompt = `Analyze the following document and create a comprehensive cognitive map. Provide your response in this EXACT format:
 
-Create a structured analysis with the following components:
-
+STRUCTURED_ANALYSIS:
 MAIN THESIS: [The central argument or main point of the document]
 
 KEY CLAIMS: [2-3 major supporting arguments]
@@ -729,7 +728,40 @@ ASSUMPTIONS: [Underlying assumptions or premises]
 - Assumption 1: [Description]
 - Assumption 2: [Description]
 
-Provide clear, concise descriptions for each component. Focus on the logical structure and relationships between ideas.
+MERMAID_DIAGRAM:
+\`\`\`mermaid
+graph TD
+    THESIS["Main Thesis:<br/>[SHORT VERSION OF MAIN THESIS]"]
+    
+    CLAIM1["Key Claim 1:<br/>[SHORT VERSION]"]
+    CLAIM2["Key Claim 2:<br/>[SHORT VERSION]"]
+    CLAIM3["Key Claim 3:<br/>[SHORT VERSION IF APPLICABLE]"]
+    
+    SUB1A["Sub-claim 1a:<br/>[SHORT VERSION]"]
+    SUB1B["Sub-claim 1b:<br/>[SHORT VERSION]"]
+    SUB2A["Sub-claim 2a:<br/>[SHORT VERSION]"]
+    SUB2B["Sub-claim 2b:<br/>[SHORT VERSION]"]
+    
+    EVIDENCE1["Evidence:<br/>[SHORT DESCRIPTION]"]
+    EVIDENCE2["Evidence:<br/>[SHORT DESCRIPTION]"]
+    
+    DEFS["Definitions:<br/>[KEY TERMS]"]
+    ASSUME["Assumptions:<br/>[CORE ASSUMPTIONS]"]
+    
+    THESIS --> CLAIM1
+    THESIS --> CLAIM2
+    THESIS --> CLAIM3
+    CLAIM1 --> SUB1A
+    CLAIM1 --> SUB1B
+    CLAIM2 --> SUB2A
+    CLAIM2 --> SUB2B
+    CLAIM1 --> EVIDENCE1
+    CLAIM2 --> EVIDENCE2
+    DEFS --> THESIS
+    ASSUME --> THESIS
+\`\`\`
+
+Keep all text in diagram boxes SHORT (max 4-5 words per line). Use <br/> for line breaks. Focus on the logical structure and relationships between ideas.
 
 Document content:
 """
@@ -760,10 +792,19 @@ ${document.content}
         return res.status(500).json({ error: response.error });
       }
 
+      // Parse structured analysis and mermaid diagram
+      const content = response.message;
+      const structuredMatch = content.match(/STRUCTURED_ANALYSIS:([\s\S]*?)MERMAID_DIAGRAM:/);
+      const mermaidMatch = content.match(/MERMAID_DIAGRAM:[\s\S]*?```mermaid([\s\S]*?)```/);
+      
+      const structuredAnalysis = structuredMatch ? structuredMatch[1].trim() : content;
+      const mermaidCode = mermaidMatch ? mermaidMatch[1].trim() : '';
+
       console.log(`✅ DOCUMENT COGNITIVE MAP GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
 
       res.json({
-        cognitiveMap: response.message,
+        cognitiveMap: structuredAnalysis,
+        mermaidDiagram: mermaidCode,
         documentTitle: document.originalName,
         provider
       });
