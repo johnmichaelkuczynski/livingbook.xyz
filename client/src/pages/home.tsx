@@ -21,6 +21,7 @@ import SimpleStudyGuide from '@/components/SimpleStudyGuide';
 import StudyGuideModal from '@/components/StudyGuideModal';
 import TestMeModal from '@/components/TestMeModal';
 import PodcastModal from '@/components/PodcastModal';
+import ChunkPodcastModal from '@/components/ChunkPodcastModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -49,6 +50,7 @@ export default function Home() {
   const [isProcessingSelection, setIsProcessingSelection] = useState(false);
   const [podcastDialogue, setPodcastDialogue] = useState('');
   const [showPodcastModal, setShowPodcastModal] = useState(false);
+  const [showChunkPodcastModal, setShowChunkPodcastModal] = useState(false);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [podcastType, setPodcastType] = useState<'standard' | 'modern'>('standard');
   const [cognitiveMapContent, setCognitiveMapContent] = useState('');
@@ -943,7 +945,30 @@ Speaker 1: [dialogue]
                   onRewrite={() => setShowRewriteModal(true)}
                   onStudyGuide={handleStudyGuide}
                   onTestMe={handleTestMe}
-                  onPodcast={() => setShowPodcastModal(true)}
+                  onPodcast={() => {
+                    // Check if document exists and determine size
+                    if (!currentDocument) {
+                      toast({
+                        title: "No document loaded",
+                        description: "Please upload a document first.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    // Count words in the document
+                    const wordCount = currentDocument.content
+                      .split(/\s+/)
+                      .filter((word: string) => word.length > 0).length;
+
+                    // For large documents (>1000 words), use ChunkPodcastModal
+                    // For small documents (≤1000 words), use regular PodcastModal with auto-complete
+                    if (wordCount > 1000) {
+                      setShowChunkPodcastModal(true);
+                    } else {
+                      setShowPodcastModal(true);
+                    }
+                  }}
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={handleSummaryThesis}
                   onThesisDeepDive={handleThesisDeepDive}
@@ -1177,6 +1202,13 @@ Speaker 1: [dialogue]
         onClose={() => setShowPodcastModal(false)}
         document={currentDocument}
         selectedText={selectedText}
+      />
+
+      {/* Chunk Podcast Modal */}
+      <ChunkPodcastModal
+        isOpen={showChunkPodcastModal}
+        onClose={() => setShowChunkPodcastModal(false)}
+        document={currentDocument}
       />
 
       {/* Rewrite Modal */}

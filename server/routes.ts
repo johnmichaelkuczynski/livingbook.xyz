@@ -6,7 +6,7 @@ import fs from "fs/promises";
 import { createReadStream } from "fs";
 import { storage } from "./storage";
 import { extractTextFromDocument, processMathNotation } from "./services/documentProcessor";
-import { chunkDocument } from "./services/documentChunker";
+import { chunkDocument, type DocumentChunk, type ChunkedDocument, getChunkStats } from "./services/documentChunker";
 import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
@@ -801,7 +801,262 @@ ${selectedText}
     }
   });
 
+  // Get document chunks for chunk-based podcast generation
+  app.get("/api/documents/:id/chunks", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.getDocument(id);
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
 
+      const chunkedDoc = chunkDocument(document.content, 1000);
+      const stats = getChunkStats(chunkedDoc);
+      
+      res.json({
+        documentId: id,
+        totalWords: chunkedDoc.totalWordCount,
+        isLargeDocument: chunkedDoc.totalWordCount > 1000,
+        chunks: stats.chunks,
+        totalChunks: stats.totalChunks,
+        avgWordsPerChunk: stats.avgWordsPerChunk
+      });
+    } catch (error) {
+      console.error("Error getting document chunks:", error);
+      res.status(500).json({ error: "Failed to get document chunks" });
+    }
+  });
+
+  // Generate podcasts from multiple chunks with rate limiting
+  app.post("/api/generate-multi-chunk-podcast", async (req, res) => {
+    try {
+      const { documentId, chunkIndexes, provider = 'deepseek', type = 'single', prompt } = req.body;
+      
+      if (!documentId || !chunkIndexes || !Array.isArray(chunkIndexes) || chunkIndexes.length === 0) {
+        return res.status(400).json({ error: "Document ID and chunk indexes are required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      const chunkedDoc = chunkDocument(document.content, 1000);
+      console.log(`🎙️ MULTI-CHUNK PODCAST - Processing ${chunkIndexes.length} chunks with 10s delays`);
+      
+      const podcastResults = [];
+      
+      for (let i = 0; i < chunkIndexes.length; i++) {
+        const chunkIndex = chunkIndexes[i];
+        const chunk = chunkedDoc.chunks.find(c => c.chunkIndex === chunkIndex);
+        
+        if (!chunk) {
+          console.warn(`⚠️ Chunk ${chunkIndex} not found, skipping`);
+          continue;
+        }
+
+        console.log(`🎙️ Processing chunk ${chunkIndex + 1}/${chunkedDoc.chunkCount} (${i + 1}/${chunkIndexes.length})`);
+        
+        // Generate podcast for this chunk
+        const chunkPrompt = prompt || `Generate a complete ${type} podcast episode with proper dialogue format using HOST: and GUEST: speaker labels. Episode should be exactly 3.5 minutes (450-500 words maximum) about the following text chunk ${chunkIndex + 1}. Include natural conversation with clear speaker turns. Keep it professional and informative:\n\n${chunk.content}`;
+
+        let chatResponse;
+        switch (provider) {
+          case 'openai':
+            chatResponse = await openaiService.generateChatResponse(chunkPrompt, chunk.content, []);
+            break;
+          case 'deepseek':
+            chatResponse = await deepseekService.generateChatResponse(chunkPrompt, chunk.content, []);
+            break;
+          case 'anthropic':
+            chatResponse = await anthropicService.generateChatResponse(chunkPrompt, chunk.content, []);
+            break;
+          case 'perplexity':
+            chatResponse = await perplexityService.generateChatResponse(chunkPrompt, chunk.content, []);
+            break;
+          default:
+            chatResponse = await deepseekService.generateChatResponse(chunkPrompt, chunk.content, []);
+        }
+        
+        if (chatResponse.error) {
+          console.error(`❌ Error generating dialogue for chunk ${chunkIndex}:`, chatResponse.error);
+          podcastResults.push({
+            chunkIndex,
+            success: false,
+            error: chatResponse.error
+          });
+          continue;
+        }
+
+        const dialogue = chatResponse.message;
+        console.log(`✅ Dialogue generated for chunk ${chunkIndex} - Length: ${dialogue.length} chars`);
+
+        // Generate audio for this chunk
+        try {
+          const azureTTSSimple = await import('./services/azureTTSSimple');
+          const audioBuffer = await azureTTSSimple.generateDialogueAudio(dialogue);
+          
+          // Save to file
+          const timestamp = Date.now();
+          const filename = `podcast-chunk-${chunkIndex}-${timestamp}.mp3`;
+          const filePath = path.join(process.cwd(), 'downloads', filename);
+          
+          await fs.writeFile(filePath, audioBuffer);
+          console.log(`💾 Chunk ${chunkIndex} audio saved: ${filename}`);
+
+          // Schedule cleanup after 1 hour
+          setTimeout(async () => {
+            try {
+              await fs.unlink(filePath);
+              console.log(`🗑️ Cleaned up chunk file: ${filePath}`);
+            } catch (err) {
+              console.log(`⚠️ Failed to cleanup chunk file: ${filePath}`, err);
+            }
+          }, 60 * 60 * 1000);
+
+          podcastResults.push({
+            chunkIndex,
+            success: true,
+            script: dialogue,
+            audioUrl: `/api/download-podcast/${filename}`,
+            filename: filename,
+            wordCount: chunk.wordCount
+          });
+
+        } catch (audioError) {
+          console.error(`❌ Audio generation failed for chunk ${chunkIndex}:`, audioError);
+          podcastResults.push({
+            chunkIndex,
+            success: false,
+            script: dialogue,
+            error: `Audio generation failed: ${audioError instanceof Error ? audioError.message : 'Unknown error'}`
+          });
+        }
+
+        // Rate limiting: Wait 10 seconds before processing next chunk (except for the last one)
+        if (i < chunkIndexes.length - 1) {
+          console.log(`⏱️ Waiting 10 seconds before processing next chunk to avoid rate limits...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        }
+      }
+
+      res.json({
+        documentId,
+        processedChunks: podcastResults.length,
+        results: podcastResults,
+        totalChunks: chunkedDoc.chunkCount
+      });
+
+    } catch (error) {
+      console.error("Error generating multi-chunk podcast:", error);
+      res.status(500).json({ error: "Failed to generate multi-chunk podcast" });
+    }
+  });
+
+  // Auto-complete podcast for small documents (≤1000 words)
+  app.post("/api/generate-auto-complete-podcast", async (req, res) => {
+    try {
+      const { documentId, provider = 'deepseek', type = 'single', prompt } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      // Check if document is small enough for auto-complete
+      const wordCount = document.content.split(/\s+/).filter(word => word.length > 0).length;
+      if (wordCount > 1000) {
+        return res.status(400).json({ 
+          error: "Document too large for auto-complete. Use chunk-based podcast generation instead.",
+          wordCount,
+          maxWords: 1000
+        });
+      }
+
+      console.log(`🎙️ AUTO-COMPLETE PODCAST - Processing full document (${wordCount} words)`);
+
+      // Generate podcast for entire document
+      const podcastPrompt = prompt || `Generate a complete ${type} podcast episode with proper dialogue format using HOST: and GUEST: speaker labels. Episode should be exactly 3.5 minutes (450-500 words maximum) about the following document. Include natural conversation with clear speaker turns. Keep it professional and informative:\n\n${document.content}`;
+
+      let chatResponse;
+      switch (provider) {
+        case 'openai':
+          chatResponse = await openaiService.generateChatResponse(podcastPrompt, document.content, []);
+          break;
+        case 'deepseek':
+          chatResponse = await deepseekService.generateChatResponse(podcastPrompt, document.content, []);
+          break;
+        case 'anthropic':
+          chatResponse = await anthropicService.generateChatResponse(podcastPrompt, document.content, []);
+          break;
+        case 'perplexity':
+          chatResponse = await perplexityService.generateChatResponse(podcastPrompt, document.content, []);
+          break;
+        default:
+          chatResponse = await deepseekService.generateChatResponse(podcastPrompt, document.content, []);
+      }
+      
+      if (chatResponse.error) {
+        return res.status(500).json({ error: chatResponse.error });
+      }
+
+      const dialogue = chatResponse.message;
+      console.log(`✅ AUTO-COMPLETE DIALOGUE GENERATED - Length: ${dialogue.length} chars`);
+
+      // Generate audio
+      try {
+        const azureTTSSimple = await import('./services/azureTTSSimple');
+        const audioBuffer = await azureTTSSimple.generateDialogueAudio(dialogue);
+        
+        // Save to file
+        const timestamp = Date.now();
+        const filename = `podcast-autocomplete-${timestamp}.mp3`;
+        const filePath = path.join(process.cwd(), 'downloads', filename);
+        
+        await fs.writeFile(filePath, audioBuffer);
+        console.log(`💾 Auto-complete audio saved: ${filename}`);
+
+        // Schedule cleanup after 1 hour
+        setTimeout(async () => {
+          try {
+            await fs.unlink(filePath);
+            console.log(`🗑️ Cleaned up auto-complete file: ${filePath}`);
+          } catch (err) {
+            console.log(`⚠️ Failed to cleanup auto-complete file: ${filePath}`, err);
+          }
+        }, 60 * 60 * 1000);
+
+        res.json({
+          documentId,
+          wordCount,
+          script: dialogue,
+          audioUrl: `/api/download-podcast/${filename}`,
+          filename: filename,
+          isAutoComplete: true
+        });
+
+      } catch (audioError) {
+        console.error(`❌ Auto-complete audio generation failed:`, audioError);
+        // Fallback to script only
+        res.json({
+          documentId,
+          wordCount,
+          script: dialogue,
+          isAutoComplete: true,
+          error: `Audio generation failed: ${audioError instanceof Error ? audioError.message : 'Unknown error'}`
+        });
+      }
+
+    } catch (error) {
+      console.error("Error generating auto-complete podcast:", error);
+      res.status(500).json({ error: "Failed to generate auto-complete podcast" });
+    }
+  });
 
   // Send chat message about selected text
   app.post("/api/chat/selection", async (req, res) => {
@@ -1434,7 +1689,8 @@ Your task is to create a comprehensive synthesis that:
         const response = await generateResponse(prompt, '', []);
         synthesis = typeof response === 'string' ? response : response.message;
       } else {
-        synthesis = await generateResponse(prompt, []);
+        const response = await generateResponse(prompt, '', []);
+        synthesis = typeof response === 'string' ? response : response.message;
       }
       const cleanedSynthesis = removeMarkupSymbols(synthesis || 'No synthesis generated');
 
