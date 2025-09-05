@@ -1048,6 +1048,82 @@ ${document.content}
     }
   });
 
+  // Document Rewrite Generation - rewrites entire document with custom instructions
+  app.post("/api/generate-document-rewrite", async (req, res) => {
+    try {
+      const { documentId, rewriteInstructions, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      if (!rewriteInstructions) {
+        return res.status(400).json({ error: "Rewrite instructions are required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`✏️ GENERATING DOCUMENT REWRITE - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const rewritePrompt = `You are a professional content rewriter. Please rewrite the following document according to these specific instructions:
+
+REWRITE INSTRUCTIONS: ${rewriteInstructions}
+
+Please maintain the core meaning and important information while following the rewrite instructions exactly. Ensure the rewritten content is well-structured, coherent, and meets the specified requirements.
+
+ORIGINAL DOCUMENT:
+"""
+${document.content}
+"""
+
+REWRITTEN VERSION:`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(rewritePrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT REWRITE GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        rewrittenContent: response.message,
+        originalContent: document.content,
+        documentTitle: document.originalName,
+        rewriteInstructions,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document rewrite generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document rewrite" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {

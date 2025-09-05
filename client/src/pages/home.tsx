@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, BookOpen, TestTube, Map, Lightbulb, Brain, Bookmark, MessageSquare, Edit } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, BookOpen, TestTube, Map, Lightbulb, Brain, Bookmark, MessageSquare, Edit, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,7 @@ import DocumentCognitiveMapModal from '@/components/DocumentCognitiveMapModal';
 import DocumentSummaryThesisModal from '@/components/DocumentSummaryThesisModal';
 import DocumentThesisDeepDiveModal from '@/components/DocumentThesisDeepDiveModal';
 import DocumentSuggestedReadingsModal from '@/components/DocumentSuggestedReadingsModal';
+import DocumentRewriteModal from '@/components/DocumentRewriteModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -73,6 +74,7 @@ export default function Home() {
   const [showDocumentSummaryThesisModal, setShowDocumentSummaryThesisModal] = useState(false);
   const [showDocumentThesisDeepDiveModal, setShowDocumentThesisDeepDiveModal] = useState(false);
   const [showDocumentSuggestedReadingsModal, setShowDocumentSuggestedReadingsModal] = useState(false);
+  const [showDocumentRewriteModal, setShowDocumentRewriteModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1141,12 +1143,12 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Discuss</span>
                   </Button>
                   
-                  {/* Rewrite */}
+                  {/* Document Rewrite */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('rewrite')}
-                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
+                    onClick={() => setShowDocumentRewriteModal(true)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
-                    <Edit className="w-5 h-5" />
+                    <Edit3 className="w-5 h-5" />
                     <span className="text-xs">Rewrite</span>
                   </Button>
                 </div>
@@ -1357,6 +1359,13 @@ Speaker 1: [dialogue]
       <DocumentSuggestedReadingsModal
         isOpen={showDocumentSuggestedReadingsModal}
         onClose={() => setShowDocumentSuggestedReadingsModal(false)}
+        document={currentDocument}
+      />
+
+      {/* Document Rewrite Modal */}
+      <DocumentRewriteModal
+        isOpen={showDocumentRewriteModal}
+        onClose={() => setShowDocumentRewriteModal(false)}
         document={currentDocument}
       />
 
