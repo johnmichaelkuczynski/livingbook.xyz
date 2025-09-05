@@ -72,6 +72,7 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  
   // Create document from text content (AI response conversion)
   app.post("/api/documents/create-from-text", async (req, res) => {
     try {
