@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**September 5, 2025**:
+- ✅ Implemented interactive Test Me standing function with 5-question format (3 multiple choice + 2 short answer)
+- ✅ Created InteractiveTestModal with real test-taking interface, automatic grading, and score feedback
+- ✅ Added backend endpoint for generating structured test data from entire documents
+- ✅ Built visual Cognitive Map standing function with Mermaid diagram integration
+- ✅ Created DocumentCognitiveMapModal with true visual diagrams showing connected relationships
+- ✅ Implemented hierarchical flowcharts (thesis → claims → sub-claims → evidence) with arrows
+- ✅ Added two-column layout: structured text analysis on left, visual diagram on right
+- ✅ Both functions are standalone (not chunk-based) and work on entire documents
+
 **August 29, 2025**: 
 - ✅ Completed dual-document functionality with auto-complete for short documents
 - ✅ Implemented two-document podcast generation with consolidation workflow
