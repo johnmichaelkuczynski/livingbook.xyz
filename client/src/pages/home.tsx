@@ -780,6 +780,31 @@ Speaker 1: [dialogue]
     }
   };
 
+  const handlePodcastClick = () => {
+    // Check if document exists and determine size
+    if (!currentDocument) {
+      toast({
+        title: "No document loaded",
+        description: "Please upload a document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Count words in the document
+    const wordCount = currentDocument.content
+      .split(/\s+/)
+      .filter((word: string) => word.length > 0).length;
+    
+    // For large documents (>1000 words), use ChunkPodcastModal
+    // For small documents (≤1000 words), use regular PodcastModal with auto-complete
+    if (wordCount > 1000) {
+      setShowChunkPodcastModal(true);
+    } else {
+      setShowPodcastModal(true);
+    }
+  };
+
   const handleSuggestedReadings = async (text?: string) => {
     const textToAnalyze = text || selectedText;
     if (!textToAnalyze.trim()) {
@@ -945,36 +970,7 @@ Speaker 1: [dialogue]
                   onRewrite={() => setShowRewriteModal(true)}
                   onStudyGuide={handleStudyGuide}
                   onTestMe={handleTestMe}
-                  onPodcast={() => {
-                    // Check if document exists and determine size
-                    if (!currentDocument) {
-                      toast({
-                        title: "No document loaded",
-                        description: "Please upload a document first.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-
-                    // Count words in the document
-                    const wordCount = currentDocument.content
-                      .split(/\s+/)
-                      .filter((word: string) => word.length > 0).length;
-
-                    console.log('🎤 PODCAST BUTTON CLICKED');
-                    console.log('📄 Document content length:', currentDocument.content.length);
-                    console.log('📊 Word count calculated:', wordCount);
-                    
-                    // For large documents (>1000 words), use ChunkPodcastModal
-                    // For small documents (≤1000 words), use regular PodcastModal with auto-complete
-                    if (wordCount > 1000) {
-                      console.log('📦 Opening ChunkPodcastModal for large document');
-                      setShowChunkPodcastModal(true);
-                    } else {
-                      console.log('📝 Opening regular PodcastModal for small document');
-                      setShowPodcastModal(true);
-                    }
-                  }}
+                  onPodcast={handlePodcastClick}
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={handleSummaryThesis}
                   onThesisDeepDive={handleThesisDeepDive}
@@ -1119,6 +1115,49 @@ Speaker 1: [dialogue]
           </div>
         </div>
 
+        {/* Document Actions - Permanent buttons when document is loaded */}
+        {currentDocument && (
+          <div className="mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Settings className="w-5 h-5" />
+                  Document Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  <Button 
+                    onClick={handlePodcastClick}
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Generate Podcast
+                  </Button>
+                  <Button 
+                    onClick={() => setShowRewriteModal(true)}
+                    variant="outline"
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Rewrite Content
+                  </Button>
+                  <Button 
+                    onClick={() => handleStudyGuide()}
+                    variant="outline"
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Study Guide
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Generate AI-powered content based on your entire document
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
         {/* Chat Interface - Below Document */}
         <div className="mt-6">
