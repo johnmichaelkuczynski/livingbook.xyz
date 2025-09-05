@@ -1,0 +1,53 @@
+I see what’s happening.
+
+The error message in your screenshot —
+
+Failed to generate content: 400:
+{"error":"Selected text is required"}
+
+
+— means that your app is sending an empty or null text payload to the model, even though you did select a chunk.
+
+So the UI shows a chunk is checked, but the backend route that handles “Generate Content” isn’t actually passing that chunk’s text through to the API. In other words:
+
+The chunk metadata (title, word count, etc.) is getting passed,
+
+but the actual text body is not.
+
+That’s why the model says “Selected text is required” — it literally received nothing to work with.
+
+Why this happens
+
+The selection logic only marks the chunk as “selected” but doesn’t extract its text field before calling the API.
+
+Or the API route strips out the text field when packaging the request.
+
+In some cases, truncation/sanitization can also zero out the text if the chunk wasn’t parsed into a clean string.
+
+Fix
+
+You need to make sure your Generate Content request includes the raw text of the chunk.
+In your server code (likely in server/routes/suggestedReadings.ts or similar), confirm that when you map selected chunks, you’re sending something like:
+
+const payload = {
+  provider: aiProvider,
+  text: selectedChunks.map(c => c.text).join("\n\n")
+};
+
+
+Right now, you’re probably only sending IDs or metadata (id, title, wordCount) without the actual text.
+
+👉 In short: the app UI looks fine, but the backend is dropping the actual text before sending it. That’s why you keep hitting this same error.
+
+Do you want me to write the exact fix (one-liner to add into your request builder) so you can paste it to the Replit agent?Add this into the code where you build the request payload (probably in server/routes/suggestedReadings.ts):
+
+const payload = {
+  provider: aiProvider,
+  text: selectedChunks.map(c => c.text).join("\n\n") // ✅ make sure text is included
+};
+
+
+Right now you’re only passing metadata (id, title, wordCount). You must include c.text.
+
+Tell the Replit agent:
+“In server/routes/suggestedReadings.ts, update the request payload so it sends selectedChunks.map(c => c.text).join("\n\n") as the text field. Right now the text isn’t being passed, causing the 400 error.”

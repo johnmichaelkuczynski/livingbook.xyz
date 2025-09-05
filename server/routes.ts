@@ -577,8 +577,14 @@ ${selectedText}`;
             const chunkedDoc = chunkDocument(document.content, 1000);
             console.log(`📚 STUDY GUIDE - Chunked into ${chunkedDoc.chunks.length} chunks`);
             if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
-              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
-              console.log(`📚 STUDY GUIDE - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
+              const chunk = chunkedDoc.chunks[chunkIndex];
+              console.log(`📚 STUDY GUIDE - Chunk structure:`, Object.keys(chunk));
+              textToAnalyze = chunk.content;
+              if (textToAnalyze && typeof textToAnalyze === 'string') {
+                console.log(`📚 STUDY GUIDE - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
+              } else {
+                console.log(`📚 STUDY GUIDE - Chunk ${chunkIndex} has no valid text content`);
+              }
             } else {
               console.log(`📚 STUDY GUIDE - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
             }
@@ -1909,7 +1915,7 @@ Your task is to create a comprehensive synthesis that:
             const chunkedDoc = chunkDocument(document.content, 1000);
             console.log(`🧠 COGNITIVE MAP - Chunked into ${chunkedDoc.chunks.length} chunks`);
             if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
-              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
               console.log(`🧠 COGNITIVE MAP - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
             } else {
               console.log(`🧠 COGNITIVE MAP - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
@@ -2024,7 +2030,7 @@ CRITICAL: Use only simple node labels with <br/> for line breaks. No markdown, n
             const chunkedDoc = chunkDocument(document.content, 1000);
             console.log(`💡 SUMMARY THESIS - Chunked into ${chunkedDoc.chunks.length} chunks`);
             if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
-              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
               console.log(`💡 SUMMARY THESIS - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
             } else {
               console.log(`💡 SUMMARY THESIS - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
@@ -2100,13 +2106,38 @@ Important: Format your response exactly as specified with "Thesis:" and "Summary
   // Thesis Deep-Dive generation endpoint
   app.post("/api/generate-thesis-deep-dive", async (req, res) => {
     try {
-      const { selectedText, provider = 'deepseek', comparisonTarget } = req.body;
+      const { selectedText, documentId, chunkIndex, provider = 'deepseek', comparisonTarget } = req.body;
       
-      if (!selectedText || selectedText.trim().length === 0) {
-        return res.status(400).json({ error: "Selected text is required" });
+      let textToAnalyze = selectedText;
+      
+      // If documentId and chunkIndex are provided, get the chunk content
+      if (documentId && chunkIndex !== undefined) {
+        try {
+          console.log(`🔍 THESIS DEEP DIVE - Fetching chunk ${chunkIndex} from document ${documentId}`);
+          const document = await storage.getDocument(documentId);
+          if (document) {
+            console.log(`🔍 THESIS DEEP DIVE - Document found, content length: ${document.content.length}`);
+            const chunkedDoc = chunkDocument(document.content, 1000);
+            console.log(`🔍 THESIS DEEP DIVE - Chunked into ${chunkedDoc.chunks.length} chunks`);
+            if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
+              console.log(`🔍 THESIS DEEP DIVE - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
+            } else {
+              console.log(`🔍 THESIS DEEP DIVE - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
+            }
+          } else {
+            console.log(`🔍 THESIS DEEP DIVE - Document ${documentId} not found`);
+          }
+        } catch (error) {
+          console.error('🔍 THESIS DEEP DIVE - Error fetching chunk:', error);
+        }
+      }
+      
+      if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+        return res.status(400).json({ error: "Text content is required" });
       }
 
-      console.log(`🔍 GENERATING THESIS DEEP-DIVE - Provider: ${provider}, Text length: ${selectedText.length}`);
+      console.log(`🔍 GENERATING THESIS DEEP-DIVE - Provider: ${provider}, Text length: ${textToAnalyze.length}`);
 
       let prompt = `Extract the core thesis of the selected passage. Then:
 (a) Quote the author's original wording of the thesis.
@@ -2125,7 +2156,7 @@ Cross-Comparison: [Compare with modern thinkers/fields, noting agreements, contr
 
 Selected passage:
 """
-${selectedText}
+${textToAnalyze}
 """`;
 
       if (comparisonTarget && comparisonTarget.trim()) {
@@ -2152,7 +2183,7 @@ ${selectedText}
           break;
       }
 
-      const response = await generateChatResponse(prompt, selectedText, []);
+      const response = await generateChatResponse(prompt, textToAnalyze, []);
       
       if (response.error) {
         return res.status(500).json({ error: response.error });
@@ -2163,7 +2194,7 @@ ${selectedText}
       
       console.log(`✅ THESIS DEEP-DIVE GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
       
-      res.json({ thesisDeepDive: cleanedContent });
+      res.json({ thesisDeepDive: cleanedContent, chunkIndex });
       
     } catch (error) {
       console.error("Thesis Deep-Dive generation error:", error);
@@ -2176,13 +2207,38 @@ ${selectedText}
   // Suggested Readings generation endpoint
   app.post("/api/generate-suggested-readings", async (req, res) => {
     try {
-      const { selectedText, provider = 'deepseek' } = req.body;
+      const { selectedText, documentId, chunkIndex, provider = 'deepseek' } = req.body;
       
-      if (!selectedText || selectedText.trim().length === 0) {
-        return res.status(400).json({ error: "Selected text is required" });
+      let textToAnalyze = selectedText;
+      
+      // If documentId and chunkIndex are provided, get the chunk content
+      if (documentId && chunkIndex !== undefined) {
+        try {
+          console.log(`📚 SUGGESTED READINGS - Fetching chunk ${chunkIndex} from document ${documentId}`);
+          const document = await storage.getDocument(documentId);
+          if (document) {
+            console.log(`📚 SUGGESTED READINGS - Document found, content length: ${document.content.length}`);
+            const chunkedDoc = chunkDocument(document.content, 1000);
+            console.log(`📚 SUGGESTED READINGS - Chunked into ${chunkedDoc.chunks.length} chunks`);
+            if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
+              console.log(`📚 SUGGESTED READINGS - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
+            } else {
+              console.log(`📚 SUGGESTED READINGS - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
+            }
+          } else {
+            console.log(`📚 SUGGESTED READINGS - Document ${documentId} not found`);
+          }
+        } catch (error) {
+          console.error('📚 SUGGESTED READINGS - Error fetching chunk:', error);
+        }
+      }
+      
+      if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+        return res.status(400).json({ error: "Text content is required" });
       }
 
-      console.log(`📚 GENERATING SUGGESTED READINGS - Provider: ${provider}, Text length: ${selectedText.length}`);
+      console.log(`📚 GENERATING SUGGESTED READINGS - Provider: ${provider}, Text length: ${textToAnalyze.length}`);
 
       const prompt = `Based on the themes, concepts, and subject matter in the selected passage, generate a list of relevant academic or intellectual works (books, articles, or essays). Include both historical and contemporary sources. For each item, provide:
 (a) Full title
@@ -2197,7 +2253,7 @@ Focus on well-known, influential works that are genuinely relevant to the themes
 
 Selected passage:
 """
-${selectedText}
+${textToAnalyze}
 """
 
 Important: Format each entry exactly as specified: "Title by Author — [relevance summary]". Provide 7-10 high-quality, genuinely relevant academic works.`;
@@ -2220,7 +2276,7 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
           break;
       }
 
-      const response = await generateChatResponse(prompt, selectedText, []);
+      const response = await generateChatResponse(prompt, textToAnalyze, []);
       
       if (response.error) {
         return res.status(500).json({ error: response.error });
@@ -2231,7 +2287,7 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
       
       console.log(`✅ SUGGESTED READINGS GENERATED - Provider: ${provider}, Length: ${cleanedContent.length} chars`);
       
-      res.json({ suggestedReadings: cleanedContent });
+      res.json({ suggestedReadings: cleanedContent, chunkIndex });
       
     } catch (error) {
       console.error("Suggested Readings generation error:", error);
@@ -2900,7 +2956,7 @@ IMPORTANT: Return only valid JSON. No additional text.`;
             const chunkedDoc = chunkDocument(document.content, 1000);
             console.log(`📝 TEST ME - Chunked into ${chunkedDoc.chunks.length} chunks`);
             if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
-              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
               console.log(`📝 TEST ME - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
             } else {
               console.log(`📝 TEST ME - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
@@ -3001,7 +3057,7 @@ Generate 3-5 multiple choice, 2-3 short answer, and 1-2 essay questions based on
             const chunkedDoc = chunkDocument(document.content, 1000);
             console.log(`💬 DISCUSS - Chunked into ${chunkedDoc.chunks.length} chunks`);
             if (chunkedDoc.chunks && chunkedDoc.chunks[chunkIndex]) {
-              textToAnalyze = chunkedDoc.chunks[chunkIndex].text;
+              textToAnalyze = chunkedDoc.chunks[chunkIndex].content;
               console.log(`💬 DISCUSS - Chunk ${chunkIndex} text length: ${textToAnalyze.length}`);
             } else {
               console.log(`💬 DISCUSS - Chunk ${chunkIndex} not found in ${chunkedDoc.chunks.length} available chunks`);
