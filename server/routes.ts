@@ -968,6 +968,86 @@ ${document.content}
     }
   });
 
+  // Document Suggested Readings Generation - creates comprehensive reading recommendations for entire document
+  app.post("/api/generate-document-suggested-readings", async (req, res) => {
+    try {
+      const { documentId, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`📚 GENERATING DOCUMENT SUGGESTED READINGS - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const suggestedReadingsPrompt = `Based on the themes, concepts, and subject matter in the following document, provide comprehensive reading recommendations. Format your response as a numbered list with EXACTLY this structure for each book:
+
+1. *[Title]* by [Author] — [2-3 sentence description explaining relevance to the document's themes and why this work is recommended]
+
+2. *[Title]* by [Author] — [2-3 sentence description explaining relevance to the document's themes and why this work is recommended]
+
+[Continue for 8-12 total recommendations]
+
+Focus on:
+- Academic and scholarly works that directly relate to the document's themes
+- Both classical foundational texts and contemporary relevant works
+- Books that would deepen understanding of the concepts discussed
+- Works that provide alternative perspectives or critical responses
+- Interdisciplinary connections where appropriate
+
+Make each description specific about why the work is relevant, not just generic summaries.
+
+Document content:
+"""
+${document.content}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(suggestedReadingsPrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT SUGGESTED READINGS GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        suggestedReadings: response.message,
+        documentTitle: document.originalName,
+        documentContent: document.content,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document suggested readings generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document suggested readings" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {

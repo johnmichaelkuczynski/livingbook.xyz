@@ -24,6 +24,7 @@ import InteractiveTestModal from '@/components/InteractiveTestModal';
 import DocumentCognitiveMapModal from '@/components/DocumentCognitiveMapModal';
 import DocumentSummaryThesisModal from '@/components/DocumentSummaryThesisModal';
 import DocumentThesisDeepDiveModal from '@/components/DocumentThesisDeepDiveModal';
+import DocumentSuggestedReadingsModal from '@/components/DocumentSuggestedReadingsModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -71,6 +72,7 @@ export default function Home() {
   const [showDocumentCognitiveMapModal, setShowDocumentCognitiveMapModal] = useState(false);
   const [showDocumentSummaryThesisModal, setShowDocumentSummaryThesisModal] = useState(false);
   const [showDocumentThesisDeepDiveModal, setShowDocumentThesisDeepDiveModal] = useState(false);
+  const [showDocumentSuggestedReadingsModal, setShowDocumentSuggestedReadingsModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1121,9 +1123,9 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Thesis Deep Dive</span>
                   </Button>
                   
-                  {/* Suggested Readings */}
+                  {/* Document Suggested Readings */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('suggested-readings')}
+                    onClick={() => setShowDocumentSuggestedReadingsModal(true)}
                     className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
                     <Bookmark className="w-5 h-5" />
@@ -1348,6 +1350,13 @@ Speaker 1: [dialogue]
       <DocumentThesisDeepDiveModal
         isOpen={showDocumentThesisDeepDiveModal}
         onClose={() => setShowDocumentThesisDeepDiveModal(false)}
+        document={currentDocument}
+      />
+
+      {/* Document Suggested Readings Modal */}
+      <DocumentSuggestedReadingsModal
+        isOpen={showDocumentSuggestedReadingsModal}
+        onClose={() => setShowDocumentSuggestedReadingsModal(false)}
         document={currentDocument}
       />
 
