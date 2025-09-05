@@ -274,7 +274,7 @@ export default function ChunkModal({ isOpen, onClose, document, contentType }: C
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[80vh] flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl">
             <IconComponent className="w-6 h-6" />
@@ -283,7 +283,7 @@ export default function ChunkModal({ isOpen, onClose, document, contentType }: C
           <p className="text-gray-600 mt-2">{config.description}</p>
         </DialogHeader>
 
-        <div className="flex-1 flex gap-6 min-h-0">
+        <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
           {/* Left Panel - Chunk Selection */}
           <div className="flex-1 flex flex-col min-h-0">
             <Card className="flex-1 flex flex-col">
@@ -453,34 +453,43 @@ export default function ChunkModal({ isOpen, onClose, document, contentType }: C
 
             {/* Results */}
             {results.length > 0 && (
-              <Card className="flex-1">
-                <CardHeader>
+              <Card className="flex-1 flex flex-col min-h-0">
+                <CardHeader className="flex-shrink-0">
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     Generated Content
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-64">
-                    <div className="space-y-3">
+                <CardContent className="flex-1 min-h-0">
+                  <ScrollArea className="h-full">
+                    <div className="space-y-3 pr-4">
                       {results.map((result) => (
-                        <Card key={result.chunkIndex} className="p-3">
-                          <div className="flex items-start gap-2">
+                        <Card key={result.chunkIndex} className="p-4">
+                          <div className="flex items-start gap-3">
                             {result.success ? (
-                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-500 mt-0.5" />
+                              <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                             )}
-                            <div className="flex-1">
-                              <div className="font-medium text-sm mb-1">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm mb-2">
                                 Chunk {result.chunkIndex + 1}
+                                {result.wordCount && (
+                                  <Badge variant="outline" className="ml-2">
+                                    {result.wordCount} words
+                                  </Badge>
+                                )}
                               </div>
                               {result.success && result.content ? (
-                                <p className="text-xs text-gray-600 line-clamp-3">
-                                  {result.content.substring(0, 150)}...
-                                </p>
+                                <div className="bg-gray-50 rounded-lg p-3">
+                                  <ScrollArea className="max-h-40">
+                                    <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                                      {result.content}
+                                    </pre>
+                                  </ScrollArea>
+                                </div>
                               ) : (
-                                <p className="text-xs text-red-600">
+                                <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">
                                   {result.error}
                                 </p>
                               )}

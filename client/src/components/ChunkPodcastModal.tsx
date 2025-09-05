@@ -270,7 +270,7 @@ export default function ChunkPodcastModal({ isOpen, onClose, document }: ChunkPo
   if (!chunkInfo && isLoadingChunks) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Analyzing Document</DialogTitle>
           </DialogHeader>
