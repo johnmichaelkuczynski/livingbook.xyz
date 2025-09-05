@@ -961,11 +961,17 @@ Speaker 1: [dialogue]
                       .split(/\s+/)
                       .filter((word: string) => word.length > 0).length;
 
+                    console.log('🎤 PODCAST BUTTON CLICKED');
+                    console.log('📄 Document content length:', currentDocument.content.length);
+                    console.log('📊 Word count calculated:', wordCount);
+                    
                     // For large documents (>1000 words), use ChunkPodcastModal
                     // For small documents (≤1000 words), use regular PodcastModal with auto-complete
                     if (wordCount > 1000) {
+                      console.log('📦 Opening ChunkPodcastModal for large document');
                       setShowChunkPodcastModal(true);
                     } else {
+                      console.log('📝 Opening regular PodcastModal for small document');
                       setShowPodcastModal(true);
                     }
                   }}
