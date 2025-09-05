@@ -22,6 +22,7 @@ import ChunkPodcastModal from '@/components/ChunkPodcastModal';
 import ChunkModal, { ContentType } from '@/components/ChunkModal';
 import InteractiveTestModal from '@/components/InteractiveTestModal';
 import DocumentCognitiveMapModal from '@/components/DocumentCognitiveMapModal';
+import DocumentSummaryThesisModal from '@/components/DocumentSummaryThesisModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -67,6 +68,7 @@ export default function Home() {
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
   const [showInteractiveTestModal, setShowInteractiveTestModal] = useState(false);
   const [showDocumentCognitiveMapModal, setShowDocumentCognitiveMapModal] = useState(false);
+  const [showDocumentSummaryThesisModal, setShowDocumentSummaryThesisModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1099,9 +1101,9 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Cognitive Map</span>
                   </Button>
                   
-                  {/* Summary/Thesis */}
+                  {/* Document Summary/Thesis */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('summary-thesis')}
+                    onClick={() => setShowDocumentSummaryThesisModal(true)}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
                     <Lightbulb className="w-5 h-5" />
@@ -1330,6 +1332,13 @@ Speaker 1: [dialogue]
       <DocumentCognitiveMapModal
         isOpen={showDocumentCognitiveMapModal}
         onClose={() => setShowDocumentCognitiveMapModal(false)}
+        document={currentDocument}
+      />
+
+      {/* Document Summary Thesis Modal */}
+      <DocumentSummaryThesisModal
+        isOpen={showDocumentSummaryThesisModal}
+        onClose={() => setShowDocumentSummaryThesisModal(false)}
         document={currentDocument}
       />
 

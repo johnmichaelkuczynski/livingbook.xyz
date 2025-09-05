@@ -817,6 +817,82 @@ ${document.content}
     }
   });
 
+  // Document Summary+Thesis Generation - creates comprehensive analysis of entire document
+  app.post("/api/generate-document-summary-thesis", async (req, res) => {
+    try {
+      const { documentId, provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`📋 GENERATING DOCUMENT SUMMARY+THESIS - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const summaryThesisPrompt = `Analyze the following document and provide a comprehensive summary with thesis. Format your response EXACTLY as follows:
+
+THESIS: [Write a clear, concise thesis statement that captures the main argument or central claim of the document in 1-2 sentences]
+
+EXPLANATION: [Provide a detailed explanation that:
+- Summarizes the key points and arguments
+- Explains the supporting evidence and reasoning
+- Describes the document's structure and flow of ideas
+- Highlights important conclusions or implications
+- Uses clear, accessible language
+- Should be 2-4 paragraphs long]
+
+Focus on accuracy and clarity. Make the thesis statement sharp and the explanation comprehensive but readable.
+
+Document content:
+"""
+${document.content}
+"""`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(summaryThesisPrompt, document.content, []);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT SUMMARY+THESIS GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        summaryThesis: response.message,
+        documentTitle: document.originalName,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document summary+thesis generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document summary+thesis" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {
