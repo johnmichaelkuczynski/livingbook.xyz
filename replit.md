@@ -18,7 +18,12 @@ Preferred communication style: Simple, everyday language.
 - ✅ Created DocumentCognitiveMapModal with true visual diagrams showing connected relationships
 - ✅ Implemented hierarchical flowcharts (thesis → claims → sub-claims → evidence) with arrows
 - ✅ Added two-column layout: structured text analysis on left, visual diagram on right
-- ✅ Both functions are standalone (not chunk-based) and work on entire documents
+- ✅ Built standing Summary/Thesis function with clean THESIS and EXPLANATION sections
+- ✅ Created DocumentSummaryThesisModal with copy, download, and scrollable content functionality
+- ✅ Implemented standing Thesis Deep Dive function with comprehensive scholarly analysis
+- ✅ Created DocumentThesisDeepDiveModal with two-column layout and structured sections (EXTRACTED THESIS, ORIGINAL WORDING, MODERN APPLICATIONS, CROSS-COMPARISON)
+- ✅ Added PDF, TXT, and Copy export functionality for research use
+- ✅ All functions are standalone (not chunk-based) and work on entire documents
 
 **August 29, 2025**: 
 - ✅ Completed dual-document functionality with auto-complete for short documents
