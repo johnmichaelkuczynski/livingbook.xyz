@@ -1124,6 +1124,87 @@ REWRITTEN VERSION:`;
     }
   });
 
+  // Document Discussion Generation - creates discussion interface for entire document
+  app.post("/api/generate-document-discussion", async (req, res) => {
+    try {
+      const { documentId, message, conversationHistory = [], provider = 'openai' } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Document ID is required" });
+      }
+
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Get the full document
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      console.log(`💬 GENERATING DOCUMENT DISCUSSION - Provider: ${provider}, Document: ${document.originalName}`);
+
+      const discussionPrompt = `You are analyzing a document and having a conversation about it. Provide thoughtful, detailed responses that help the user understand the document's content, themes, and significance.
+
+Document Content:
+"""
+${document.content}
+"""
+
+Conversation History:
+${conversationHistory.map((msg: any) => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
+
+User Question: ${message}
+
+Please provide a comprehensive response that:
+- Directly addresses the user's question
+- References specific parts of the document when relevant
+- Offers insights, analysis, or explanations
+- Encourages further discussion when appropriate
+
+Response:`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+
+      const response = await generateChatResponse(discussionPrompt, document.content, conversationHistory);
+      
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+
+      console.log(`✅ DOCUMENT DISCUSSION GENERATED - Provider: ${provider}, Length: ${response.message.length} chars`);
+
+      res.json({
+        message: response.message,
+        documentTitle: document.originalName,
+        provider
+      });
+      
+    } catch (error) {
+      console.error("Document discussion generation error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate document discussion" 
+      });
+    }
+  });
+
   // Complete podcast generation endpoint - generates dialogue AND audio in one call
   app.post("/api/generate-podcast", async (req, res) => {
     try {

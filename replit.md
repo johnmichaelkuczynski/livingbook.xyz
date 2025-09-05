@@ -26,6 +26,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ Created DocumentSuggestedReadingsModal with two-column layout and individual book cards
 - ✅ Implemented standing Rewrite function with custom instruction interface
 - ✅ Created DocumentRewriteModal with Content Source display and Rewrite Instructions text area
+- ✅ Implemented standing Discuss function with interactive chat interface for entire documents
+- ✅ Created DocumentDiscussModal with conversation history, auto-discussion start, and export features
 - ✅ Added PDF, TXT, and Copy export functionality for all research functions
 - ✅ All functions are standalone (not chunk-based) and work on entire documents
 

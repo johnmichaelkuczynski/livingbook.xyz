@@ -26,6 +26,7 @@ import DocumentSummaryThesisModal from '@/components/DocumentSummaryThesisModal'
 import DocumentThesisDeepDiveModal from '@/components/DocumentThesisDeepDiveModal';
 import DocumentSuggestedReadingsModal from '@/components/DocumentSuggestedReadingsModal';
 import DocumentRewriteModal from '@/components/DocumentRewriteModal';
+import DocumentDiscussModal from '@/components/DocumentDiscussModal';
 import RewriteModal from '@/components/RewriteModal';
 import CognitiveMapModal from '@/components/CognitiveMapModal';
 import SummaryThesisModal from '@/components/SummaryThesisModal';
@@ -76,6 +77,7 @@ export default function Home() {
   const [showDocumentSuggestedReadingsModal, setShowDocumentSuggestedReadingsModal] = useState(false);
   const [showDocumentRewriteModal, setShowDocumentRewriteModal] = useState(false);
   const [showDiscussPopup, setShowDiscussPopup] = useState(false);
+  const [showDocumentDiscussModal, setShowDocumentDiscussModal] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1135,9 +1137,9 @@ Speaker 1: [dialogue]
                     <span className="text-xs">Suggested Readings</span>
                   </Button>
                   
-                  {/* Discuss */}
+                  {/* Document Discuss */}
                   <Button 
-                    onClick={() => handleChunkModalOpen('discuss')}
+                    onClick={() => setShowDocumentDiscussModal(true)}
                     className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2 px-4 py-3 h-auto flex-col"
                   >
                     <MessageSquare className="w-5 h-5" />
@@ -1376,6 +1378,13 @@ Speaker 1: [dialogue]
         onClose={() => setShowDiscussPopup(false)}
         selectedText={selectedText}
         documentTitle={currentDocument?.originalName}
+      />
+
+      {/* Document Discuss Modal */}
+      <DocumentDiscussModal
+        isOpen={showDocumentDiscussModal}
+        onClose={() => setShowDocumentDiscussModal(false)}
+        document={currentDocument}
       />
 
     </div>
