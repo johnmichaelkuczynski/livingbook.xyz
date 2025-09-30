@@ -16,6 +16,7 @@ export interface IStorage {
   // Credit transaction methods
   createCreditTransaction(transaction: InsertCreditTransaction): Promise<CreditTransaction>;
   getCreditTransactions(userId: number): Promise<CreditTransaction[]>;
+  getCreditTransactionByPaymentIntentId(paymentIntentId: string): Promise<CreditTransaction | undefined>;
   
   // Document methods
   createDocument(document: InsertDocument): Promise<Document>;
@@ -213,6 +214,7 @@ For the hereditary prince has less cause and less necessity to offend; hence it 
     const transaction: CreditTransaction = {
       ...insertTransaction,
       id,
+      paymentIntentId: insertTransaction.paymentIntentId ?? null,
       timestamp: new Date()
     };
     this.creditTransactions.set(id, transaction);
@@ -223,6 +225,12 @@ For the hereditary prince has less cause and less necessity to offend; hence it 
     return Array.from(this.creditTransactions.values())
       .filter((transaction) => transaction.userId === userId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+
+  async getCreditTransactionByPaymentIntentId(paymentIntentId: string): Promise<CreditTransaction | undefined> {
+    return Array.from(this.creditTransactions.values()).find(
+      (transaction) => transaction.paymentIntentId === paymentIntentId
+    );
   }
 
   async createDocument(insertDocument: InsertDocument): Promise<Document> {

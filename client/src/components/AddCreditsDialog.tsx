@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -9,6 +9,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Load Stripe
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  : null;
 
 interface AddCreditsDialogProps {
   open: boolean;
@@ -64,11 +71,134 @@ const ZHI_TIERS = [
   },
 ];
 
+// Payment form component
+function PaymentForm({ 
+  credits, 
+  price, 
+  tierName, 
+  onSuccess, 
+  onCancel 
+}: { 
+  credits: number; 
+  price: number; 
+  tierName: string; 
+  onSuccess: (newBalance: number) => void; 
+  onCancel: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+        },
+        redirect: 'if_required',
+      });
+
+      if (error) {
+        toast({
+          title: "Payment failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Add credits after successful payment
+        // SECURITY: Only send paymentIntentId - server reads credits from Stripe metadata
+        const sessionToken = localStorage.getItem('sessionToken');
+        const response = await fetch('/api/credits/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntent.id,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          toast({
+            title: "Payment successful!",
+            description: `${credits.toLocaleString()} credits added to your account.`,
+          });
+          onSuccess(data.credits);
+        } else {
+          throw new Error('Failed to add credits after payment');
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Payment processing failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded-md">
+        <div className="text-sm text-gray-600">You're purchasing:</div>
+        <div className="text-lg font-bold">{credits.toLocaleString()} credits</div>
+        <div className="text-sm text-gray-600">{tierName} - ${price}</div>
+      </div>
+      
+      <PaymentElement />
+      
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isProcessing}
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={!stripe || isProcessing}
+          className="flex-1"
+        >
+          {isProcessing ? "Processing..." : `Pay $${price}`}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCreditsDialogProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<{
+    credits: number;
+    price: number;
+    tierName: string;
+  } | null>(null);
 
-  const handleAddCredits = async (credits: number, price: number, tierName: string) => {
+  // Map tier names to IDs for server validation
+  const getTierId = (tierName: string): string => {
+    return tierName.toLowerCase().replace(' ', '-');
+  };
+
+  const handleSelectPackage = async (credits: number, price: number, tierName: string) => {
     setIsLoading(true);
     
     try {
@@ -82,35 +212,40 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
         return;
       }
 
-      const response = await fetch('/api/credits/add', {
+      if (!stripePromise) {
+        toast({
+          title: "Payment unavailable",
+          description: "Stripe is not configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // SECURITY: Only send tier ID and package price - server looks up actual values
+      const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
-          amount: credits,
-          description: `${tierName} - $${price} package`,
+          tierId: getTierId(tierName),
+          packagePrice: price,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to add credits');
+        throw new Error(error.error || 'Failed to create payment');
       }
 
       const data = await response.json();
-      onCreditsAdded(data.credits);
+      setClientSecret(data.clientSecret);
+      setSelectedPackage({ credits, price, tierName });
       
-      toast({
-        title: "Credits added!",
-        description: `${credits.toLocaleString()} credits added to your account.`,
-      });
-      
-      onOpenChange(false);
     } catch (error) {
       toast({
-        title: "Failed to add credits",
+        title: "Failed to start payment",
         description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
@@ -119,46 +254,73 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
     }
   };
 
+  const handlePaymentSuccess = (newBalance: number) => {
+    onCreditsAdded(newBalance);
+    setClientSecret(null);
+    setSelectedPackage(null);
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    setClientSecret(null);
+    setSelectedPackage(null);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Credits</DialogTitle>
+          <DialogTitle>{clientSecret ? 'Complete Payment' : 'Add Credits'}</DialogTitle>
           <DialogDescription>
-            Choose a credit package from our ZHI tiers. Credits are used for AI operations like chat, rewrite, and content generation.
+            {clientSecret 
+              ? 'Enter your payment details to complete the purchase.'
+              : 'Choose a credit package from our ZHI tiers. Credits are used for AI operations like chat, rewrite, and content generation.'
+            }
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {ZHI_TIERS.map((tier) => (
-            <Card key={tier.name}>
-              <CardHeader>
-                <CardTitle className="text-lg">{tier.name}</CardTitle>
-                <CardDescription>{tier.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-5 gap-2">
-                  {tier.packages.map((pkg) => (
-                    <Button
-                      key={pkg.price}
-                      variant="outline"
-                      className="flex flex-col h-auto py-3"
-                      onClick={() => handleAddCredits(pkg.credits, pkg.price, tier.name)}
-                      disabled={isLoading}
-                      data-testid={`button-add-credits-${tier.name.toLowerCase()}-${pkg.price}`}
-                    >
-                      <span className="font-bold text-lg">${pkg.price}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {pkg.credits.toLocaleString()}
-                      </span>
-                      <span className="text-xs text-muted-foreground">credits</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {clientSecret && selectedPackage && stripePromise ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <PaymentForm
+              credits={selectedPackage.credits}
+              price={selectedPackage.price}
+              tierName={selectedPackage.tierName}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handleCancel}
+            />
+          </Elements>
+        ) : (
+          <div className="space-y-4">
+            {ZHI_TIERS.map((tier) => (
+              <Card key={tier.name}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{tier.name}</CardTitle>
+                  <CardDescription>{tier.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-5 gap-2">
+                    {tier.packages.map((pkg) => (
+                      <Button
+                        key={pkg.price}
+                        variant="outline"
+                        className="flex flex-col h-auto py-3"
+                        onClick={() => handleSelectPackage(pkg.credits, pkg.price, tier.name)}
+                        disabled={isLoading}
+                        data-testid={`button-add-credits-${tier.name.toLowerCase()}-${pkg.price}`}
+                      >
+                        <span className="font-bold text-lg">${pkg.price}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {pkg.credits.toLocaleString()}
+                        </span>
+                        <span className="text-xs text-muted-foreground">credits</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

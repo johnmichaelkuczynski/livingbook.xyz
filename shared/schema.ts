@@ -119,6 +119,7 @@ export const creditTransactions = pgTable("credit_transactions", {
   type: text("type").notNull(), // 'purchase', 'usage', 'refund'
   description: text("description").notNull(),
   balanceAfter: integer("balance_after").notNull(),
+  paymentIntentId: text("payment_intent_id"), // For tracking Stripe payments (prevents replay attacks)
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
