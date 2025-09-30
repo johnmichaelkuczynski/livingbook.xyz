@@ -163,9 +163,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
       
+      // Special debug user: jmk (case insensitive) - unlimited credits
+      const isDebugUser = username.toLowerCase() === 'jmk';
+      
       // Create user
       const userData = insertUserSchema.parse({ username, password: hashedPassword });
       const user = await storage.createUser(userData);
+      
+      // For debug user jmk, set unlimited credits (999,999,999)
+      if (isDebugUser) {
+        await storage.updateUser(user.id, { credits: 999999999 });
+        user.credits = 999999999;
+      }
       
       // Create session
       const sessionToken = generateSessionToken();
@@ -291,6 +300,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(session.userId);
       if (!user) {
         return res.status(401).json({ error: "User not found" });
+      }
+      
+      // For debug user jmk, ensure unlimited credits (999,999,999)
+      if (user.username.toLowerCase() === 'jmk' && user.credits < 999999999) {
+        await storage.updateUser(user.id, { credits: 999999999 });
+        user.credits = 999999999;
       }
       
       res.json({
