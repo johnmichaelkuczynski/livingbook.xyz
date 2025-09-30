@@ -120,13 +120,16 @@ function VirtualizedDocumentViewer({
       }
     };
 
-    // Add selection listeners
-    document.addEventListener('mouseup', handleSelection);
-    document.addEventListener('keyup', handleSelection);
+    // Add selection listeners ONLY to the document viewer, not globally
+    const docViewer = document.querySelector('.virtualized-document-content');
+    if (!docViewer) return;
+
+    docViewer.addEventListener('mouseup', handleSelection);
+    docViewer.addEventListener('keyup', handleSelection);
     
     return () => {
-      document.removeEventListener('mouseup', handleSelection);
-      document.removeEventListener('keyup', handleSelection);
+      docViewer.removeEventListener('mouseup', handleSelection);
+      docViewer.removeEventListener('keyup', handleSelection);
     };
   }, [onTextSelection]);
 

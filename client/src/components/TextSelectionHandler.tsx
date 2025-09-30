@@ -116,16 +116,20 @@ export default function TextSelectionHandler({
       window.getSelection()?.removeAllRanges();
     };
 
+    // Add listeners ONLY to the container, not globally
+    const container = containerRef.current;
+    if (!container) return;
+
     document.addEventListener('selectionchange', handleSelectionChange);
-    document.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('click', handleClickOutside);
 
     return () => {
       document.removeEventListener('selectionchange', handleSelectionChange);
-      document.removeEventListener('mouseup', handleMouseUp);
+      container.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [containerRef.current]);
 
   const handleClose = () => {
     setShowToolbar(false);
