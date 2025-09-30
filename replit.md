@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**September 30, 2025**:
+- ✅ Fixed critical Chrome browser bug where text inputs became unresponsive after document processing
+- ✅ Implemented isTypingTarget() guard functions in DocumentViewer and VirtualizedDocumentViewer components
+- ✅ Prevented global text selection event listeners from interfering with input fields in Chrome
+- ✅ Resolved post-processing input blocking while maintaining text selection functionality
+
 **August 29, 2025**: 
 - ✅ Completed dual-document functionality with auto-complete for short documents
 - ✅ Implemented two-document podcast generation with consolidation workflow
