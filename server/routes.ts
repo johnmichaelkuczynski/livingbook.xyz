@@ -218,8 +218,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Password is required" });
       }
       
-      // Find user
-      const user = await storage.getUserByUsername(username);
+      // Find user - for jmk debug user, try lowercase first
+      let user = await storage.getUserByUsername(username);
+      if (!user && isDebugUser) {
+        // Try lowercase lookup for jmk debug user
+        user = await storage.getUserByUsername(username.toLowerCase());
+        if (!user) {
+          // Try uppercase
+          user = await storage.getUserByUsername(username.toUpperCase());
+        }
+      }
       if (!user) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
