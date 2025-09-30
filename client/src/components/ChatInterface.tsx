@@ -10,6 +10,7 @@ import { processMathNotation, containsMath } from '@/lib/mathUtils';
 import MathRenderer from './MathRenderer';
 import KaTeXRenderer from './KaTeXRenderer';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { downloadAIResponseAsWord } from '@/utils/wordGenerator';
@@ -58,6 +59,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { updateCredits } = useAuth();
 
   // Debounced message update to prevent excessive re-renders during typing
   const debouncedSetMessage = useDebouncedCallback((value: string) => {
@@ -85,21 +87,35 @@ export default function ChatInterface({ document, showInputInline = true, onMess
     onMutate: () => {
       setIsTyping(true);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       // Invalidate and refetch messages
       const queryKey = document ? ['/api/chat/' + document.id + '/messages'] : ['/api/chat/messages'];
       queryClient.invalidateQueries({ queryKey });
       setMessage('');
       setIsTyping(false);
+      
+      // Update credits if new balance is provided
+      if (data.newBalance !== undefined) {
+        updateCredits(data.newBalance);
+        if (data.creditsUsed) {
+          toast({
+            title: "Credits used",
+            description: `${data.creditsUsed.toLocaleString()} credits used. Balance: ${data.newBalance.toLocaleString()}`,
+          });
+        }
+      }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Chat error:', error);
       
       let errorTitle = "Failed to send message";
       let errorDescription = "Please try again.";
       
       if (error instanceof Error) {
-        if (error.message.includes("Document not found")) {
+        if (error.message.includes("Insufficient credits")) {
+          errorTitle = "Insufficient credits";
+          errorDescription = error.message + " Please add credits to continue.";
+        } else if (error.message.includes("Document not found")) {
           errorTitle = "Document not found";
           errorDescription = "The document you're trying to chat with no longer exists. Please refresh the page and upload your document again.";
         } else if (error.message.includes("Invalid document ID")) {

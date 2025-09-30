@@ -23,6 +23,61 @@ function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// Helper function to check and deduct credits for AI operations
+async function deductCreditsForOperation(
+  sessionToken: string | undefined,
+  wordCount: number,
+  description: string
+): Promise<{ success: boolean; error?: string; newBalance?: number }> {
+  if (!sessionToken) {
+    // Guest users can use the app without credits
+    return { success: true };
+  }
+
+  try {
+    const session = await storage.getUserSession(sessionToken);
+    if (!session) {
+      // Invalid session, but allow guest access
+      return { success: true };
+    }
+
+    const user = await storage.getUser(session.userId);
+    if (!user) {
+      return { success: true };
+    }
+
+    // Calculate cost: 1 credit per word
+    const cost = wordCount;
+
+    // Check if user has enough credits
+    if (user.credits < cost) {
+      return { 
+        success: false, 
+        error: `Insufficient credits. You need ${cost.toLocaleString()} credits but have ${user.credits.toLocaleString()}.` 
+      };
+    }
+
+    // Deduct credits
+    const newBalance = user.credits - cost;
+    await storage.updateUser(user.id, { credits: newBalance });
+
+    // Record transaction
+    await storage.createCreditTransaction({
+      userId: user.id,
+      amount: -cost,
+      type: 'usage',
+      description: description,
+      balanceAfter: newBalance
+    });
+
+    return { success: true, newBalance };
+  } catch (error) {
+    console.error('Credit deduction error:', error);
+    // On error, allow operation to proceed (don't block users on credit system failures)
+    return { success: true };
+  }
+}
+
 // Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
   let cleaned = text
@@ -1222,6 +1277,24 @@ Please provide a helpful response based on the selected text. Keep your response
       // Clean AI response of markup symbols
       const cleanedResponse = removeMarkupSymbols(aiResponse.message);
       
+      // Calculate word count for credit deduction
+      const wordCount = cleanedResponse.split(/\s+/).filter(word => word.length > 0).length;
+      
+      // Deduct credits for logged-in users
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      const creditResult = await deductCreditsForOperation(
+        sessionToken,
+        wordCount,
+        `Chat message (${wordCount} words)`
+      );
+      
+      if (!creditResult.success) {
+        return res.status(402).json({ 
+          error: creditResult.error,
+          insufficientCredits: true
+        });
+      }
+      
       // Save AI response
       const aiMessageData = {
         sessionId: session.id,
@@ -1235,7 +1308,9 @@ Please provide a helpful response based on the selected text. Keep your response
         id: savedAiMessage.id,
         role: savedAiMessage.role,
         content: savedAiMessage.content,
-        timestamp: savedAiMessage.timestamp
+        timestamp: savedAiMessage.timestamp,
+        creditsUsed: wordCount,
+        newBalance: creditResult.newBalance
       });
       
     } catch (error) {
@@ -1370,6 +1445,24 @@ CONTEXT: The user has selected a specific passage from their document. Answer th
       // Clean AI response of markup symbols
       const cleanedResponse = removeMarkupSymbols(aiResponse.message);
       
+      // Calculate word count for credit deduction
+      const wordCount = cleanedResponse.split(/\s+/).filter(word => word.length > 0).length;
+      
+      // Deduct credits for logged-in users
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      const creditResult = await deductCreditsForOperation(
+        sessionToken,
+        wordCount,
+        `Chat with document (${wordCount} words)`
+      );
+      
+      if (!creditResult.success) {
+        return res.status(402).json({ 
+          error: creditResult.error,
+          insufficientCredits: true
+        });
+      }
+      
       // Save AI response
       const aiMessageData = {
         sessionId: session.id,
@@ -1383,7 +1476,9 @@ CONTEXT: The user has selected a specific passage from their document. Answer th
         id: savedAiMessage.id,
         role: savedAiMessage.role,
         content: savedAiMessage.content,
-        timestamp: savedAiMessage.timestamp
+        timestamp: savedAiMessage.timestamp,
+        creditsUsed: wordCount,
+        newBalance: creditResult.newBalance
       });
       
     } catch (error) {
@@ -1717,12 +1812,13 @@ Your task is to create a comprehensive synthesis that:
           break;
       }
 
-      let synthesis;
+      let synthesis: string;
       if (provider.toLowerCase() === 'deepseek') {
         const response = await generateResponse(prompt, '', []);
         synthesis = typeof response === 'string' ? response : response.message;
       } else {
-        synthesis = await generateResponse(prompt, []);
+        const response = await generateResponse(prompt, '', []);
+        synthesis = typeof response === 'string' ? response : response.message;
       }
       const cleanedSynthesis = removeMarkupSymbols(synthesis || 'No synthesis generated');
 
