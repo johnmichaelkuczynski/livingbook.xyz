@@ -208,15 +208,25 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
         return;
       }
 
-      // Runtime check for Stripe configuration
-      const stripe = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
-        ? await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-        : null;
+      // Fetch Stripe public key from backend
+      const configResponse = await fetch('/api/stripe/config');
+      const config = await configResponse.json();
+      
+      if (!config.publicKey) {
+        toast({
+          title: "Payment unavailable",
+          description: "Stripe is not configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const stripe = await loadStripe(config.publicKey);
         
       if (!stripe) {
         toast({
           title: "Payment unavailable",
-          description: "Stripe is not configured. Please contact support.",
+          description: "Failed to initialize payment system.",
           variant: "destructive",
         });
         return;

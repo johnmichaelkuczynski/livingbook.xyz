@@ -385,6 +385,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Credit Management Routes
   
+  // Get Stripe public key for frontend
+  app.get("/api/stripe/config", async (req, res) => {
+    return res.json({
+      publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || null
+    });
+  });
+  
   // Create Stripe checkout session for credit purchase
   app.post("/api/create-payment-intent", async (req, res) => {
     try {
