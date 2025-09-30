@@ -32,6 +32,15 @@ export default function TextSelectionHandler({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Helper function to check if target is a typing element
+    const isTypingTarget = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tagName = target.tagName.toUpperCase();
+      return target.isContentEditable || 
+             ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
+             target.closest('input, textarea, [contenteditable="true"]') !== null;
+    };
+
     const handleSelectionChange = () => {
       const selection = window.getSelection();
       
@@ -73,12 +82,18 @@ export default function TextSelectionHandler({
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
+      // Don't interfere with typing in input fields
+      if (isTypingTarget(e.target)) return;
+      
       // Small delay to allow selection to complete
       setTimeout(handleSelectionChange, 10);
     };
 
     const handleClickOutside = (event: MouseEvent) => {
+      // Don't interfere with typing in input fields
+      if (isTypingTarget(event.target)) return;
+      
       // Hide toolbar ONLY if clicking outside both container AND toolbar
       const target = event.target as Element;
       const toolbar = document.getElementById('text-selection-toolbar');
