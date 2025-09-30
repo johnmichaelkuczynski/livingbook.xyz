@@ -33,7 +33,19 @@ export default function SimpleTextSelection({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleMouseUp = () => {
+    // Helper function to check if target is a typing element
+    const isTypingTarget = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tagName = target.tagName.toUpperCase();
+      return target.isContentEditable || 
+             ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
+             target.closest('input, textarea, [contenteditable="true"]') !== null;
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      // Don't interfere with typing in input fields
+      if (isTypingTarget(e.target)) return;
+      
       const selection = window.getSelection();
       if (selection && selection.toString().trim().length > 0) {
         const text = selection.toString().trim();
@@ -56,6 +68,9 @@ export default function SimpleTextSelection({
     };
 
     const handleClickOutside = (event: MouseEvent) => {
+      // Don't interfere with typing in input fields
+      if (isTypingTarget(event.target)) return;
+      
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowToolbar(false);
         setSelectedText('');
