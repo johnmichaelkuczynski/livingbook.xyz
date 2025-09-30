@@ -11,6 +11,11 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 **September 30, 2025**:
+- ✅ Implemented user authentication system with optional login (no password wall)
+- ✅ Created credit tracking infrastructure with ZHI pricing tiers
+- ✅ Added credit display in header and purchase UI with 4 ZHI tiers
+- ✅ Backend credit management routes (/api/credits/add, /api/credits/deduct, /api/credits/transactions)
+- ⏳ Integrating credit deduction into AI operations (in progress)
 - ✅ Fixed critical Chrome browser bug where text inputs became unresponsive after document processing
 - ✅ Implemented isTypingTarget() guard functions in DocumentViewer and VirtualizedDocumentViewer components
 - ✅ Prevented global text selection event listeners from interfering with input fields in Chrome

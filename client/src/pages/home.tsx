@@ -10,6 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthDialog } from '@/components/AuthDialog';
+import { AddCreditsDialog } from '@/components/AddCreditsDialog';
 import FileUpload from '@/components/FileUpload';
 import SmartDocumentViewer from '@/components/SmartDocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
@@ -72,8 +73,9 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
+  const { user, logout, updateCredits } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showAddCreditsDialog, setShowAddCreditsDialog] = useState(false);
 
   // Simple client-side chunking function
   const chunkDocumentClient = (content: string, maxWords: number = 10000) => {
@@ -919,8 +921,22 @@ Speaker 1: [dialogue]
                 <Settings className="w-5 h-5" />
               </Button>
               {user ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">{user.username}</span>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddCreditsDialog(true)}
+                    data-testid="button-add-credits"
+                    className="text-green-600 border-green-600 hover:bg-green-50"
+                  >
+                    + Add Credits
+                  </Button>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-medium text-gray-900">{user.username}</span>
+                    <span className="text-xs font-semibold text-blue-600" data-testid="text-credits">
+                      {user.credits.toLocaleString()} credits
+                    </span>
+                  </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -947,6 +963,11 @@ Speaker 1: [dialogue]
       </header>
       
       <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
+      <AddCreditsDialog 
+        open={showAddCreditsDialog} 
+        onOpenChange={setShowAddCreditsDialog}
+        onCreditsAdded={updateCredits}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto space-y-6 pb-32">

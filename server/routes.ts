@@ -232,6 +232,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Credit Management Routes
+  
+  // Add credits (purchase/top-up)
+  app.post("/api/credits/add", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const session = await storage.getUserSession(sessionToken);
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+      
+      const { amount, description } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const newBalance = user.credits + amount;
+      await storage.updateUser(user.id, { credits: newBalance });
+      
+      await storage.createCreditTransaction({
+        userId: user.id,
+        amount,
+        type: 'purchase',
+        description: description || 'Credit purchase',
+        balanceAfter: newBalance
+      });
+      
+      res.json({
+        credits: newBalance,
+        added: amount
+      });
+      
+    } catch (error) {
+      console.error("Add credits error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to add credits" 
+      });
+    }
+  });
+  
+  // Deduct credits (for AI operations)
+  app.post("/api/credits/deduct", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const session = await storage.getUserSession(sessionToken);
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+      
+      const { amount, description } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (user.credits < amount) {
+        return res.status(402).json({ error: "Insufficient credits" });
+      }
+      
+      const newBalance = user.credits - amount;
+      await storage.updateUser(user.id, { credits: newBalance });
+      
+      await storage.createCreditTransaction({
+        userId: user.id,
+        amount: -amount,
+        type: 'usage',
+        description: description || 'AI operation',
+        balanceAfter: newBalance
+      });
+      
+      res.json({
+        credits: newBalance,
+        deducted: amount
+      });
+      
+    } catch (error) {
+      console.error("Deduct credits error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to deduct credits" 
+      });
+    }
+  });
+  
+  // Get credit transactions
+  app.get("/api/credits/transactions", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const session = await storage.getUserSession(sessionToken);
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+      
+      const transactions = await storage.getCreditTransactions(session.userId);
+      res.json(transactions);
+      
+    } catch (error) {
+      console.error("Get transactions error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get transactions" 
+      });
+    }
+  });
+  
   // Create document from text content (AI response conversion)
   app.post("/api/documents/create-from-text", async (req, res) => {
     try {
