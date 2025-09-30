@@ -12,6 +12,7 @@ export const documents = pgTable("documents", {
   isChunked: boolean("is_chunked").default(false).notNull(),
   chunkCount: integer("chunk_count").default(1).notNull(),
   totalWords: integer("total_words").notNull(),
+  userId: integer("user_id").references(() => users.id),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
@@ -30,6 +31,7 @@ export const documentChunks = pgTable("document_chunks", {
 export const chatSessions = pgTable("chat_sessions", {
   id: serial("id").primaryKey(),
   documentId: integer("document_id").references(() => documents.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -37,6 +39,7 @@ export const comparisonSessions = pgTable("comparison_sessions", {
   id: serial("id").primaryKey(),
   documentAId: integer("document_a_id").references(() => documents.id),
   documentBId: integer("document_b_id").references(() => documents.id),
+  userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -105,12 +108,47 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  credits: integer("credits").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const creditTransactions = pgTable("credit_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  amount: integer("amount").notNull(),
+  type: text("type").notNull(), // 'purchase', 'usage', 'refund'
+  description: text("description").notNull(),
+  balanceAfter: integer("balance_after").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  sessionToken: text("session_token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  credits: true,
+  createdAt: true,
+});
+
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
+  id: true,
+  createdAt: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+export type UserSession = typeof userSessions.$inferSelect;
