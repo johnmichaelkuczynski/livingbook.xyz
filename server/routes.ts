@@ -17,6 +17,15 @@ import * as azureSpeechService from "./services/azureSpeech";
 import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema, insertUserSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import Stripe from "stripe";
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('Warning: STRIPE_SECRET_KEY not set. Payment features will not work.');
+}
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" })
+  : null;
 
 // Helper function to generate secure session token
 function generateSessionToken(): string {
@@ -332,7 +341,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Credit Management Routes
   
-  // Add credits (purchase/top-up)
+  // Create Stripe checkout session for credit purchase
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ error: "Payment system not configured" });
+      }
+
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const session = await storage.getUserSession(sessionToken);
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+      
+      const { amount, credits, description } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+      
+      if (!credits || credits <= 0) {
+        return res.status(400).json({ error: "Invalid credits" });
+      }
+      
+      // Create payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert dollars to cents
+        currency: "usd",
+        metadata: {
+          userId: session.userId.toString(),
+          credits: credits.toString(),
+          description: description || 'Credit purchase'
+        }
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+      
+    } catch (error) {
+      console.error("Create payment intent error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to create payment intent" 
+      });
+    }
+  });
+  
+  // Add credits after successful payment (called from frontend after Stripe confirms payment)
   app.post("/api/credits/add", async (req, res) => {
     try {
       const sessionToken = req.headers.authorization?.replace('Bearer ', '');
@@ -346,10 +404,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid or expired session" });
       }
       
-      const { amount, description } = req.body;
+      const { amount, description, paymentIntentId } = req.body;
       
       if (!amount || amount <= 0) {
         return res.status(400).json({ error: "Invalid amount" });
+      }
+      
+      // Verify payment with Stripe if paymentIntentId is provided
+      if (paymentIntentId && stripe) {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status !== 'succeeded') {
+          return res.status(400).json({ error: "Payment not completed" });
+        }
+        
+        // Verify the payment belongs to this user
+        if (paymentIntent.metadata.userId !== session.userId.toString()) {
+          return res.status(403).json({ error: "Payment verification failed" });
+        }
       }
       
       const user = await storage.getUser(session.userId);
