@@ -78,8 +78,25 @@ export class MemStorage implements IStorage {
     this.currentComparisonSessionId = 1;
     this.currentComparisonMessageId = 1;
     
+    // Add debug user for development/testing
+    this.addDebugUser();
+    
     // Add a test document for functionality verification
     this.addTestDocument();
+  }
+  
+  private addDebugUser() {
+    // Create JMK debug user with unlimited credits and no password requirement
+    const debugUser: User = {
+      id: 1,
+      username: 'jmk',
+      password: '', // Empty password - login code will skip password check for jmk
+      credits: 999999999,
+      createdAt: new Date()
+    };
+    
+    this.users.set(1, debugUser);
+    this.currentUserId = 2; // Start other user IDs from 2
   }
   
   private addTestDocument() {
