@@ -11,11 +11,15 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 **September 30, 2025**:
+- ✅ **Phase 1-3 COMPLETE**: Full credit tracking and payment infrastructure
 - ✅ Implemented user authentication system with optional login (no password wall)
-- ✅ Created credit tracking infrastructure with ZHI pricing tiers
-- ✅ Added credit display in header and purchase UI with 4 ZHI tiers
+- ✅ Created credit tracking infrastructure with ZHI pricing tiers (4 tiers: $5-$100)
+- ✅ Added credit display in header and purchase UI with real-time balance updates
 - ✅ Backend credit management routes (/api/credits/add, /api/credits/deduct, /api/credits/transactions)
-- ⏳ Integrating credit deduction into AI operations (in progress)
+- ✅ **Credit deduction fully integrated** into AI chat operations (1 credit per word)
+- ✅ Authorization Bearer tokens in API requests for authenticated users
+- ✅ Real-time credit updates in header after each AI interaction
+- ✅ Error handling for insufficient credits with user-friendly messages
 - ✅ Fixed critical Chrome browser bug where text inputs became unresponsive after document processing
 - ✅ Implemented isTypingTarget() guard functions in DocumentViewer and VirtualizedDocumentViewer components
 - ✅ Prevented global text selection event listeners from interfering with input fields in Chrome
