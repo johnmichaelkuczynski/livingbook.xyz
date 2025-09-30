@@ -46,6 +46,11 @@ async function deductCreditsForOperation(
       return { success: true };
     }
 
+    // Special debug user: jmk (case insensitive) - unlimited credits, no deduction
+    if (user.username.toLowerCase() === 'jmk') {
+      return { success: true, newBalance: user.credits };
+    }
+
     // Calculate cost: 1 credit per word
     const cost = wordCount;
 
@@ -193,8 +198,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       
-      if (!username || !password) {
-        return res.status(400).json({ error: "Username and password are required" });
+      if (!username) {
+        return res.status(400).json({ error: "Username is required" });
+      }
+      
+      // Special debug user: jmk (case insensitive) - no password required, unlimited credits
+      const isDebugUser = username.toLowerCase() === 'jmk';
+      
+      if (!isDebugUser && !password) {
+        return res.status(400).json({ error: "Password is required" });
       }
       
       // Find user
@@ -203,10 +215,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid username or password" });
       }
       
-      // Check password
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        return res.status(401).json({ error: "Invalid username or password" });
+      // Check password (skip for debug user)
+      if (!isDebugUser) {
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+          return res.status(401).json({ error: "Invalid username or password" });
+        }
       }
       
       // Create session
