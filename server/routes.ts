@@ -32,6 +32,50 @@ function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// SECURITY: Server-side pricing tiers - single source of truth
+const ZHI_TIERS = {
+  'zhi-1': {
+    name: 'ZHI 1',
+    packages: {
+      '5': { price: 5, credits: 4275000 },
+      '10': { price: 10, credits: 8977500 },
+      '25': { price: 25, credits: 23512500 },
+      '50': { price: 50, credits: 51300000 },
+      '100': { price: 100, credits: 115425000 },
+    }
+  },
+  'zhi-2': {
+    name: 'ZHI 2',
+    packages: {
+      '5': { price: 5, credits: 106840 },
+      '10': { price: 10, credits: 224360 },
+      '25': { price: 25, credits: 587625 },
+      '50': { price: 50, credits: 1282100 },
+      '100': { price: 100, credits: 2883400 },
+    }
+  },
+  'zhi-3': {
+    name: 'ZHI 3',
+    packages: {
+      '5': { price: 5, credits: 702000 },
+      '10': { price: 10, credits: 1474200 },
+      '25': { price: 25, credits: 3861000 },
+      '50': { price: 50, credits: 8424000 },
+      '100': { price: 100, credits: 18954000 },
+    }
+  },
+  'zhi-4': {
+    name: 'ZHI 4',
+    packages: {
+      '5': { price: 5, credits: 6410255 },
+      '10': { price: 10, credits: 13461530 },
+      '25': { price: 25, credits: 35256400 },
+      '50': { price: 50, credits: 76923050 },
+      '100': { price: 100, credits: 173176900 },
+    }
+  },
+} as const;
+
 // Helper function to check and deduct credits for AI operations
 async function deductCreditsForOperation(
   sessionToken: string | undefined,
@@ -359,26 +403,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid or expired session" });
       }
       
-      const { amount, credits, description } = req.body;
+      // SECURITY: Client only sends tier and package IDs, server looks up the actual prices
+      const { tierId, packagePrice } = req.body;
       
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
+      if (!tierId || !packagePrice) {
+        return res.status(400).json({ error: "Tier ID and package price required" });
       }
       
-      if (!credits || credits <= 0) {
-        return res.status(400).json({ error: "Invalid credits" });
+      // Look up the tier and package from our server-side pricing table
+      const tier = ZHI_TIERS[tierId as keyof typeof ZHI_TIERS];
+      if (!tier) {
+        return res.status(400).json({ error: "Invalid tier ID" });
       }
       
-      // Create payment intent
+      const pkg = tier.packages[packagePrice.toString() as keyof typeof tier.packages];
+      if (!pkg) {
+        return res.status(400).json({ error: "Invalid package price" });
+      }
+      
+      // SECURITY: Use server-side values only - never trust client
+      const amount = pkg.price;
+      const credits = pkg.credits;
+      const description = `${tier.name} - $${amount} package`;
+      
+      // Create payment intent with server-verified values
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert dollars to cents
         currency: "usd",
         metadata: {
           userId: session.userId.toString(),
           credits: credits.toString(),
-          description: description || 'Credit purchase'
+          price: amount.toString(),
+          tierId: tierId,
+          description: description
         }
       });
+      
+      console.log(`💳 Payment intent created: User ${session.userId} - ${credits.toLocaleString()} credits for $${amount}`);
       
       res.json({ clientSecret: paymentIntent.client_secret });
       
@@ -404,24 +465,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid or expired session" });
       }
       
-      const { amount, description, paymentIntentId } = req.body;
+      const { paymentIntentId } = req.body;
       
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: "Payment intent ID required" });
       }
       
-      // Verify payment with Stripe if paymentIntentId is provided
-      if (paymentIntentId && stripe) {
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        
-        if (paymentIntent.status !== 'succeeded') {
-          return res.status(400).json({ error: "Payment not completed" });
-        }
-        
-        // Verify the payment belongs to this user
-        if (paymentIntent.metadata.userId !== session.userId.toString()) {
-          return res.status(403).json({ error: "Payment verification failed" });
-        }
+      if (!stripe) {
+        return res.status(500).json({ error: "Payment system not configured" });
+      }
+      
+      // SECURITY: Check if this payment intent has already been used (prevent replay attacks)
+      const existingTransaction = await storage.getCreditTransactionByPaymentIntentId(paymentIntentId);
+      if (existingTransaction) {
+        console.warn(`⚠️ Replay attack detected: Payment intent ${paymentIntentId} already used by user ${session.userId}`);
+        return res.status(400).json({ 
+          error: "This payment has already been processed",
+          credits: existingTransaction.balanceAfter 
+        });
+      }
+      
+      // SECURITY: Get credit amount from Stripe metadata, NOT from client request
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ error: "Payment not completed" });
+      }
+      
+      // Verify the payment belongs to this user
+      if (paymentIntent.metadata.userId !== session.userId.toString()) {
+        return res.status(403).json({ error: "Payment verification failed" });
+      }
+      
+      // Extract credits from payment metadata (set during payment intent creation)
+      const credits = parseInt(paymentIntent.metadata.credits || '0');
+      const description = paymentIntent.metadata.description || 'Credit purchase';
+      
+      if (!credits || credits <= 0) {
+        return res.status(400).json({ error: "Invalid payment metadata" });
       }
       
       const user = await storage.getUser(session.userId);
@@ -429,20 +510,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       
-      const newBalance = user.credits + amount;
+      const newBalance = user.credits + credits;
       await storage.updateUser(user.id, { credits: newBalance });
       
       await storage.createCreditTransaction({
         userId: user.id,
-        amount,
+        amount: credits,
         type: 'purchase',
-        description: description || 'Credit purchase',
-        balanceAfter: newBalance
+        description: description,
+        balanceAfter: newBalance,
+        paymentIntentId: paymentIntentId // SECURITY: Track payment intent to prevent replay
       });
+      
+      console.log(`✅ Credits added: User ${user.id} purchased ${credits} credits for $${paymentIntent.amount / 100}`);
       
       res.json({
         credits: newBalance,
-        added: amount
+        added: credits
       });
       
     } catch (error) {
