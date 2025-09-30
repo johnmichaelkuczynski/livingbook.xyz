@@ -209,10 +209,13 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
       }
 
       // Fetch Stripe public key from backend
+      console.log('[STRIPE] Fetching config from /api/stripe/config');
       const configResponse = await fetch('/api/stripe/config');
       const config = await configResponse.json();
+      console.log('[STRIPE] Config received:', config);
       
       if (!config.publicKey) {
+        console.error('[STRIPE] No public key in config');
         toast({
           title: "Payment unavailable",
           description: "Stripe is not configured. Please contact support.",
@@ -221,16 +224,21 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
         return;
       }
       
+      console.log('[STRIPE] Loading Stripe with key:', config.publicKey.substring(0, 20) + '...');
       const stripe = await loadStripe(config.publicKey);
+      console.log('[STRIPE] Stripe loaded:', !!stripe);
         
       if (!stripe) {
+        console.error('[STRIPE] loadStripe returned null - this usually means the Stripe account needs activation or the key is invalid');
         toast({
           title: "Payment unavailable",
-          description: "Failed to initialize payment system.",
+          description: "Failed to initialize Stripe. Your Stripe account may need to be activated on stripe.com",
           variant: "destructive",
         });
         return;
       }
+      
+      console.log('[STRIPE] Stripe initialized successfully');
       
       // Store stripe instance for Elements component
       setStripeInstance(stripe);
