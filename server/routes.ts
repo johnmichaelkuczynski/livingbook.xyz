@@ -223,6 +223,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // For debug user jmk, ensure unlimited credits (999,999,999)
+      if (isDebugUser && user.credits < 999999999) {
+        await storage.updateUser(user.id, { credits: 999999999 });
+        user.credits = 999999999;
+      }
+      
       // Create session
       const sessionToken = generateSessionToken();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
