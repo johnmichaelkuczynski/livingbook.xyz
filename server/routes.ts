@@ -14,7 +14,14 @@ import * as perplexityService from "./services/perplexity";
 import * as emailService from "./services/email";
 import * as azureSpeechService from "./services/azureSpeech";
 
-import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema } from "@shared/schema";
+import { insertDocumentSchema, insertChatMessageSchema, insertComparisonSessionSchema, insertComparisonMessageSchema, insertUserSchema } from "@shared/schema";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+
+// Helper function to generate secure session token
+function generateSessionToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
 
 // Helper function to clean markup symbols and metadata from AI responses
 function removeMarkupSymbols(text: string): string {
@@ -71,6 +78,159 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Auth Routes
+  
+  // Register new user
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+      }
+      
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+      
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Create user
+      const userData = insertUserSchema.parse({ username, password: hashedPassword });
+      const user = await storage.createUser(userData);
+      
+      // Create session
+      const sessionToken = generateSessionToken();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      await storage.createUserSession({
+        userId: user.id,
+        sessionToken,
+        expiresAt
+      });
+      
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          credits: user.credits
+        },
+        sessionToken
+      });
+      
+    } catch (error) {
+      console.error("Register error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to register" 
+      });
+    }
+  });
+  
+  // Login
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+      }
+      
+      // Find user
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      
+      // Check password
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      
+      // Create session
+      const sessionToken = generateSessionToken();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      await storage.createUserSession({
+        userId: user.id,
+        sessionToken,
+        expiresAt
+      });
+      
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          credits: user.credits
+        },
+        sessionToken
+      });
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to login" 
+      });
+    }
+  });
+  
+  // Logout
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (sessionToken) {
+        await storage.deleteUserSession(sessionToken);
+      }
+      
+      res.json({ success: true });
+      
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to logout" 
+      });
+    }
+  });
+  
+  // Get current user
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const session = await storage.getUserSession(sessionToken);
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        credits: user.credits
+      });
+      
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get user" 
+      });
+    }
+  });
   
   // Create document from text content (AI response conversion)
   app.post("/api/documents/create-from-text", async (req, res) => {

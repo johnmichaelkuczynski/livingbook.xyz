@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthDialog } from '@/components/AuthDialog';
 import FileUpload from '@/components/FileUpload';
 import SmartDocumentViewer from '@/components/SmartDocumentViewer';
 import ChunkedDocumentViewer from '@/components/ChunkedDocumentViewer';
@@ -70,6 +72,8 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, logout } = useAuth();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   // Simple client-side chunking function
   const chunkDocumentClient = (content: string, maxWords: number = 10000) => {
@@ -914,10 +918,35 @@ Speaker 1: [dialogue]
               <Button variant="ghost" size="sm">
                 <Settings className="w-5 h-5" />
               </Button>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{user.username}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={logout}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAuthDialog(true)}
+                  data-testid="button-open-auth"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </header>
+      
+      <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto space-y-6 pb-32">
