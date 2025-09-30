@@ -79,10 +79,11 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   const sendMessageMutation = useMutation({
     mutationFn: async (messageContent: string) => {
       const endpoint = document ? `/api/chat/${document.id}/message` : '/api/chat/message';
-      return apiRequest('POST', endpoint, {
+      const response = await apiRequest('POST', endpoint, {
         message: messageContent,
         provider: selectedProvider,
       });
+      return response.json();
     },
     onMutate: () => {
       setIsTyping(true);
