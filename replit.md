@@ -20,6 +20,9 @@ Preferred communication style: Simple, everyday language.
 - ✅ Authorization Bearer tokens in API requests for authenticated users
 - ✅ Real-time credit updates in header after each AI interaction
 - ✅ Error handling for insufficient credits with user-friendly messages
+- ✅ **Stripe payment system with runtime loading**: Refactored to load Stripe dynamically at payment time instead of module-level, preventing browser caching issues
+- ✅ Stripe environment variables properly configured (VITE_STRIPE_PUBLIC_KEY for frontend, STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET for backend)
+- ✅ Payment intents with server-side validation, replay protection via paymentIntentId tracking
 - ✅ Fixed critical Chrome browser bug where text inputs became unresponsive after document processing
 - ✅ Implemented isTypingTarget() guard functions in DocumentViewer and VirtualizedDocumentViewer components
 - ✅ Prevented global text selection event listeners from interfering with input fields in Chrome

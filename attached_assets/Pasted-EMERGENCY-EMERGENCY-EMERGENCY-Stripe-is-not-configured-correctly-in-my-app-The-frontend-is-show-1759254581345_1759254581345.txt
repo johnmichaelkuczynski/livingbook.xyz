@@ -1,0 +1,77 @@
+EMERGENCY! EMERGENCY! EMERGENCY!
+
+Stripe is not configured correctly in my app. The frontend is showing “Payment unavailable – Stripe is not configured”. Clearing cache will never fix this. You must fix the environment variables, backend routes, and webhook.
+
+Environment variables (set in Replit Secrets):
+
+STRIPE_SECRET_KEY = my Stripe secret key (sk_live_... or sk_test_...).
+
+VITE_STRIPE_PUBLIC_KEY = my Stripe publishable key (pk_live_... or pk_test_...).
+
+STRIPE_WEBHOOK_SECRET = webhook signing secret from the Stripe dashboard.
+
+Frontend (Vite)
+
+In client/src/components/AddCreditsDialog.tsx, the Stripe instance must load with:
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+
+Ensure Vite picks up the key at build time (must have VITE_ prefix).
+
+Backend (Express)
+
+Create checkout session route:
+
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+app.post("/api/create-checkout-session", async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    line_items: req.body.items,
+    success_url: `${process.env.CLIENT_URL}/success`,
+    cancel_url: `${process.env.CLIENT_URL}/cancel`,
+    client_reference_id: req.body.userId,
+  });
+  res.json({ id: session.id });
+});
+
+
+Webhook (critical for credits to be applied)
+
+Add raw body middleware for the webhook route only:
+
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    // ✅ Add credits to the correct user here using session.client_reference_id
+  }
+
+  res.json({ received: true });
+});
+
+
+Rebuild and test
+
+After secrets are set, rebuild the app.
+
+Click a package → Stripe Checkout should appear.
+
+When payment completes, Stripe webhook must fire and add credits to the user’s account.
+
+⚠️ Stop telling me to clear my cache. This is a server configuration issue, not a browser issue. Fix the keys, the checkout route, and the webhook exactly as written.

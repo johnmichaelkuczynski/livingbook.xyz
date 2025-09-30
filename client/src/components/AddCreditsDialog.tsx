@@ -12,11 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
-// Load Stripe
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-  : null;
-
 interface AddCreditsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -192,6 +187,7 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
     price: number;
     tierName: string;
   } | null>(null);
+  const [stripeInstance, setStripeInstance] = useState<any>(null);
 
   // Map tier names to IDs for server validation
   const getTierId = (tierName: string): string => {
@@ -212,7 +208,12 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
         return;
       }
 
-      if (!stripePromise) {
+      // Runtime check for Stripe configuration
+      const stripe = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+        ? await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+        : null;
+        
+      if (!stripe) {
         toast({
           title: "Payment unavailable",
           description: "Stripe is not configured. Please contact support.",
@@ -220,6 +221,9 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
         });
         return;
       }
+      
+      // Store stripe instance for Elements component
+      setStripeInstance(stripe);
 
       // SECURITY: Only send tier ID and package price - server looks up actual values
       const response = await fetch('/api/create-payment-intent', {
@@ -258,12 +262,14 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
     onCreditsAdded(newBalance);
     setClientSecret(null);
     setSelectedPackage(null);
+    setStripeInstance(null);
     onOpenChange(false);
   };
 
   const handleCancel = () => {
     setClientSecret(null);
     setSelectedPackage(null);
+    setStripeInstance(null);
   };
 
   return (
@@ -279,8 +285,8 @@ export function AddCreditsDialog({ open, onOpenChange, onCreditsAdded }: AddCred
           </DialogDescription>
         </DialogHeader>
         
-        {clientSecret && selectedPackage && stripePromise ? (
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
+        {clientSecret && selectedPackage && stripeInstance ? (
+          <Elements stripe={stripeInstance} options={{ clientSecret }}>
             <PaymentForm
               credits={selectedPackage.credits}
               price={selectedPackage.price}
