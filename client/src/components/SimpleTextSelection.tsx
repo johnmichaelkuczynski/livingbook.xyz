@@ -77,14 +77,18 @@ export default function SimpleTextSelection({
       }
     };
 
-    document.addEventListener('mouseup', handleMouseUp);
+    // Add listeners ONLY to the container, not globally
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('click', handleClickOutside);
 
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
+      container.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [containerRef.current]);
 
   const handleAction = (action: string, callback?: (text: string) => void) => {
     if (callback && selectedText) {
