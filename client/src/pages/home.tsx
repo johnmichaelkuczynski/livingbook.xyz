@@ -71,6 +71,7 @@ export default function Home() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout, updateCredits } = useAuth();
@@ -987,8 +988,21 @@ Speaker 1: [dialogue]
               <div className="h-full">
                 <TextSelectionHandler
                   onDiscuss={(text) => {
+                    // Set the selected text and prepare message
                     setSelectedText(text);
-                    setMessage(`Tell me more about: "${text.substring(0, 100)}..."`);
+                    const discussMessage = `Discuss this with me: "${text.substring(0, 200)}${text.length > 200 ? '...' : ''}"`;
+                    
+                    // Scroll to chat section
+                    chatSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Send the message automatically after a brief delay
+                    setTimeout(() => {
+                      const messageData = {
+                        content: discussMessage,
+                        selectedText: text
+                      };
+                      sendMessageMutation.mutate(messageData);
+                    }, 300);
                   }}
                   onRewrite={() => setShowRewriteModal(true)}
                   onStudyGuide={handleStudyGuide}
@@ -1140,7 +1154,7 @@ Speaker 1: [dialogue]
 
         
         {/* Chat Interface - Below Document */}
-        <div className="mt-6">
+        <div className="mt-6" ref={chatSectionRef}>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
