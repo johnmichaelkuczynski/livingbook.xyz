@@ -474,7 +474,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
 
       {/* Chat Input - Fixed at bottom */}
       {showInputInline && (
-      <div className="border-t border-gray-200 px-2 py-3 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 50 }}>
+      <div className="border-t border-gray-200 px-2 py-3 flex-shrink-0 bg-white" style={{ position: 'relative', zIndex: 40 }}>
         <div className="flex space-x-1">
           <div className="flex-1">
             <div className="relative">
@@ -495,7 +495,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                   MozUserSelect: 'text',
                   msUserSelect: 'text',
                   position: 'relative',
-                  zIndex: 100,
+                  zIndex: 1,
                   backgroundColor: 'white',
                   touchAction: 'manipulation'
                 }}
@@ -512,7 +512,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
             style={{ 
               pointerEvents: 'auto',
               position: 'relative',
-              zIndex: 100,
+              zIndex: 1,
               border: 'none',
               outline: 'none'
             }}
