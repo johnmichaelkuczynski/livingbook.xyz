@@ -58,9 +58,20 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
   };
 
   const handleFile = async (file: File) => {
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-    if (!allowedTypes.includes(file.type)) {
+    // Validate file type - check both MIME type and file extension for better compatibility
+    const allowedTypes = [
+      'application/pdf', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword', // .doc files
+      'text/plain'
+    ];
+    const fileName = file.name.toLowerCase();
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    
+    // Accept if either MIME type matches OR extension is valid (for drag-drop compatibility)
+    if (!allowedTypes.includes(file.type) && !hasValidExtension) {
+      console.log('File rejected - Type:', file.type, 'Name:', file.name);
       toast({
         title: "Unsupported file type",
         description: "Please upload a PDF, DOCX, or TXT file.",
@@ -68,6 +79,8 @@ export default function FileUpload({ onFileUploaded, isUploading, setIsUploading
       });
       return;
     }
+    
+    console.log('File accepted - Type:', file.type, 'Name:', file.name, 'Size:', file.size);
 
     // Validate file size (50MB limit)
     if (file.size > 50 * 1024 * 1024) {
