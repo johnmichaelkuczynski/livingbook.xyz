@@ -1,0 +1,90 @@
+FIX FOR DocumentViewer Re-render Flicker
+🧠 Problem:
+Keystrokes in the chat input update global or parent state.
+
+This triggers a re-render of DocumentViewer (left and right panels), causing flicker.
+
+💡 Step-by-step Code Fix
+1. Wrap your DocumentViewer component in React.memo
+jsx
+Copy
+Edit
+// DocumentViewer.js
+import React from 'react';
+
+const DocumentViewer = ({ content, title }) => {
+  return (
+    <div className="document-box">
+      <h3>{title}</h3>
+      <div className="document-content">{content}</div>
+    </div>
+  );
+};
+
+export default React.memo(DocumentViewer);
+This prevents re-renders unless content or title change.
+
+2. Use useState or useRef for chat input
+Ensure your chat input doesn't update global or shared state on every keystroke:
+
+jsx
+Copy
+Edit
+// ChatInput.js
+import React, { useState } from 'react';
+
+const ChatInput = ({ onSubmit }) => {
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    setMessage(e.target.value); // local state only
+  };
+
+  const handleSubmit = () => {
+    onSubmit(message);
+    setMessage('');
+  };
+
+  return (
+    <div className="chat-input-box">
+      <input
+        type="text"
+        value={message}
+        onChange={handleChange}
+        placeholder="Ask AI to compare your documents!"
+      />
+      <button onClick={handleSubmit}>Send</button>
+    </div>
+  );
+};
+
+export default ChatInput;
+✅ Do not lift this message state unless absolutely needed. Keep it local to prevent parent rerenders.
+
+3. Memoize the documents if passed as props
+In your parent component:
+
+jsx
+Copy
+Edit
+import React, { useMemo } from 'react';
+import DocumentViewer from './DocumentViewer';
+
+const ComparePage = ({ docAContent, docBContent }) => {
+  const memoDocA = useMemo(() => docAContent, [docAContent]);
+  const memoDocB = useMemo(() => docBContent, [docBContent]);
+
+  return (
+    <div className="comparison-view">
+      <DocumentViewer content={memoDocA} title="Document A" />
+      <DocumentViewer content={memoDocB} title="Document B" />
+      <ChatInput onSubmit={handleChatSubmit} />
+    </div>
+  );
+};
+✅ Summary of Fixes
+Component	Fix
+DocumentViewer	Wrap with React.memo()
+Parent	Use useMemo() on docContent
+Chat Input	Use local state, not global
+

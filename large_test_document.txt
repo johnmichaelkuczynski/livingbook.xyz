@@ -1,0 +1,128 @@
+This is a large test document to verify chunking functionality.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Mathematics concepts and formulas:
+
+The quadratic formula is given by: $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+For a right triangle with sides a, b, and hypotenuse c, the Pythagorean theorem states: $a^2 + b^2 = c^2$
+
+The area of a circle with radius r is: $A = \pi r^2$
+
+Calculus fundamentals:
+
+The derivative of $f(x) = x^n$ is: $f'(x) = nx^{n-1}$
+
+The integral of $x^n$ is: $\int x^n dx = \frac{x^{n+1}}{n+1} + C$ where $n \neq -1$
+
+The fundamental theorem of calculus states that if F is an antiderivative of f on [a,b], then:
+$$\int_a^b f(x) dx = F(b) - F(a)$$
+
+Linear algebra concepts:
+
+For matrices A and B, if they are conformable for multiplication, then:
+$(AB)^T = B^T A^T$
+
+The determinant of a 2x2 matrix $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$ is $ad - bc$
+
+Eigenvalues $\lambda$ of a matrix A satisfy: $\det(A - \lambda I) = 0$
+
+Statistical measures:
+
+Sample mean: $\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$
+
+Sample variance: $s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2$
+
+Standard normal distribution: $f(x) = \frac{1}{\sqrt{2\pi}}e^{-\frac{x^2}{2}}$
+
+More advanced topics:
+
+Taylor series expansion: $f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n$
+
+Fourier transform: $F(\omega) = \int_{-\infty}^{\infty} f(t)e^{-i\omega t} dt$
+
+Complex analysis and Euler's formula: $e^{i\theta} = \cos\theta + i\sin\theta$
+
+This document continues with more mathematical content to reach the word count threshold for chunking. The system should automatically detect when a document exceeds 1000 words and split it into manageable chunks for processing and editing.
+
+Additional mathematical concepts:
+
+Differential equations are fundamental in modeling various phenomena. A first-order linear differential equation has the form: $\frac{dy}{dx} + P(x)y = Q(x)$
+
+The solution involves finding an integrating factor: $\mu(x) = e^{\int P(x)dx}$
+
+Vector calculus introduces concepts like gradient, divergence, and curl:
+- Gradient: $\nabla f = \frac{\partial f}{\partial x}\mathbf{i} + \frac{\partial f}{\partial y}\mathbf{j} + \frac{\partial f}{\partial z}\mathbf{k}$
+- Divergence: $\nabla \cdot \mathbf{F} = \frac{\partial F_x}{\partial x} + \frac{\partial F_y}{\partial y} + \frac{\partial F_z}{\partial z}$
+- Curl: $\nabla \times \mathbf{F} = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\ \frac{\partial}{\partial x} & \frac{\partial}{\partial y} & \frac{\partial}{\partial z} \\ F_x & F_y & F_z \end{vmatrix}$
+
+Number theory explores properties of integers. Some important concepts include:
+
+The Euclidean algorithm for finding the greatest common divisor (GCD):
+If $a = bq + r$ where $0 \leq r < b$, then $\gcd(a,b) = \gcd(b,r)$
+
+Modular arithmetic: $a \equiv b \pmod{n}$ means $n$ divides $(a-b)$
+
+Fermat's Little Theorem: If p is prime and a is not divisible by p, then $a^{p-1} \equiv 1 \pmod{p}$
+
+Abstract algebra introduces group theory, where a group $(G, *)$ satisfies:
+1. Closure: If $a, b \in G$, then $a * b \in G$
+2. Associativity: $(a * b) * c = a * (b * c)$ for all $a, b, c \in G$
+3. Identity: There exists $e \in G$ such that $a * e = e * a = a$ for all $a \in G$
+4. Inverse: For each $a \in G$, there exists $a^{-1} \in G$ such that $a * a^{-1} = a^{-1} * a = e$
+
+Graph theory studies networks and connections. Key concepts include:
+
+Degree of a vertex: The number of edges incident to it
+Euler's formula for connected planar graphs: $V - E + F = 2$ where V is vertices, E is edges, F is faces
+
+Optimization problems often use Lagrange multipliers:
+To optimize $f(x,y)$ subject to constraint $g(x,y) = 0$, solve:
+$\nabla f = \lambda \nabla g$ and $g(x,y) = 0$
+
+Probability theory foundations:
+
+Bayes' theorem: $P(A|B) = \frac{P(B|A)P(A)}{P(B)}$
+
+Expected value: $E[X] = \sum_{i} x_i P(X = x_i)$ for discrete random variables
+
+Variance: $\text{Var}(X) = E[X^2] - (E[X])^2$
+
+Central Limit Theorem: As sample size increases, the distribution of sample means approaches a normal distribution.
+
+Topology introduces concepts of continuity and convergence:
+
+A function $f: X \to Y$ is continuous if for every open set $V$ in $Y$, the preimage $f^{-1}(V)$ is open in $X$.
+
+Metric spaces define distance: A metric $d: X \times X \to \mathbb{R}$ satisfies:
+1. $d(x,y) \geq 0$ with equality iff $x = y$
+2. $d(x,y) = d(y,x)$ (symmetry)
+3. $d(x,z) \leq d(x,y) + d(y,z)$ (triangle inequality)
+
+This extensive mathematical content should easily exceed 1000 words, triggering the chunking system. Each chunk will be manageable for editing and AI processing while maintaining the document's mathematical integrity and proper notation rendering.
+
+The chunking system should preserve mathematical expressions across chunk boundaries and provide users with intuitive controls for editing specific sections of large documents. This approach significantly improves the user experience when working with lengthy academic or technical materials.
+
+Additional content to ensure we exceed the chunking threshold significantly...
+
+Real analysis delves into the properties of real numbers and functions. Key theorems include:
+
+Intermediate Value Theorem: If f is continuous on [a,b] and k is between f(a) and f(b), then there exists c in (a,b) such that f(c) = k.
+
+Mean Value Theorem: If f is continuous on [a,b] and differentiable on (a,b), then there exists c in (a,b) such that:
+$$f'(c) = \frac{f(b) - f(a)}{b - a}$$
+
+Sequences and series convergence tests:
+- Ratio test: If $\lim_{n \to \infty} \left|\frac{a_{n+1}}{a_n}\right| = L < 1$, then $\sum a_n$ converges
+- Root test: If $\lim_{n \to \infty} \sqrt[n]{|a_n|} = L < 1$, then $\sum a_n$ converges
+
+Complex analysis extends calculus to the complex plane:
+
+Cauchy-Riemann equations for analyticity:
+$$\frac{\partial u}{\partial x} = \frac{\partial v}{\partial y}, \quad \frac{\partial u}{\partial y} = -\frac{\partial v}{\partial x}$$
+
+Residue theorem for complex integration:
+$$\oint_C f(z) dz = 2\pi i \sum \text{Res}(f, z_k)$$
+
+This document now contains substantial mathematical content across multiple areas, ensuring thorough testing of the chunking functionality.

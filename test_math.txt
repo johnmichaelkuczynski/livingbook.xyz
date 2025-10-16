@@ -1,0 +1,9 @@
+Test math expressions:
+
+Inline: $x^2 + y^2 = z^2$
+
+Display: $$\frac{1}{2} \times \sqrt{16} = 2$$
+
+Fractions: $\frac{a}{b}$
+
+Greek: $\alpha + \beta = \gamma$

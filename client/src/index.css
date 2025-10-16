@@ -1,0 +1,357 @@
+@import 'katex/dist/katex.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Ensure textarea and input elements work across all browsers */
+  textarea, input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Fix for browser-specific focus issues */
+  textarea:focus, input:focus {
+    outline: 2px solid hsl(207, 90%, 54%) !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Document formatting preservation - PERFECT DISPLAY */
+.prose {
+  max-width: none !important;
+}
+
+/* Force proper paragraph display */
+.prose p, p {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  text-align: justify !important;
+  text-indent: 2em !important;
+  line-height: 1.9 !important;
+  font-size: 1.1em !important;
+  color: #2c3e50 !important;
+}
+
+.prose p:first-child, p:first-child {
+  margin-top: 0 !important;
+  text-indent: 0 !important;
+}
+
+.prose p:last-child, p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Headers and structure */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6,
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 2.5em !important;
+  margin-bottom: 1.5em !important;
+  text-align: left !important;
+  text-indent: 0 !important;
+  font-weight: bold !important;
+  color: #1a202c !important;
+}
+
+/* Lists */
+.prose ul, .prose ol, ul, ol {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  padding-left: 2.5em !important;
+}
+
+.prose li, li {
+  margin-top: 0.75em !important;
+  margin-bottom: 0.75em !important;
+  text-align: justify !important;
+  line-height: 1.8 !important;
+}
+
+/* Math notation styling */
+.math-inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  color: hsl(207, 90%, 54%);
+  background-color: hsl(207, 90%, 96%);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.math-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  color: hsl(207, 90%, 54%);
+  background-color: hsl(207, 90%, 96%);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 1.1em;
+  margin: 1rem 0;
+}
+
+/* Enhanced KaTeX styling */
+.katex {
+  font-size: 1.1em !important;
+  color: inherit !important;
+  line-height: 1.5 !important;
+}
+
+.katex-display {
+  margin: 1.2em 0 !important;
+  text-align: center !important;
+  padding: 0.5em 0 !important;
+}
+
+.katex-inline {
+  display: inline !important;
+  margin: 0 0.1em !important;
+}
+
+.math-katex {
+  font-size: 1.1em;
+}
+
+.math-katex.display {
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.math-katex.inline {
+  margin: 0 2px;
+}
+
+/* Improved fallback styles for broken math */
+.math-fallback {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #1e40af;
+  font-size: 0.95em;
+}
+
+.math-fallback.display-math {
+  display: block;
+  text-align: center;
+  margin: 0.8em 0;
+  padding: 0.5em;
+}
+
+.math-fallback.inline-math {
+  display: inline;
+  margin: 0 0.2em;
+}
+
+/* Chat message specific math styling */
+.chat-message .katex {
+  color: inherit;
+  font-size: 1.05em;
+}
+
+.chat-message .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background-color: hsl(207, 90%, 96%);
+  border-radius: 0.5rem;
+}
+
+.math-katex.inline {
+  display: inline;
+  padding: 0.125rem 0.25rem;
+  background-color: hsl(207, 90%, 96%);
+  border-radius: 0.25rem;
+  margin: 0 0.125rem;
+}
+
+.math-content {
+  line-height: 1.8;
+}
+
+/* Enhanced prose styling for math documents */
+.prose {
+  max-width: none;
+}
+
+.prose p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.prose .math-inline,
+.prose .math-katex.inline {
+  display: inline;
+}
+
+.prose .math-display,
+.prose .math-katex.display {
+  display: block;
+}
+
+/* Animation for math elements */
+.math-inline:hover,
+.math-display:hover,
+.math-katex:hover {
+  background-color: hsl(207, 90%, 92%);
+  transition: background-color 0.2s ease;
+}
+
+/* KaTeX font adjustments */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1rem 0;
+}
+
+/* CRITICAL: Scroll-friendly text selection for mobile and desktop */
+.scroll-friendly-selection {
+  /* Force text selection to work properly */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  
+  /* CRITICAL: Allow scrolling during text selection */
+  overflow-y: auto !important;
+  touch-action: pan-y pinch-zoom !important;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Enable scroll while selecting */
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  
+  /* Ensure selection doesn't interfere with scrolling */
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all children inherit text selection properties */
+.scroll-friendly-selection * {
+  user-select: inherit !important;
+  -webkit-user-select: inherit !important;
+  -moz-user-select: inherit !important;
+  -ms-user-select: inherit !important;
+}
+
+/* Fix ScrollArea viewport for text selection */
+[data-radix-scroll-area-viewport] {
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection from blocking scroll events */
+.scroll-friendly-selection::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.scroll-friendly-selection::-moz-selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Text Selection Toolbar Persistence */
+#text-selection-toolbar {
+  /* Make toolbar more persistent */
+  pointer-events: auto !important;
+  transition: opacity 0.2s ease-in-out;
+  user-select: none !important;
+}
+
+#text-selection-toolbar:hover {
+  /* Stay visible when hovering over toolbar */
+  opacity: 1 !important;
+  z-index: 10000 !important;
+}
+
+/* Prevent toolbar from disappearing too quickly */
+.text-selection-active {
+  user-select: text !important;
+}
+
+.toolbar-hover-active #text-selection-toolbar {
+  /* Keep toolbar visible when hovering */
+  opacity: 1 !important;
+  z-index: 10000 !important;
+}
+
+/* Ensure toolbar buttons are clickable */
+#text-selection-toolbar button {
+  pointer-events: auto !important;
+  z-index: 10001 !important;
+  user-select: none !important;
+}
+
+/* Hover states for toolbar elements */
+#text-selection-toolbar * {
+  user-select: none !important;
+  pointer-events: auto !important;
+}
