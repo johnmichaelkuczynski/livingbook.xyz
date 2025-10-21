@@ -158,12 +158,17 @@ export default function TextSelectionHandler({
           }}
           onRewrite={() => {
             const text = persistedTextRef.current;
-            console.log('✍️ REWRITE CLICKED - Using persisted text length:', text.length);
+            console.log('✍️ REWRITE CLICKED');
+            console.log('✍️ Persisted text:', text);
+            console.log('✍️ Persisted text length:', text.length);
             onRewrite(text);
           }}
           onStudyGuide={() => {
             const text = persistedTextRef.current;
-            console.log('🎯 STUDY GUIDE CLICKED - Using persisted text length:', text.length);
+            console.log('🎯 STUDY GUIDE CLICKED');
+            console.log('🎯 Persisted text:', text);
+            console.log('🎯 Persisted text length:', text.length);
+            console.log('🎯 Selected text state:', selectedText);
             onStudyGuide(text);
           }}
           onTestMe={() => {

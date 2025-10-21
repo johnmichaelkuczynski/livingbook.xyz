@@ -1023,10 +1023,16 @@ Speaker 1: [dialogue]
                       sendMessageMutation.mutate(messageData);
                     }, 300);
                   }}
-                  onRewrite={() => setShowRewriteModal(true)}
+                  onRewrite={(text) => {
+                    setSelectedText(text);
+                    setShowRewriteModal(true);
+                  }}
                   onStudyGuide={handleStudyGuide}
                   onTestMe={handleTestMe}
-                  onPodcast={() => setShowPodcastModal(true)}
+                  onPodcast={(text) => {
+                    setSelectedText(text);
+                    setShowPodcastModal(true);
+                  }}
                   onCognitiveMap={handleCognitiveMap}
                   onSummaryThesis={handleSummaryThesis}
                   onThesisDeepDive={handleThesisDeepDive}
