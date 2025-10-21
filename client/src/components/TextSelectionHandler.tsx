@@ -30,6 +30,9 @@ export default function TextSelectionHandler({
   const [selectionRect, setSelectionRect] = useState<DOMRect | undefined>();
   const [showToolbar, setShowToolbar] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Persist selected text so it doesn't get cleared when browser collapses selection during button click
+  const persistedTextRef = useRef<string>('');
 
   useEffect(() => {
     // Helper function to check if target is a typing element
@@ -71,6 +74,7 @@ export default function TextSelectionHandler({
       if (text.length > 5 && containerRef.current?.contains(range.commonAncestorContainer)) {
         const rect = range.getBoundingClientRect();
         setSelectedText(text);
+        persistedTextRef.current = text; // Persist text in ref
         setSelectionRect(rect);
         setShowToolbar(true);
         
@@ -134,6 +138,7 @@ export default function TextSelectionHandler({
   const handleClose = () => {
     setShowToolbar(false);
     setSelectedText('');
+    persistedTextRef.current = ''; // Clear persisted text on explicit close
     document.body.classList.remove('text-selection-active');
     window.getSelection()?.removeAllRanges();
   };
@@ -146,28 +151,50 @@ export default function TextSelectionHandler({
         <TextSelectionToolbar
           selectedText={selectedText}
           selectionRect={selectionRect}
-          onDiscuss={() => onDiscuss(selectedText)}
-          onRewrite={() => onRewrite(selectedText)}
+          onDiscuss={() => {
+            const text = persistedTextRef.current;
+            console.log('💬 DISCUSS CLICKED - Using persisted text length:', text.length);
+            onDiscuss(text);
+          }}
+          onRewrite={() => {
+            const text = persistedTextRef.current;
+            console.log('✍️ REWRITE CLICKED - Using persisted text length:', text.length);
+            onRewrite(text);
+          }}
           onStudyGuide={() => {
-            console.log('🎯 STUDY GUIDE CLICKED - Text length:', selectedText.length);
-            onStudyGuide(selectedText);
+            const text = persistedTextRef.current;
+            console.log('🎯 STUDY GUIDE CLICKED - Using persisted text length:', text.length);
+            onStudyGuide(text);
           }}
           onTestMe={() => {
-            console.log('📝 TEST ME CLICKED - Text length:', selectedText.length);
-            onTestMe(selectedText);
+            const text = persistedTextRef.current;
+            console.log('📝 TEST ME CLICKED - Using persisted text length:', text.length);
+            onTestMe(text);
           }}
-          onPodcast={() => onPodcast(selectedText)}
+          onPodcast={() => {
+            const text = persistedTextRef.current;
+            console.log('🎙️ PODCAST CLICKED - Using persisted text length:', text.length);
+            onPodcast(text);
+          }}
           onCognitiveMap={() => {
-            console.log('🧠 COGNITIVE MAP CLICKED - Text length:', selectedText.length);
-            console.log('🧠 HANDLE COGNITIVE MAP - Called with text:', selectedText.slice(0, 100) + '...');
-            onCognitiveMap(selectedText);
+            const text = persistedTextRef.current;
+            console.log('🧠 COGNITIVE MAP CLICKED - Using persisted text length:', text.length);
+            onCognitiveMap(text);
           }}
-          onSummaryThesis={() => onSummaryThesis(selectedText)}
-          onThesisDeepDive={() => onThesisDeepDive(selectedText)}
+          onSummaryThesis={() => {
+            const text = persistedTextRef.current;
+            console.log('📄 SUMMARY+THESIS CLICKED - Using persisted text length:', text.length);
+            onSummaryThesis(text);
+          }}
+          onThesisDeepDive={() => {
+            const text = persistedTextRef.current;
+            console.log('🔬 THESIS DEEP-DIVE CLICKED - Using persisted text length:', text.length);
+            onThesisDeepDive(text);
+          }}
           onSuggestedReadings={() => {
-            console.log('📚 SUGGESTED READINGS CLICKED - Text length:', selectedText.length);
-            console.log('📚 HANDLE SUGGESTED READINGS - Called with text:', selectedText.slice(0, 100) + '...');
-            onSuggestedReadings(selectedText);
+            const text = persistedTextRef.current;
+            console.log('📚 SUGGESTED READINGS CLICKED - Using persisted text length:', text.length);
+            onSuggestedReadings(text);
           }}
           onClose={handleClose}
         />
