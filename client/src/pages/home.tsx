@@ -511,12 +511,13 @@ export default function Home() {
   };
 
   const handlePodcast = async (type: 'standard' | 'modern', text?: string) => {
-    const textToUse = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToUse = text || selectedText || currentDocument?.content || '';
     
     if (!textToUse.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
