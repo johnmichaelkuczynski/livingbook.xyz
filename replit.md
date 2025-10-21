@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 21, 2025**:
+- ✅ **Fixed Rewrite function in two-document mode**: Backend endpoint now accepts selectedText without requiring valid documentId, enabling rewrite to work in both single and two-document comparison modes
+- ✅ **Synthesize function completely redesigned**: Now generates NEW ORIGINAL CREATIVE WORKS that combine both documents, not analytical comparisons. Creates mashups like "A Christmas Carol" + "The Republic" → Platonic dialogue about Scrooge's moral education
+- ✅ **Automatic two-document podcast consolidation**: Eliminated manual consolidation step. Clicking "Podcast" in two-document mode now automatically consolidates and opens podcast generation in one step
+- ✅ Verified all backend endpoints properly accept selectedText for two-document operations
+- ✅ Improved error logging in SynthesizeDocumentsModal for better debugging
+
 **September 30, 2025**:
 - ✅ **Phase 1-3 COMPLETE**: Full credit tracking and payment infrastructure
 - ✅ Implemented user authentication system with optional login (no password wall)
