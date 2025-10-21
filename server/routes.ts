@@ -1968,8 +1968,8 @@ Instructions: ${instructions}
         return res.status(400).json({ error: "Both documents are required" });
       }
 
-      // Create synthesis prompt
-      let prompt = `You are tasked with synthesizing two documents into a comprehensive, unified analysis. 
+      // Create synthesis prompt for CREATIVE synthesis (not analytical comparison)
+      let prompt = `You are a creative writer tasked with synthesizing two documents into a NEW, ORIGINAL work that combines their themes, concepts, styles, or ideas.
 
 DOCUMENT A: ${titleA}
 ${documentA}
@@ -1977,21 +1977,24 @@ ${documentA}
 DOCUMENT B: ${titleB}  
 ${documentB}
 
-Your task is to create a comprehensive synthesis that:
-1. Identifies key themes and concepts from both documents
-2. Compares and contrasts the main arguments or findings
-3. Highlights areas of agreement and disagreement
-4. Draws connections between the documents
-5. Provides insights that emerge from considering both documents together
-6. Creates a unified perspective that incorporates elements from both sources
+DO NOT write an analytical comparison or book report. DO NOT simply summarize or analyze these documents.
+
+INSTEAD, create an ORIGINAL creative work that:
+1. Blends the themes, ideas, characters, or concepts from both documents
+2. Creates something NEW that wouldn't exist from reading either document alone
+3. Integrates elements from both sources into a unified creative piece
+4. Can be an essay, narrative, dialogue, philosophical treatise, or any form that naturally emerges from combining these works
+5. Should feel like a genuine synthesis where both documents have been merged into something original
+
+Think of this like creating a mashup or fusion: if the documents are "A Christmas Carol" and "The Republic", you might create a Platonic dialogue about the moral education of Scrooge, or a philosophical treatise on justice using Dickensian characters and themes.
 
 `;
 
       if (customInstructions) {
-        prompt += `\nSpecial Instructions: ${customInstructions}\n\n`;
+        prompt += `\nSpecial Creative Instructions: ${customInstructions}\n\n`;
       }
 
-      prompt += `Please provide a well-structured synthesis that combines the insights from both documents into a cohesive analysis. Format your response with clear headings and organized sections.`;
+      prompt += `Write a substantial, creative synthesis that is a NEW WORK combining both documents. Be original and creative. This should NOT be an analysis - it should be a fresh creation inspired by both sources.`;
 
       // Select AI service based on provider
       let generateResponse;
