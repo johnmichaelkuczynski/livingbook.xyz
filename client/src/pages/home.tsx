@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut, GraduationCap, ClipboardCheck, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1004,9 +1004,88 @@ Speaker 1: [dialogue]
           
           <div className="flex-1 relative" style={{ minHeight: '600px', maxHeight: '80vh' }}>
             {currentDocument ? (
-              <div className="h-full">
-                <TextSelectionHandler
-                  onDiscuss={(text) => {
+              <div className="h-full flex flex-col">
+                {/* Standing Whole-Document Action Buttons */}
+                <Card className="mb-4">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Whole Document Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button 
+                        onClick={() => {
+                          setSelectedText(currentDocument.content);
+                          setShowPodcastModal(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-podcast-whole-doc"
+                      >
+                        <Mic className="w-4 h-4" />
+                        Podcast
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setSelectedText(currentDocument.content);
+                          setShowRewriteModal(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-rewrite-whole-doc"
+                      >
+                        <FileEdit className="w-4 h-4" />
+                        Rewrite
+                      </Button>
+                      <Button 
+                        onClick={() => handleStudyGuide(currentDocument.content)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-studyguide-whole-doc"
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                        Study Guide
+                      </Button>
+                      <Button 
+                        onClick={() => handleTestMe(currentDocument.content)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-testme-whole-doc"
+                      >
+                        <ClipboardCheck className="w-4 h-4" />
+                        Test Me
+                      </Button>
+                      <Button 
+                        onClick={() => handleCognitiveMap(currentDocument.content)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-cognitivemap-whole-doc"
+                      >
+                        <Network className="w-4 h-4" />
+                        Cognitive Map
+                      </Button>
+                      <Button 
+                        onClick={() => handleSummaryThesis(currentDocument.content)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        data-testid="button-summarythesis-whole-doc"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Summary+Thesis
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Or select specific text below for targeted analysis</p>
+                  </CardContent>
+                </Card>
+
+                <div className="flex-1 overflow-auto">
+                  <TextSelectionHandler
+                    onDiscuss={(text) => {
                     // Set the selected text and prepare message
                     setSelectedText(text);
                     const discussMessage = `Discuss this with me: "${text.substring(0, 200)}${text.length > 200 ? '...' : ''}"`;
@@ -1022,22 +1101,22 @@ Speaker 1: [dialogue]
                       };
                       sendMessageMutation.mutate(messageData);
                     }, 300);
-                  }}
-                  onRewrite={(text) => {
-                    setSelectedText(text);
-                    setShowRewriteModal(true);
-                  }}
-                  onStudyGuide={handleStudyGuide}
-                  onTestMe={handleTestMe}
-                  onPodcast={(text) => {
-                    setSelectedText(text);
-                    setShowPodcastModal(true);
-                  }}
-                  onCognitiveMap={handleCognitiveMap}
-                  onSummaryThesis={handleSummaryThesis}
-                  onThesisDeepDive={handleThesisDeepDive}
-                  onSuggestedReadings={handleSuggestedReadings}
-                >
+                    }}
+                    onRewrite={(text) => {
+                      setSelectedText(text);
+                      setShowRewriteModal(true);
+                    }}
+                    onStudyGuide={handleStudyGuide}
+                    onTestMe={handleTestMe}
+                    onPodcast={(text) => {
+                      setSelectedText(text);
+                      setShowPodcastModal(true);
+                    }}
+                    onCognitiveMap={handleCognitiveMap}
+                    onSummaryThesis={handleSummaryThesis}
+                    onThesisDeepDive={handleThesisDeepDive}
+                    onSuggestedReadings={handleSuggestedReadings}
+                  >
                   <SmartDocumentViewer 
                     content={currentDocument.content}
                     onTextSelection={(text) => {
@@ -1046,6 +1125,7 @@ Speaker 1: [dialogue]
                     }}
                   />
                 </TextSelectionHandler>
+                </div>
               </div>
             ) : (
               <Card className="h-full min-h-[500px] flex flex-col">
