@@ -29,6 +29,7 @@ export default function SynthesizeDocumentsModal({
     
     setIsGenerating(true);
     try {
+      console.log('Sending synthesis request...');
       const response = await fetch('/api/synthesize-documents', {
         method: 'POST',
         headers: {
@@ -44,23 +45,35 @@ export default function SynthesizeDocumentsModal({
         }),
       });
 
+      console.log('Response status:', response.status, response.statusText);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
         throw new Error(`Synthesis failed: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setResult(data.synthesis || 'No synthesis generated');
+      console.log('Received data:', data);
+      
+      if (!data.synthesis) {
+        console.error('No synthesis in response:', data);
+        throw new Error('No synthesis content received from server');
+      }
+      
+      setResult(data.synthesis);
       
       toast({
-        title: "Documents synthesized",
-        description: "Successfully combined insights from both documents.",
+        title: "Creative Synthesis Generated!",
+        description: "Your new creative work is ready.",
       });
       
     } catch (error) {
       console.error('Synthesis error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to synthesize documents. Please try again.';
       toast({
         title: "Synthesis failed",
-        description: "Failed to synthesize documents. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
