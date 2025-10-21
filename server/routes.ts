@@ -2817,32 +2817,31 @@ Follow the custom instructions provided while creating an engaging conversation 
     try {
       const { documentId, selectedText, instructions } = req.body;
       
-      if (!documentId) {
-        return res.status(400).json({ error: "Document ID is required" });
-      }
-      
       if (!instructions || !instructions.trim()) {
         return res.status(400).json({ error: "Rewrite instructions are required" });
-      }
-      
-      // Get document
-      const document = await storage.getDocument(documentId);
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
       }
       
       // Determine content to rewrite
       let contentToRewrite = '';
       let contextInfo = '';
       
+      // If we have selected text, use it directly (works for both single and two-document modes)
       if (selectedText && selectedText.trim()) {
-        // User has selected specific text
         contentToRewrite = selectedText.trim();
         contextInfo = 'The user has selected specific text to rewrite.';
-      } else {
-        // No text selected - use full document and let AI identify sections based on instructions
+      } 
+      // Otherwise, try to get document by ID (single document mode only)
+      else if (documentId) {
+        const document = await storage.getDocument(documentId);
+        if (!document) {
+          return res.status(404).json({ error: "Document not found" });
+        }
         contentToRewrite = document.content;
         contextInfo = 'The user has not selected specific text. Use the instructions to identify which part of the document to rewrite.';
+      } 
+      // No content available at all
+      else {
+        return res.status(400).json({ error: "Either documentId or selectedText is required" });
       }
       
       // Create comprehensive prompt for rewriting
