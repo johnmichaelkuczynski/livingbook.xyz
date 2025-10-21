@@ -402,10 +402,11 @@ export default function Home() {
   };
 
   // Bottom toolbar handlers
-  const handleStudyGuide = async () => {
-    console.log('🎯 HANDLE STUDY GUIDE - Called with text:', selectedText.substring(0, 100) + '...');
+  const handleStudyGuide = async (text?: string) => {
+    const textToUse = text || selectedText;
+    console.log('🎯 HANDLE STUDY GUIDE - Called with text:', textToUse.substring(0, 100) + '...');
     
-    if (!selectedText.trim()) {
+    if (!textToUse.trim()) {
       toast({
         title: "No text selected",
         description: "Please select some text first.",
@@ -437,7 +438,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selectedText: selectedText,
+          selectedText: textToUse,
           documentTitle: currentDocument?.originalName || 'Document',
           provider: selectedProvider
         }),
@@ -472,8 +473,9 @@ export default function Home() {
     }
   };
 
-  const handleTestMe = async () => {
-    if (!selectedText?.trim()) {
+  const handleTestMe = async (text?: string) => {
+    const textToUse = text || selectedText;
+    if (!textToUse?.trim()) {
       toast({
         title: "No text selected",
         description: "Please select some text to create a test.",
@@ -486,6 +488,8 @@ export default function Home() {
       return;
     }
 
+    // Update selectedText state so the modal can use it
+    setSelectedText(textToUse);
     setIsGeneratingTest(true);
     setShowTestModal(true);
     
@@ -664,8 +668,9 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleSummaryThesis = async () => {
-    if (!selectedText.trim()) {
+  const handleSummaryThesis = async (text?: string) => {
+    const textToUse = text || selectedText;
+    if (!textToUse.trim()) {
       toast({
         title: "No text selected",
         description: "Please select some text first.",
@@ -679,6 +684,9 @@ Speaker 1: [dialogue]
       return;
     }
 
+    // Update selectedText state
+    setSelectedText(textToUse);
+    
     // Clear previous content and show modal immediately
     setSummaryThesisContent('');
     setIsProcessingSelection(true);
@@ -692,7 +700,7 @@ Speaker 1: [dialogue]
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selectedText: selectedText,
+          selectedText: textToUse,
           provider: selectedProvider
         }),
       });
@@ -723,8 +731,9 @@ Speaker 1: [dialogue]
     }
   };
 
-  const handleThesisDeepDive = async (comparisonTarget?: string) => {
-    if (!selectedText.trim()) {
+  const handleThesisDeepDive = async (text?: string, comparisonTarget?: string) => {
+    const textToUse = text || selectedText;
+    if (!textToUse.trim()) {
       toast({
         title: "No text selected",
         description: "Please select some text first.",
@@ -738,6 +747,9 @@ Speaker 1: [dialogue]
       return;
     }
 
+    // Update selectedText state
+    setSelectedText(textToUse);
+    
     // Clear previous content and show modal immediately
     setThesisDeepDiveContent('');
     setIsProcessingSelection(true);
@@ -751,7 +763,7 @@ Speaker 1: [dialogue]
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selectedText: selectedText,
+          selectedText: textToUse,
           provider: selectedProvider,
           comparisonTarget: comparisonTarget
         }),

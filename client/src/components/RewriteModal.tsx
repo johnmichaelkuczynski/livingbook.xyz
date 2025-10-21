@@ -21,6 +21,14 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
+  // Clear rewritten content when modal opens to show fresh state
+  // But keep instructions so user can modify them
+  const handleOpen = () => {
+    if (isOpen) {
+      setRewrittenContent('');
+    }
+  };
+
   const handleGenerateRewrite = async () => {
     if (!instructions.trim()) {
       toast({
@@ -126,7 +134,8 @@ export default function RewriteModal({ isOpen, onClose, document, selectedText }
   };
 
   const handleClose = () => {
-    setInstructions('');
+    // Don't clear instructions - allow user to modify them for rewrites
+    // Only clear the rewritten content
     setRewrittenContent('');
     onClose();
   };
