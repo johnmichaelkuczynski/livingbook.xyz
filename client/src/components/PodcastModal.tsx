@@ -48,8 +48,8 @@ export default function PodcastModal({ isOpen, onClose, document, selectedText }
       const response = await apiRequest('POST', '/api/generate-podcast', {
         selectedText: selectedText || document.content,
         provider: 'deepseek',
-        podcastType: mode.includes('dialogue') ? 'dialogue' : 'single',
-        customInstructions: (mode === 'custom-single' || mode === 'custom-dialogue') ? customInstructions : null,
+        type: mode.includes('dialogue') ? 'dialogue' : 'single',
+        prompt: (mode === 'custom-single' || mode === 'custom-dialogue') ? customInstructions : null,
       });
       
       if (!response.ok) {
