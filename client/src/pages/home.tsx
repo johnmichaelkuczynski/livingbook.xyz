@@ -403,13 +403,14 @@ export default function Home() {
 
   // Bottom toolbar handlers
   const handleStudyGuide = async (text?: string) => {
-    const textToUse = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToUse = text || selectedText || currentDocument?.content || '';
     console.log('🎯 HANDLE STUDY GUIDE - Called with text:', textToUse.substring(0, 100) + '...');
     
     if (!textToUse.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -474,11 +475,12 @@ export default function Home() {
   };
 
   const handleTestMe = async (text?: string) => {
-    const textToUse = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToUse = text || selectedText || currentDocument?.content || '';
     if (!textToUse?.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text to create a test.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -617,11 +619,12 @@ Speaker 1: [dialogue]
   };
 
   const handleCognitiveMap = async (text?: string) => {
-    const textToAnalyze = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToAnalyze = text || selectedText || currentDocument?.content || '';
     if (!textToAnalyze.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -669,11 +672,12 @@ Speaker 1: [dialogue]
   };
 
   const handleSummaryThesis = async (text?: string) => {
-    const textToUse = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToUse = text || selectedText || currentDocument?.content || '';
     if (!textToUse.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -732,11 +736,12 @@ Speaker 1: [dialogue]
   };
 
   const handleThesisDeepDive = async (text?: string, comparisonTarget?: string) => {
-    const textToUse = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToUse = text || selectedText || currentDocument?.content || '';
     if (!textToUse.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -798,11 +803,12 @@ Speaker 1: [dialogue]
   };
 
   const handleSuggestedReadings = async (text?: string) => {
-    const textToAnalyze = text || selectedText;
+    // Use passed text, or selected text, or entire document content
+    const textToAnalyze = text || selectedText || currentDocument?.content || '';
     if (!textToAnalyze.trim()) {
       toast({
-        title: "No text selected",
-        description: "Please select some text first.",
+        title: "No document content",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
