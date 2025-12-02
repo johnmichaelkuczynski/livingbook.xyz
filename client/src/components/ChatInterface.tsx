@@ -350,6 +350,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
                 <SelectItem value="anthropic">ZHI 2</SelectItem>
                 <SelectItem value="deepseek">ZHI 3</SelectItem>
                 <SelectItem value="perplexity">ZHI 4</SelectItem>
+                <SelectItem value="grok">ZHI 5</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center space-x-2">

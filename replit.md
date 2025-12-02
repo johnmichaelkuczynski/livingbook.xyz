@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**December 2, 2025**:
+- ✅ **Added ZHI 5 (Grok) as AI provider**: Integrated xAI's Grok model as the fifth LLM option
+- ✅ Created server/services/grok.ts service following same pattern as other AI providers
+- ✅ Added ZHI 5 tier pricing structure to backend
+- ✅ Updated all AI provider switch statements across routes.ts (chat, study guide, podcast, test, rewrite, synthesize, etc.)
+- ✅ Added ZHI 5 option to all frontend provider dropdowns (ChatInterface, TextSelectionPopup, RewritePanel, compare page, home page)
+
 **October 21, 2025**:
 - ✅ **Fixed Rewrite function in two-document mode**: Backend endpoint now accepts selectedText without requiring valid documentId, enabling rewrite to work in both single and two-document comparison modes
 - ✅ **Synthesize function completely redesigned**: Now generates NEW ORIGINAL CREATIVE WORKS that combine both documents, not analytical comparisons. Creates mashups like "A Christmas Carol" + "The Republic" → Platonic dialogue about Scrooge's moral education

@@ -1154,6 +1154,7 @@ ${metaData.cognitiveMap}`;
                       <SelectItem value="anthropic">ZHI 2</SelectItem>
                       <SelectItem value="deepseek">ZHI 3</SelectItem>
                       <SelectItem value="perplexity">ZHI 4</SelectItem>
+                      <SelectItem value="grok">ZHI 5</SelectItem>
                     </SelectContent>
                   </Select>
                 </CardTitle>

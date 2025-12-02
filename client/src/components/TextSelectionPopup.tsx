@@ -34,7 +34,7 @@ export default function TextSelectionPopup({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [provider, setProvider] = useState<'openai' | 'anthropic' | 'deepseek' | 'perplexity'>('openai');
+  const [provider, setProvider] = useState<'openai' | 'anthropic' | 'deepseek' | 'perplexity' | 'grok'>('openai');
   const { toast } = useToast();
 
   // Reset messages and start automatic discussion when popup opens with new selection
@@ -250,7 +250,7 @@ export default function TextSelectionPopup({
                       <span className="text-xs text-gray-500">Press Enter to send • Shift+Enter for new line</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Select value={provider} onValueChange={setProvider}>
+                      <Select value={provider} onValueChange={(value) => setProvider(value as 'openai' | 'anthropic' | 'deepseek' | 'perplexity' | 'grok')}>
                         <SelectTrigger className="w-32 h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
@@ -259,6 +259,7 @@ export default function TextSelectionPopup({
                           <SelectItem value="anthropic">ZHI 2</SelectItem>
                           <SelectItem value="deepseek">ZHI 3</SelectItem>
                           <SelectItem value="perplexity">ZHI 4</SelectItem>
+                          <SelectItem value="grok">ZHI 5</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button

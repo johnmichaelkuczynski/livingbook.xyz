@@ -11,6 +11,7 @@ import * as openaiService from "./services/openai";
 import * as anthropicService from "./services/anthropic";
 import * as deepseekService from "./services/deepseek";
 import * as perplexityService from "./services/perplexity";
+import * as grokService from "./services/grok";
 import * as emailService from "./services/email";
 import * as azureSpeechService from "./services/azureSpeech";
 
@@ -72,6 +73,16 @@ const ZHI_TIERS = {
       '25': { price: 25, credits: 35256400 },
       '50': { price: 50, credits: 76923050 },
       '100': { price: 100, credits: 173176900 },
+    }
+  },
+  'zhi-5': {
+    name: 'ZHI 5 (Grok)',
+    packages: {
+      '5': { price: 5, credits: 833333 },
+      '10': { price: 10, credits: 1750000 },
+      '25': { price: 25, credits: 4583333 },
+      '50': { price: 50, credits: 10000000 },
+      '100': { price: 100, credits: 22500000 },
     }
   },
 } as const;
@@ -857,6 +868,10 @@ Please rewrite the text according to the instructions. Return only the rewritten
         case 'perplexity':
           response = await import('./services/perplexity').then(m => m.generateChatResponse(rewritePrompt, '', []));
           break;
+        case 'grok':
+        case 'zhi5':
+          response = await import('./services/grok').then(m => m.generateChatResponse(rewritePrompt, '', []));
+          break;
         default:
           response = await import('./services/deepseek').then(m => m.generateChatResponse(rewritePrompt, '', []));
       }
@@ -1088,6 +1103,11 @@ ${selectedText}`;
           const perplexityResponse = await perplexityService.generateChatResponse(summaryThesisPrompt, selectedText, []);
           response = perplexityResponse.error ? perplexityResponse.error : perplexityResponse.message;
           break;
+        case 'grok':
+        case 'zhi5':
+          const grokResponse = await grokService.generateChatResponse(summaryThesisPrompt, selectedText, []);
+          response = grokResponse.error ? grokResponse.error : grokResponse.message;
+          break;
         default:
           const defaultResponse = await openaiService.generateChatResponse(summaryThesisPrompt, selectedText, []);
           response = defaultResponse.error ? defaultResponse.error : defaultResponse.message;
@@ -1139,6 +1159,10 @@ ${selectedText}
           break;
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
           break;
         case 'deepseek':
         default:
@@ -1199,6 +1223,10 @@ ${selectedText}
           break;
         case 'perplexity':
           chatResponse = await perplexityService.generateChatResponse(prompt, selectedText, []);
+          break;
+        case 'grok':
+        case 'zhi5':
+          chatResponse = await grokService.generateChatResponse(podcastPrompt, selectedText, []);
           break;
         default:
           chatResponse = await deepseekService.generateChatResponse(prompt, selectedText, []);
@@ -1375,6 +1403,10 @@ Please provide a helpful response based on the selected text. Keep your response
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
           break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
         case 'deepseek':
         default:
           generateChatResponse = deepseekService.generateChatResponse;
@@ -1454,6 +1486,11 @@ Please provide a helpful response based on the selected text. Keep your response
         case 'perplexity':
           console.log(`✅ PROVIDER DEBUG - Global Chat Using Perplexity service`);
           generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          console.log(`✅ PROVIDER DEBUG - Global Chat Using Grok (ZHI 5) service`);
+          generateChatResponse = grokService.generateChatResponse;
           break;
         case 'deepseek':
         default:
@@ -1876,6 +1913,10 @@ IMPORTANT: Provide ONLY the rewritten text. Do not include any commentary, expla
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
           break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
         case 'deepseek':
         default:
           generateChatResponse = deepseekService.generateChatResponse;
@@ -2110,6 +2151,10 @@ Think of this like creating a mashup or fusion: if the documents are "A Christma
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
           break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
         case 'deepseek':
         default:
           generateChatResponse = deepseekService.generateChatResponse;
@@ -2260,6 +2305,10 @@ CRITICAL: Use only simple node labels with <br/> for line breaks. No markdown, n
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
           break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
         case 'deepseek':
         default:
           generateChatResponse = deepseekService.generateChatResponse;
@@ -2322,6 +2371,10 @@ Important: Format your response exactly as specified with "Thesis:" and "Summary
           break;
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
           break;
         case 'deepseek':
         default:
@@ -2399,6 +2452,10 @@ ${selectedText}
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
           break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
         case 'deepseek':
         default:
           generateChatResponse = deepseekService.generateChatResponse;
@@ -2466,6 +2523,10 @@ Important: Format each entry exactly as specified: "Title by Author — [relevan
           break;
         case 'perplexity':
           generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
           break;
         case 'deepseek':
         default:
@@ -2977,6 +3038,10 @@ IMPORTANT: Return only valid JSON. No additional text.`;
         case 'perplexity':
           testResponse = await perplexityService.generateChatResponse(testPrompt, selectedText, []);
           break;
+        case 'grok':
+        case 'zhi5':
+          testResponse = await grokService.generateChatResponse(testPrompt, selectedText, []);
+          break;
         default:
           testResponse = await openaiService.generateChatResponse(testPrompt, selectedText, []);
       }
@@ -3104,6 +3169,10 @@ IMPORTANT: Return only valid JSON. No additional text.`;
           break;
         case 'perplexity':
           gradingResponse = await perplexityService.generateChatResponse(gradingPrompt, selectedText, []);
+          break;
+        case 'grok':
+        case 'zhi5':
+          gradingResponse = await grokService.generateChatResponse(gradingPrompt, selectedText, []);
           break;
         default:
           gradingResponse = await openaiService.generateChatResponse(gradingPrompt, selectedText, []);
