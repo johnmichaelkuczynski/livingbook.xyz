@@ -1133,26 +1133,33 @@ ${selectedText}`;
 
       console.log('📋 GENERATING POSITION STATEMENT - Provider:', provider, 'Text length:', selectedText.length);
 
-      const positionPrompt = `Analyze the following text and identify the core philosophical claims or positions being made. Output a numbered list of these positions.
+      const positionPrompt = `Analyze the following text and identify ALL core philosophical claims or positions being made.
+
+IDENTIFICATION CRITERIA (apply these strictly):
+- Include every explicit assertion, definition, or argued claim
+- Include implicit premises that support the main arguments
+- Include conclusions and their supporting reasons
+- Include any normative claims (what should/ought to be)
+- Include any descriptive claims about reality or human nature
 
 RULES:
-1. Each position should be stated clearly and succinctly
-2. Focus on assertions, definitions, and argued claims - not just topic sentences
-3. Do NOT include any quotations or citations
-4. Each statement should capture a distinct philosophical claim or argument
-5. Present positions in logical order as they build upon each other
-6. Be comprehensive but avoid redundancy
+1. Each position should be stated clearly and succinctly in your own words
+2. Do NOT include any quotations or citations - just the positions themselves
+3. Each statement should capture a distinct philosophical claim or argument
+4. Present positions in logical order as they build upon each other
+5. Be EXHAUSTIVE - identify every substantive claim, even minor supporting ones
+6. Aim for completeness over brevity
 
 Text from "${documentTitle || 'Document'}":
 """
 ${selectedText}
 """
 
-Output format:
+Output format (numbered list only, no quotes):
 1. [First position statement]
 2. [Second position statement]
 3. [Third position statement]
-...`;
+...and so on for ALL positions identified`;
 
       // Select AI service based on provider
       let generateChatResponse;
@@ -1209,15 +1216,23 @@ Output format:
 
       console.log('📋 GENERATING POSITION STATEMENT WITH QUOTES - Provider:', provider, 'Text length:', selectedText.length);
 
-      const positionQuotesPrompt = `Analyze the following text and identify the core philosophical claims or positions being made. For each position, provide a direct quotation from the text that supports it.
+      const positionQuotesPrompt = `Analyze the following text and identify ALL core philosophical claims or positions being made. For each position, provide a direct quotation from the text that supports it.
+
+IDENTIFICATION CRITERIA (apply these strictly):
+- Include every explicit assertion, definition, or argued claim
+- Include implicit premises that support the main arguments
+- Include conclusions and their supporting reasons
+- Include any normative claims (what should/ought to be)
+- Include any descriptive claims about reality or human nature
 
 RULES:
-1. Each position should be stated clearly and succinctly
-2. Focus on assertions, definitions, and argued claims - not just topic sentences
-3. Each entry MUST include a blockquote with the exact text from the document
-4. Quotations should be concise but provide clear textual evidence
+1. Each position should be stated clearly and succinctly in your own words
+2. Each entry MUST include a blockquote with exact text from the document
+3. Quotations can be partial sentences or key phrases - they don't need to be complete sentences
+4. If a position has no direct quote, use the closest relevant passage
 5. Present positions in logical order as they build upon each other
-6. Be comprehensive but avoid redundancy
+6. Be EXHAUSTIVE - identify every substantive claim, even minor supporting ones
+7. Do NOT skip positions just because finding a quote is difficult
 
 Text from "${documentTitle || 'Document'}":
 """
@@ -1228,17 +1243,17 @@ Output format (use exactly this format with > for blockquotes):
 
 1. [First position statement]
 
-> "[Exact quotation from text supporting this position]"
+> "[Quotation from text - can be partial phrase]"
 
 2. [Second position statement]
 
-> "[Exact quotation from text supporting this position]"
+> "[Quotation from text - can be partial phrase]"
 
 3. [Third position statement]
 
-> "[Exact quotation from text supporting this position]"
+> "[Quotation from text - can be partial phrase]"
 
-...`;
+...and so on for ALL positions identified`;
 
       // Select AI service based on provider
       let generateChatResponse;
