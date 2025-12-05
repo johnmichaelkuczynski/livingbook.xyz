@@ -17,6 +17,9 @@ Preferred communication style: Simple, everyday language.
 - ✅ Created PositionStatementModal component with blockquote rendering for quoted content
 - ✅ Added Positions and Positions+Quotes buttons to Whole Document Actions
 - ✅ Implemented handler functions with loading states, error handling, and toast notifications
+- ✅ **Fixed UI layout issue**: Reorganized ChatInterface to prevent "Document Chat" and "AI Assistant" labels from overlapping document text
+- ✅ Added clear visual separation (gray background, blue border) for chat section below document viewer
+- ✅ Removed redundant nested Card structure in ChatInterface component for cleaner layout
 
 **December 2, 2025**:
 - ✅ **Added ZHI 5 (Grok) as AI provider**: Integrated xAI's Grok model as the fifth LLM option
