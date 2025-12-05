@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**December 5, 2025**:
+- ✅ **Added Position Statement Generator (7th button)**: Generates numbered list of core philosophical claims without quotations
+- ✅ **Added Position Statement with Quotes Generator (8th button)**: Same as above but includes direct quotations from text as evidence
+- ✅ Created backend endpoints (/api/position-statement and /api/position-statement-quotes) with all 5 AI providers
+- ✅ Created PositionStatementModal component with blockquote rendering for quoted content
+- ✅ Added Positions and Positions+Quotes buttons to Whole Document Actions
+- ✅ Implemented handler functions with loading states, error handling, and toast notifications
+
 **December 2, 2025**:
 - ✅ **Added ZHI 5 (Grok) as AI provider**: Integrated xAI's Grok model as the fifth LLM option
 - ✅ Created server/services/grok.ts service following same pattern as other AI providers

@@ -1,0 +1,58 @@
+Instructions for Replit Agent: Add Two New Functions to Living Book Creator
+App: Living Book Creator
+Current Functionality: Has buttons for Podcast, Rewrite, Study Guide, Test Me, Cognitive Map, Summary+Thesis.
+New Functions to Add:
+
+Position Statement Generator – This will be the 7th button in the app.
+
+Position Statement Generator with Quotations – This will be the 8th button in the app.
+
+1. Position Statement Generator (7th Button)
+Name: Position Statement
+
+Action: When the user uploads a text document and clicks this button, the app should output a numbered list of the core philosophical claims or positions taken in the text.
+
+Format: Each position should be stated clearly and succinctly, without any supporting quotations or citations.
+
+Output Example for a sample philosophical text:
+
+text
+1. Philosophy is the discipline that delineates the structures of the categories in terms of which we think about the world.
+2. We understand the world through categories (event, cause, thing, mind, perception, belief, knowledge, language, truth, value-judgment, law, justice, etc.).
+3. These categories are seldom objects of thought, even though we cannot think without them.
+4. We are adept at using categories but have difficulty making explicit the conditions that govern them.
+5. Self-understanding is not the mind's primary function.
+2. Position Statement Generator with Quotations (8th Button)
+Name: Position Statement with Quotes
+
+Action: When the user uploads a text document and clicks this button, the app should output a numbered list of the core philosophical claims or positions, each followed by a direct quotation from the text that supports it.
+
+Format: Each entry should include:
+
+The position statement.
+
+A blockquote (> or indented) containing the exact text from the document that evidences that position.
+
+Output Example for the same sample text:
+
+text
+1. Philosophy is the discipline that delineates the structures of the categories in terms of which we think about the world.
+
+> "Philosophy studies these categories. It delineates their structures. This is its sole function. Thus, philosophy is the discipline that delineates the structures of the categories in terms of which we think about the world."
+
+2. We understand the world through categories (event, cause, thing, mind, perception, belief, knowledge, language, truth, value-judgment, law, justice, etc.).
+
+> "We understand the world in terms of certain categories (e.g., person, statement, fact, impossibility, existence)."
+
+3. These categories are seldom objects of thought, even though we cannot think without them.
+
+> "Whatever we know, we know it through these categories (and others like them—the list is not complete). But even though we cannot think without them, they are seldom the objects of thought."
+Implementation Notes:
+Both functions should process the entire uploaded document.
+
+The agent should use natural language processing to identify assertions, definitions, and argued claims, not just topic sentences.
+
+For the “with quotes” version, the agent must find and extract the most direct textual evidence for each claim, ideally keeping quotations concise and relevant.
+
+The output should be clean, numbered, and ready for the user to copy/paste or export.
+

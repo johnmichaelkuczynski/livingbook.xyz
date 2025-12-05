@@ -1122,6 +1122,168 @@ ${selectedText}`;
     }
   });
 
+  // Generate position statement (core claims without quotes)
+  app.post("/api/position-statement", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log('📋 GENERATING POSITION STATEMENT - Provider:', provider, 'Text length:', selectedText.length);
+
+      const positionPrompt = `Analyze the following text and identify the core philosophical claims or positions being made. Output a numbered list of these positions.
+
+RULES:
+1. Each position should be stated clearly and succinctly
+2. Focus on assertions, definitions, and argued claims - not just topic sentences
+3. Do NOT include any quotations or citations
+4. Each statement should capture a distinct philosophical claim or argument
+5. Present positions in logical order as they build upon each other
+6. Be comprehensive but avoid redundancy
+
+Text from "${documentTitle || 'Document'}":
+"""
+${selectedText}
+"""
+
+Output format:
+1. [First position statement]
+2. [Second position statement]
+3. [Third position statement]
+...`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate position statement
+      const aiResponse = await generateChatResponse(
+        positionPrompt,
+        selectedText,
+        []
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      console.log('✅ POSITION STATEMENT GENERATED - Provider:', provider, 'Length:', aiResponse.message.length, 'chars');
+      
+      res.json({ positionStatement: aiResponse.message });
+    } catch (error) {
+      console.error('❌ POSITION STATEMENT ERROR:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate position statement" 
+      });
+    }
+  });
+
+  // Generate position statement with quotations (core claims with supporting quotes)
+  app.post("/api/position-statement-quotes", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log('📋 GENERATING POSITION STATEMENT WITH QUOTES - Provider:', provider, 'Text length:', selectedText.length);
+
+      const positionQuotesPrompt = `Analyze the following text and identify the core philosophical claims or positions being made. For each position, provide a direct quotation from the text that supports it.
+
+RULES:
+1. Each position should be stated clearly and succinctly
+2. Focus on assertions, definitions, and argued claims - not just topic sentences
+3. Each entry MUST include a blockquote with the exact text from the document
+4. Quotations should be concise but provide clear textual evidence
+5. Present positions in logical order as they build upon each other
+6. Be comprehensive but avoid redundancy
+
+Text from "${documentTitle || 'Document'}":
+"""
+${selectedText}
+"""
+
+Output format (use exactly this format with > for blockquotes):
+
+1. [First position statement]
+
+> "[Exact quotation from text supporting this position]"
+
+2. [Second position statement]
+
+> "[Exact quotation from text supporting this position]"
+
+3. [Third position statement]
+
+> "[Exact quotation from text supporting this position]"
+
+...`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate position statement with quotes
+      const aiResponse = await generateChatResponse(
+        positionQuotesPrompt,
+        selectedText,
+        []
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      console.log('✅ POSITION STATEMENT WITH QUOTES GENERATED - Provider:', provider, 'Length:', aiResponse.message.length, 'chars');
+      
+      res.json({ positionStatementQuotes: aiResponse.message });
+    } catch (error) {
+      console.error('❌ POSITION STATEMENT WITH QUOTES ERROR:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate position statement with quotes" 
+      });
+    }
+  });
+
   // Generate study guide for selected text
   app.post("/api/study-guide", async (req, res) => {
     try {
