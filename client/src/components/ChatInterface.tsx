@@ -320,51 +320,27 @@ export default function ChatInterface({ document, showInputInline = true, onMess
   };
 
   return (
-    <Card className="flex-1 flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <Lightbulb className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button
-              variant={mathRenderingEnabled ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMathRenderingEnabled(!mathRenderingEnabled)}
-              className="flex items-center space-x-1"
-            >
-              <Calculator className="w-4 h-4" />
-              <span className="text-xs">Math</span>
-            </Button>
-            <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="openai">ZHI 1</SelectItem>
-                <SelectItem value="anthropic">ZHI 2</SelectItem>
-                <SelectItem value="deepseek">ZHI 3</SelectItem>
-                <SelectItem value="perplexity">ZHI 4</SelectItem>
-                <SelectItem value="grok">ZHI 5</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-xs text-gray-500">Online</span>
-            </div>
-          </div>
+    <div className="flex-1 flex flex-col">
+      {/* Math toggle - compact controls */}
+      <div className="flex items-center justify-end gap-2 mb-3 pb-3 border-b border-gray-200">
+        <Button
+          variant={mathRenderingEnabled ? "default" : "outline"}
+          size="sm"
+          onClick={() => setMathRenderingEnabled(!mathRenderingEnabled)}
+          className="flex items-center space-x-1"
+        >
+          <Calculator className="w-4 h-4" />
+          <span className="text-xs">Math</span>
+        </Button>
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <span className="text-xs text-gray-500">Online</span>
         </div>
       </div>
 
-      {/* Chat Messages - Takes up remaining space */}
-      <div className="flex-1 overflow-hidden min-h-0">
-        <ScrollArea className="h-full">
-          <div className="p-6 space-y-4 pb-4">
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-auto max-h-96">
+        <div className="space-y-4">
 
             {/* Chat Messages */}
             {messages.map((msg) => (
@@ -469,8 +445,7 @@ export default function ChatInterface({ document, showInputInline = true, onMess
             )}
             
             <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Chat Input - Fixed at bottom */}
@@ -555,6 +530,6 @@ export default function ChatInterface({ document, showInputInline = true, onMess
         )}
       </div>
       )}
-    </Card>
+    </div>
   );
 }

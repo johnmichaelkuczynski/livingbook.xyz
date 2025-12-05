@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut, GraduationCap, ClipboardCheck, Network, Quote, List } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut, GraduationCap, ClipboardCheck, Network, Quote, List, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1346,38 +1346,42 @@ Speaker 1: [dialogue]
         </div>
 
         
-        {/* Chat Interface - Below Document */}
-        <div className="mt-6" ref={chatSectionRef}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Document Chat
-                </div>
-                <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="openai">ZHI 1</SelectItem>
-                    <SelectItem value="anthropic">ZHI 2</SelectItem>
-                    <SelectItem value="deepseek">ZHI 3</SelectItem>
-                    <SelectItem value="perplexity">ZHI 4</SelectItem>
-                    <SelectItem value="grok">ZHI 5</SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChatInterface 
-                document={currentDocument} 
-                showInputInline={false} 
-                onMessageToDocument={handleMessageToDocument}
-              />
-              
-              {/* Chat Input Section */}
-              <div className="mt-4 pt-4 border-t">
+        {/* Chat Interface - Below Document with clear separation */}
+        <div className="mt-8 p-8 bg-gray-100 border-t-4 border-blue-500" ref={chatSectionRef}>
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <MessageSquare className="w-6 h-6 text-blue-600" />
+                Chat with AI
+              </h2>
+              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">ZHI 1</SelectItem>
+                  <SelectItem value="anthropic">ZHI 2</SelectItem>
+                  <SelectItem value="deepseek">ZHI 3</SelectItem>
+                  <SelectItem value="perplexity">ZHI 4</SelectItem>
+                  <SelectItem value="grok">ZHI 5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Chat Messages Display */}
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <ChatInterface 
+                  document={currentDocument} 
+                  showInputInline={false} 
+                  onMessageToDocument={handleMessageToDocument}
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Chat Input Section */}
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex space-x-3">
                   <div className="flex-1">
                     <Textarea
@@ -1401,7 +1405,7 @@ Speaker 1: [dialogue]
                         MozUserSelect: 'text',
                         msUserSelect: 'text',
                         position: 'relative',
-                        zIndex: 100,
+                        zIndex: 1,
                         backgroundColor: selectedText ? '#f0f9ff' : 'white',
                         touchAction: 'manipulation'
                       }}
@@ -1422,9 +1426,9 @@ Speaker 1: [dialogue]
                     </Button>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
