@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**December 6, 2025**:
+- ✅ **Added Dialectical Analysis (9th and final button)**: Extracts tensions, contradictions, hidden assumptions, and conceptual fault lines
+- ✅ Created /api/dialectical-analysis endpoint with all 5 AI providers
+- ✅ Created DialecticalAnalysisModal component with purple theming and structured output
+- ✅ Output includes: Key contradictions, Tension pairs, Unstated premises, Self-undermining arguments, Conceptual gaps, Structural asymmetries, "If X then why Y?" points, Where the author cheats, Hidden commitments
+
 **December 5, 2025**:
 - ✅ **Added Position Statement Generator (7th button)**: Generates numbered list of core philosophical claims without quotations
 - ✅ **Added Position Statement with Quotes Generator (8th button)**: Same as above but includes direct quotations from text as evidence

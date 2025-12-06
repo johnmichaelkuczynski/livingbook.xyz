@@ -1299,6 +1299,101 @@ Output format (use exactly this format with > for blockquotes):
     }
   });
 
+  // Generate dialectical analysis
+  app.post("/api/dialectical-analysis", async (req, res) => {
+    try {
+      const { selectedText, documentTitle, provider = 'openai' } = req.body;
+      
+      if (!selectedText) {
+        return res.status(400).json({ error: "Selected text is required" });
+      }
+
+      console.log('⚖️ GENERATING DIALECTICAL ANALYSIS - Provider:', provider, 'Text length:', selectedText.length);
+
+      const dialecticalPrompt = `You are an expert philosophical analyst specializing in dialectical criticism. Analyze the following text and identify all tensions, contradictions, hidden assumptions, and conceptual fault lines.
+
+Your analysis must be EXHAUSTIVE. Identify:
+
+## KEY CONTRADICTIONS
+Where does the author's reasoning contradict itself, either explicitly or implicitly? List each contradiction with explanation.
+
+## TENSION PAIRS  
+What conceptual oppositions or conflicting commitments does the text contain that are never fully resolved? (e.g., "freedom vs. determinism", "individual vs. collective")
+
+## UNSTATED PREMISES
+What assumptions is the author making without defending them? What does the argument require to be true that is never established?
+
+## SELF-UNDERMINING ARGUMENTS
+Where does the author's method undercut the author's conclusions? Where does the form of argument contradict its content?
+
+## CONCEPTUAL GAPS
+What necessary steps in the reasoning are missing? Where does the author jump from one claim to another without sufficient justification?
+
+## STRUCTURAL ASYMMETRIES
+Where does the author treat similar cases differently without justification? Where is there an unexplained imbalance in the argument's structure?
+
+## "IF X IS TRUE, THEN WHY Y?" POINTS
+What uncomfortable questions does the author's position raise but fail to address?
+
+## WHERE THE AUTHOR CHEATS
+Where does the author use rhetorical sleight of hand, equivocate on key terms, shift definitions mid-argument, or appeal to emotion rather than reason?
+
+## HIDDEN COMMITMENTS
+What controversial philosophical, political, or metaphysical positions is the author committed to (perhaps unwittingly) by virtue of the argument being made?
+
+Be specific. Quote the text where relevant using > blockquote format. This is a critical, adversarial reading - do not be charitable where the text doesn't warrant it.
+
+Text from "${documentTitle || 'Document'}":
+"""
+${selectedText}
+"""
+
+Provide your dialectical analysis in the structured format above. Be thorough and intellectually rigorous.`;
+
+      // Select AI service based on provider
+      let generateChatResponse;
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          generateChatResponse = openaiService.generateChatResponse;
+          break;
+        case 'anthropic':
+          generateChatResponse = anthropicService.generateChatResponse;
+          break;
+        case 'perplexity':
+          generateChatResponse = perplexityService.generateChatResponse;
+          break;
+        case 'grok':
+        case 'zhi5':
+          generateChatResponse = grokService.generateChatResponse;
+          break;
+        case 'deepseek':
+        default:
+          generateChatResponse = deepseekService.generateChatResponse;
+          break;
+      }
+      
+      // Generate dialectical analysis
+      const aiResponse = await generateChatResponse(
+        dialecticalPrompt,
+        selectedText,
+        []
+      );
+      
+      if (aiResponse.error) {
+        return res.status(500).json({ error: aiResponse.error });
+      }
+
+      console.log('✅ DIALECTICAL ANALYSIS GENERATED - Provider:', provider, 'Length:', aiResponse.message.length, 'chars');
+      
+      res.json({ dialecticalAnalysis: aiResponse.message });
+    } catch (error) {
+      console.error('❌ DIALECTICAL ANALYSIS ERROR:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to generate dialectical analysis" 
+      });
+    }
+  });
+
   // Generate study guide for selected text
   app.post("/api/study-guide", async (req, res) => {
     try {

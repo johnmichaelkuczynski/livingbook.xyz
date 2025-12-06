@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut, GraduationCap, ClipboardCheck, Network, Quote, List, MessageSquare } from 'lucide-react';
+import { Settings, Info, Send, FileText, RotateCcw, Upload, Mic, Volume2, FileEdit, User, LogOut, GraduationCap, ClipboardCheck, Network, Quote, List, MessageSquare, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,6 +30,7 @@ import SummaryThesisModal from '@/components/SummaryThesisModal';
 import ThesisDeepDiveModal from '@/components/ThesisDeepDiveModal';
 import SuggestedReadingsModal from '@/components/SuggestedReadingsModal';
 import PositionStatementModal from '@/components/PositionStatementModal';
+import DialecticalAnalysisModal from '@/components/DialecticalAnalysisModal';
 
 import LoadingIndicator from '@/components/LoadingIndicator';
 // Import chunkDocument function - we'll implement a client-side version
@@ -73,6 +74,9 @@ export default function Home() {
   const [showPositionStatement, setShowPositionStatement] = useState(false);
   const [isGeneratingPositionStatement, setIsGeneratingPositionStatement] = useState(false);
   const [positionStatementWithQuotes, setPositionStatementWithQuotes] = useState(false);
+  const [dialecticalAnalysisContent, setDialecticalAnalysisContent] = useState('');
+  const [showDialecticalAnalysis, setShowDialecticalAnalysis] = useState(false);
+  const [isGeneratingDialecticalAnalysis, setIsGeneratingDialecticalAnalysis] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -804,6 +808,66 @@ Speaker 1: [dialogue]
     }
   };
 
+  const handleDialecticalAnalysis = async (text?: string) => {
+    const textToUse = text || selectedText || currentDocument?.content || '';
+    if (!textToUse.trim()) {
+      toast({
+        title: "No document content",
+        description: "Please upload a document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isProcessingSelection) {
+      return;
+    }
+
+    setSelectedText(textToUse);
+    setDialecticalAnalysisContent('');
+    setIsProcessingSelection(true);
+    setIsGeneratingDialecticalAnalysis(true);
+    setShowDialecticalAnalysis(true);
+
+    try {
+      const response = await fetch('/api/dialectical-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: textToUse,
+          documentTitle: currentDocument?.originalName || 'Document',
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate dialectical analysis: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setDialecticalAnalysisContent(data.dialecticalAnalysis);
+      
+      toast({
+        title: "Dialectical Analysis Generated",
+        description: "Critical analysis of tensions and contradictions is ready!",
+      });
+      
+    } catch (error) {
+      console.error('Dialectical analysis generation error:', error);
+      toast({
+        title: "Error generating analysis",
+        description: "Failed to generate dialectical analysis. Please try again.",
+        variant: "destructive",
+      });
+      setShowDialecticalAnalysis(false);
+    } finally {
+      setIsGeneratingDialecticalAnalysis(false);
+      setIsProcessingSelection(false);
+    }
+  };
+
   const handleThesisDeepDive = async (text?: string, comparisonTarget?: string) => {
     // Use passed text, or selected text, or entire document content
     const textToUse = text || selectedText || currentDocument?.content || '';
@@ -1166,6 +1230,16 @@ Speaker 1: [dialogue]
                         <Quote className="w-4 h-4" />
                         Positions+Quotes
                       </Button>
+                      <Button 
+                        onClick={() => handleDialecticalAnalysis(currentDocument.content)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+                        data-testid="button-dialectical-whole-doc"
+                      >
+                        <Scale className="w-4 h-4" />
+                        Dialectical
+                      </Button>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">Or select specific text below for targeted analysis</p>
                   </CardContent>
@@ -1507,6 +1581,14 @@ Speaker 1: [dialogue]
         content={positionStatementContent}
         isLoading={isGeneratingPositionStatement}
         withQuotes={positionStatementWithQuotes}
+      />
+
+      {/* Dialectical Analysis Modal */}
+      <DialecticalAnalysisModal
+        isOpen={showDialecticalAnalysis}
+        onClose={() => setShowDialecticalAnalysis(false)}
+        content={dialecticalAnalysisContent}
+        isLoading={isGeneratingDialecticalAnalysis}
       />
 
     </div>
