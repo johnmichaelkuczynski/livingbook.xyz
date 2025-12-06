@@ -17,8 +17,21 @@ export default function DialecticalAnalysisModal({
 }: DialecticalAnalysisModalProps) {
   if (!isOpen) return null;
 
+  const removeMarkdown = (text: string): string => {
+    return text
+      .replace(/#{1,6}\s*/g, '') // Remove heading symbols ### ## #
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
+      .replace(/__(.*?)__/g, '$1') // Remove bold __text__
+      .replace(/_(.*?)_/g, '$1') // Remove italic _text_
+      .replace(/`(.*?)`/g, '$1') // Remove inline code `text`
+      .trim();
+  };
+
+  const cleanContent = content.split('\n').map(line => removeMarkdown(line)).join('\n');
+
   const handleDownloadTXT = () => {
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([cleanContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -54,7 +67,7 @@ export default function DialecticalAnalysisModal({
           </head>
           <body>
             <h1>Dialectical Analysis</h1>
-            <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">${content}</pre>
+            <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">${cleanContent}</pre>
           </body>
         </html>
       `);
@@ -68,6 +81,8 @@ export default function DialecticalAnalysisModal({
     
     const lines = content.split('\n');
     return lines.map((line, index) => {
+      const cleanLine = removeMarkdown(line);
+      
       if (line.startsWith('>')) {
         return (
           <blockquote 
@@ -81,11 +96,11 @@ export default function DialecticalAnalysisModal({
               color: '#4b5563'
             }}
           >
-            {line.substring(1).trim()}
+            {removeMarkdown(line.substring(1).trim())}
           </blockquote>
         );
       }
-      if (line.match(/^##?\s/)) {
+      if (line.match(/^#{1,3}\s/)) {
         return (
           <h3 key={index} style={{ 
             color: '#4c1d95', 
@@ -94,13 +109,13 @@ export default function DialecticalAnalysisModal({
             marginBottom: '8px',
             fontSize: '15px'
           }}>
-            {line.replace(/^##?\s/, '')}
+            {cleanLine}
           </h3>
         );
       }
       return (
         <p key={index} style={{ margin: '0 0 8px 0' }}>
-          {line}
+          {cleanLine}
         </p>
       );
     });
